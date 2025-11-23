@@ -1,0 +1,280 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "AudioStreamPlayer",
+"class": "AudioStreamPlayerADSR",
+"language": "GDScript",
+"path": "res://addons/midi/ADSR.gd"
+}, {
+"base": "Reference",
+"class": "Bank",
+"language": "GDScript",
+"path": "res://addons/midi/Bank.gd"
+}, {
+"base": "Reference",
+"class": "Degree",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/Degree.gd"
+}, {
+"base": "Resource",
+"class": "Event",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/Event.gd"
+}, {
+"base": "Reference",
+"class": "Extensions_loader",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/satb_V3/Extensions_loader.gd"
+}, {
+"base": "Node",
+"class": "FadeUtils",
+"language": "GDScript",
+"path": "res://UI/fade_utils.gd"
+}, {
+"base": "Reference",
+"class": "FolkGuitarPlayer",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/FolkGuitarPlayer.gd"
+}, {
+"base": "Resource",
+"class": "GuitarChord",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/GuitarChord.gd"
+}, {
+"base": "Node",
+"class": "GuitarChordDatabase",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/GuitarChordDatabase.gd"
+}, {
+"base": "Control",
+"class": "GuitarChordView",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/GuitarChordView.gd"
+}, {
+"base": "Reference",
+"class": "GuitarPatternGenerator",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/GuitarPatternGenerator.gd"
+}, {
+"base": "Reference",
+"class": "HarmonicKey",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/HarmonicKey.gd"
+}, {
+"base": "Reference",
+"class": "Harmony_SATB",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/satb_V3/Harmony_SATB.gd"
+}, {
+"base": "Node",
+"class": "Harmony_dictionary",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/Harmony_dictionary.gd"
+}, {
+"base": "HBoxContainer",
+"class": "KeySelect",
+"language": "GDScript",
+"path": "res://addons/musiclib/LegoBox/KeySelect.gd"
+}, {
+"base": "HSlider",
+"class": "Knob",
+"language": "GDScript",
+"path": "res://addons/knob/Knob.gd"
+}, {
+"base": "Label",
+"class": "LabelFontAA",
+"language": "GDScript",
+"path": "res://UI/labelFontSize.gd"
+}, {
+"base": "Reference",
+"class": "MidiFileTools",
+"language": "GDScript",
+"path": "res://addons/musiclib/tools/MidiFileTools.gd"
+}, {
+"base": "Node",
+"class": "MidiPlayer",
+"language": "GDScript",
+"path": "res://addons/midi/MidiPlayer.gd"
+}, {
+"base": "Resource",
+"class": "ModulationDatabase",
+"language": "GDScript",
+"path": "res://addons/musiclib/modulation/ModulationDatabase.gd"
+}, {
+"base": "Resource",
+"class": "ModulationManager",
+"language": "GDScript",
+"path": "res://addons/musiclib/modulation/ModulationManager.gd"
+}, {
+"base": "Reference",
+"class": "Note",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/Note.gd"
+}, {
+"base": "Reference",
+"class": "NoteParser",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/NoteParser.gd"
+}, {
+"base": "Panel",
+"class": "Numeric_Knob",
+"language": "GDScript",
+"path": "res://UI/numKnob/numKnob.gd"
+}, {
+"base": "Node",
+"class": "ParallelChecker",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/ParallelChecker.gd"
+}, {
+"base": "Reference",
+"class": "ProgramChange",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/ProgramChange.gd"
+}, {
+"base": "Reference",
+"class": "RockProgressionGenerator",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/RockProgressionGenerator.gd"
+}, {
+"base": "Node",
+"class": "SATB_solver",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/satb_V3/SATB_solver.gd"
+}, {
+"base": "Reference",
+"class": "SMF",
+"language": "GDScript",
+"path": "res://addons/midi/SMF.gd"
+}, {
+"base": "Reference",
+"class": "ScaleHelper",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/ScaleHelper.gd"
+}, {
+"base": "Reference",
+"class": "Song",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/Song.gd"
+}, {
+"base": "Control",
+"class": "SongTrackView",
+"language": "GDScript",
+"path": "res://addons/musiclib/LegoBox/SongTrackView.gd"
+}, {
+"base": "Reference",
+"class": "SoundFont",
+"language": "GDScript",
+"path": "res://addons/midi/SoundFont.gd"
+}, {
+"base": "Reference",
+"class": "StrumPattern",
+"language": "GDScript",
+"path": "res://addons/musiclib/guitar/StrumPattern.gd"
+}, {
+"base": "Node",
+"class": "TitleGenerator",
+"language": "GDScript",
+"path": "res://addons/musiclib/LegoBox/TitleGenerator/TitleGenerator.gd"
+}, {
+"base": "Reference",
+"class": "Track",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/Track.gd"
+}, {
+"base": "Reference",
+"class": "Verbose_satb_logger",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/satb_V3/Verbose_satb_logger.gd"
+}, {
+"base": "Reference",
+"class": "Voicing_bank",
+"language": "GDScript",
+"path": "res://addons/musiclib/harmony/satb_V3/Voicing_bank.gd"
+} ]
+_global_script_class_icons={
+"AudioStreamPlayerADSR": "",
+"Bank": "",
+"Degree": "",
+"Event": "",
+"Extensions_loader": "",
+"FadeUtils": "",
+"FolkGuitarPlayer": "",
+"GuitarChord": "",
+"GuitarChordDatabase": "",
+"GuitarChordView": "",
+"GuitarPatternGenerator": "",
+"HarmonicKey": "",
+"Harmony_SATB": "",
+"Harmony_dictionary": "",
+"KeySelect": "",
+"Knob": "res://addons/knob/icon_knob.svg",
+"LabelFontAA": "",
+"MidiFileTools": "",
+"MidiPlayer": "res://addons/midi/icon.png",
+"ModulationDatabase": "",
+"ModulationManager": "",
+"Note": "",
+"NoteParser": "",
+"Numeric_Knob": "",
+"ParallelChecker": "",
+"ProgramChange": "",
+"RockProgressionGenerator": "",
+"SATB_solver": "",
+"SMF": "",
+"ScaleHelper": "",
+"Song": "",
+"SongTrackView": "",
+"SoundFont": "",
+"StrumPattern": "",
+"TitleGenerator": "",
+"Track": "",
+"Verbose_satb_logger": "",
+"Voicing_bank": ""
+}
+
+[application]
+
+config/name="Musiclab V7"
+config/description="Music Piece Builder"
+run/main_scene="res://Main.tscn"
+run/low_processor_mode=true
+boot_splash/image="res://assets/musicLib5Score.PNG"
+config/icon="res://assets/musicLib5Score.PNG"
+
+[autoload]
+
+musiclibMidiPlayer="*res://addons/musiclib/midiPlayerAutoload.gd"
+LogBus="*res://addons/musiclib/LogBus.gd"
+MusicLabGlobals="*res://MusicLabGlobals.gd"
+
+[display]
+
+window/size/width=1280
+window/size/height=720
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "res://addons/midi/plugin.cfg" )
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[physics]
+
+common/enable_pause_aware_picking=true
+
+[rendering]
+
+quality/driver/fallback_to_gles2=true
+environment/default_clear_color=Color( 0, 0, 0, 1 )

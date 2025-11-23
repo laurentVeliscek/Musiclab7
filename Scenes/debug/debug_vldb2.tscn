@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Scenes/debug/debug_vldb2.gd" type="Script" id=1]
+[ext_resource path="res://Factory/VLDBReader.gd" type="Script" id=2]
+[ext_resource path="res://Fonts/Roboto-VariableFont_wdth,wght.ttf" type="DynamicFontData" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+use_mipmaps = true
+use_filter = true
+extra_spacing_top = 3
+font_data = ExtResource( 3 )
+
+[node name="debug_vldb" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+
+[node name="vldb_reader" type="Node" parent="."]
+script = ExtResource( 2 )
+
+[node name="logBusConsole_TXT" type="TextEdit" parent="."]
+margin_left = 90.0
+margin_top = 32.0
+margin_right = 1195.0
+margin_bottom = 668.0
+custom_fonts/font = SubResource( 1 )
+smooth_scrolling = true
+wrap_enabled = true

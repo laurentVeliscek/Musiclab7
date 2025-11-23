@@ -1,0 +1,95 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://assets/IMG_5045.PNG" type="Texture" id=1]
+[ext_resource path="res://Themes/musiclib_V7.tres" type="Theme" id=2]
+[ext_resource path="res://Fonts/ShadowsIntoLight-Regular.ttf" type="DynamicFontData" id=3]
+[ext_resource path="res://assets/IMG_5044.PNG" type="Texture" id=4]
+[ext_resource path="res://assets/guitar_robot.PNG" type="Texture" id=5]
+[ext_resource path="res://Scenes/menu.gd" type="Script" id=6]
+[ext_resource path="res://assets/satb_fractalizer_menu.PNG" type="Texture" id=7]
+
+[sub_resource type="DynamicFont" id=1]
+size = 50
+font_data = ExtResource( 3 )
+
+[node name="menu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 2 )
+script = ExtResource( 6 )
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_right = 1280.0
+margin_bottom = 720.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ColorRect"]
+margin_left = 736.0
+margin_top = 144.0
+margin_right = 1136.0
+margin_bottom = 560.0
+custom_constants/separation = 40
+alignment = 1
+
+[node name="progression_editor_btn" type="Button" parent="ColorRect/VBoxContainer"]
+margin_right = 400.0
+margin_bottom = 83.0
+rect_min_size = Vector2( 400, 0 )
+custom_fonts/font = SubResource( 1 )
+text = "progression editor"
+
+[node name="guitar_player_btn" type="Button" parent="ColorRect/VBoxContainer"]
+margin_top = 123.0
+margin_right = 400.0
+margin_bottom = 206.0
+rect_min_size = Vector2( 400, 0 )
+custom_fonts/font = SubResource( 1 )
+text = "GuitarPlayer"
+
+[node name="SATB_fractalizer_btn" type="Button" parent="ColorRect/VBoxContainer"]
+margin_top = 246.0
+margin_right = 400.0
+margin_bottom = 329.0
+rect_min_size = Vector2( 400, 0 )
+custom_fonts/font = SubResource( 1 )
+text = "SATB_fractalizer®"
+
+[node name="bass_catcher_btn" type="Button" parent="ColorRect/VBoxContainer"]
+margin_top = 369.0
+margin_right = 400.0
+margin_bottom = 452.0
+rect_min_size = Vector2( 400, 0 )
+custom_fonts/font = SubResource( 1 )
+text = "Bass catcher"
+
+[node name="pony" type="Sprite" parent="."]
+position = Vector2( 376, 352 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 4 )
+
+[node name="GuitarRobot" type="Sprite" parent="."]
+position = Vector2( 376, 352 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 5 )
+
+[node name="SatbFractalizerMenu" type="Sprite" parent="."]
+position = Vector2( 376, 352 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 7 )
+
+[node name="musiclab" type="Sprite" parent="."]
+position = Vector2( 376, 358 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 1 )
+
+[connection signal="mouse_entered" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_entered"]
+[connection signal="mouse_exited" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_exited"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_pressed"]
+[connection signal="mouse_entered" from="ColorRect/VBoxContainer/guitar_player_btn" to="." method="_on_guitar_player_btn_mouse_entered"]
+[connection signal="mouse_exited" from="ColorRect/VBoxContainer/guitar_player_btn" to="." method="_on_guitar_player_btn_mouse_exited"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/guitar_player_btn" to="." method="_on_guitar_player_btn_pressed"]
+[connection signal="mouse_entered" from="ColorRect/VBoxContainer/SATB_fractalizer_btn" to="." method="_on_SATB_fractalizer_btn_mouse_entered"]
+[connection signal="mouse_exited" from="ColorRect/VBoxContainer/SATB_fractalizer_btn" to="." method="_on_SATB_fractalizer_btn_mouse_exited"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/SATB_fractalizer_btn" to="." method="_on_SATB_fractalizer_btn_pressed"]
+[connection signal="mouse_entered" from="ColorRect/VBoxContainer/bass_catcher_btn" to="." method="_on_bass_catcher_btn_mouse_entered"]
+[connection signal="mouse_exited" from="ColorRect/VBoxContainer/bass_catcher_btn" to="." method="_on_bass_catcher_btn_mouse_exited"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/bass_catcher_btn" to="." method="_on_bass_catcher_btn_pressed"]

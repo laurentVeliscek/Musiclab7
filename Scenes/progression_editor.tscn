@@ -1,0 +1,1162 @@
+[gd_scene load_steps=41 format=2]
+
+[ext_resource path="res://Scenes/progression_editor.gd" type="Script" id=1]
+[ext_resource path="res://addons/musiclib/LegoBox/SongTrackView.tscn" type="PackedScene" id=2]
+[ext_resource path="res://addons/musiclib/LegoBox/TitleGenerator/EnglishDico.gd" type="Script" id=3]
+[ext_resource path="res://addons/musiclib/LegoBox/TitleGenerator/TitleGenerator.gd" type="Script" id=4]
+[ext_resource path="res://Themes/musicLab_theme.tres" type="Theme" id=5]
+[ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://addons/musiclib/satb_V7/godot_satb_client.gd" type="Script" id=7]
+[ext_resource path="res://Themes/script_minimal.tres" type="Theme" id=8]
+[ext_resource path="res://UI/numKnob/numKnob.tscn" type="PackedScene" id=11]
+
+[sub_resource type="DynamicFont" id=40]
+size = 70
+font_data = ExtResource( 6 )
+
+[sub_resource type="Animation" id=41]
+resource_name = "anim"
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.6, 1.1 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+
+[sub_resource type="DynamicFontData" id=5]
+font_path = "res://Fonts/KIN668.TTF"
+
+[sub_resource type="DynamicFont" id=6]
+size = 14
+font_data = SubResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+content_margin_left = 10.0
+content_margin_right = 10.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+bg_color = Color( 0, 0, 0, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id=11]
+bg_color = Color( 1, 0, 0, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 1, 1, 1, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="DynamicFont" id=19]
+size = 22
+font_data = ExtResource( 6 )
+
+[sub_resource type="DynamicFont" id=9]
+size = 25
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=10]
+bg_color = Color( 1, 0, 0, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="DynamicFont" id=43]
+size = 27
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=15]
+bg_color = Color( 1, 1, 1, 0 )
+
+[sub_resource type="DynamicFont" id=7]
+size = 26
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=8]
+bg_color = Color( 0, 0.321569, 1, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=45]
+bg_color = Color( 0, 0.764706, 0.823529, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=14]
+bg_color = Color( 0.109804, 0.45098, 0, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id=18]
+bg_color = Color( 0.870588, 0.360784, 0.941176, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="DynamicFont" id=22]
+size = 22
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=23]
+bg_color = Color( 0.921569, 0.560784, 0, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id=39]
+bg_color = Color( 1, 0.866667, 0, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="DynamicFont" id=47]
+size = 24
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=48]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.623529, 0.623529, 0.623529, 1 )
+
+[sub_resource type="StyleBoxFlat" id=49]
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.658824, 0.658824, 0.658824, 1 )
+expand_margin_left = 10.0
+
+[sub_resource type="StyleBoxFlat" id=50]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.658824, 0.658824, 0.658824, 1 )
+expand_margin_bottom = 30.0
+
+[sub_resource type="StyleBoxFlat" id=16]
+bg_color = Color( 1, 1, 1, 1 )
+
+[sub_resource type="StyleBoxFlat" id=27]
+bg_color = Color( 0.862745, 0.862745, 0.862745, 1 )
+
+[sub_resource type="DynamicFont" id=28]
+size = 14
+font_data = ExtResource( 6 )
+
+[sub_resource type="StyleBoxFlat" id=52]
+bg_color = Color( 0.862745, 0.862745, 0.862745, 1 )
+
+[sub_resource type="StyleBoxFlat" id=51]
+bg_color = Color( 1, 1, 1, 1 )
+
+[sub_resource type="StyleBoxFlat" id=53]
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.5, 0.5, 0.5, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="tonalProgressionFactory" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource( 8 )
+script = ExtResource( 1 )
+
+[node name="white_background_rect" type="ColorRect" parent="."]
+margin_right = 1280.0
+margin_bottom = 720.0
+
+[node name="titleGenerator" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+script = ExtResource( 4 )
+
+[node name="dico" type="Node2D" parent="titleGenerator"]
+script = ExtResource( 3 )
+
+[node name="SongViewContainer" type="Control" parent="."]
+margin_left = 179.0
+margin_top = 538.0
+margin_right = 1259.0
+margin_bottom = 678.0
+hint_tooltip = "
+"
+theme = ExtResource( 5 )
+
+[node name="backGround_cr" type="ColorRect" parent="SongViewContainer"]
+margin_left = 16.0
+margin_right = 1056.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 1040, 140 )
+color = Color( 0, 0, 0, 1 )
+
+[node name="computing_label" type="Label" parent="SongViewContainer"]
+modulate = Color( 1, 1, 1, 0.75 )
+margin_right = 1045.0
+margin_bottom = 134.0
+custom_colors/font_color = Color( 0.356863, 0.356863, 0.356863, 1 )
+custom_fonts/font = SubResource( 40 )
+text = "Computing SATB solutions..."
+align = 1
+valign = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="SongViewContainer/computing_label"]
+anims/anim = SubResource( 41 )
+
+[node name="SongTrackView" parent="SongViewContainer" instance=ExtResource( 2 )]
+margin_left = 16.0
+margin_right = -14.0
+rect_min_size = Vector2( 1050, 140 )
+hint_tooltip = "[F1] [F2] [F3] [F4] to change display
+[F5] [F6] to zoom in / out
+Use the mouse wheel or the scroll bar  to set the play position
+[Shift . ] to set a playing marker
+[space bar] to play /stop
+[0] to rewind"
+ruler_font_path = "res://Fonts/Roboto-VariableFont_wdth,wght.ttf"
+ruler_font_size = 11
+font_size = 8
+selected_border_color = Color( 0, 0.0156863, 1, 1 )
+selection_border_px = 2
+rn_view_font_size = 18
+rn_view_scale_font_path = "res://Fonts/AtkinsonHyperlegible-Regular.ttf"
+rn_view_scale_font_size = 12
+
+[node name="play_head_cr" type="ColorRect" parent="SongViewContainer"]
+margin_left = 13.0
+margin_right = 17.0
+margin_bottom = 144.0
+rect_min_size = Vector2( 4, 130 )
+color = Color( 0.239216, 0.321569, 1, 1 )
+
+[node name="trackDisplayMode" type="OptionButton" parent="SongViewContainer"]
+margin_left = -144.0
+margin_right = -3.0
+margin_bottom = 20.0
+hint_tooltip = "Click to change the timeline
+display or use key:
+[F1] midi notes
+[F2] jazz chords
+[F3] Roman Numeral
+[F4] Keyboard
+to change display"
+theme = ExtResource( 8 )
+text = "midi view"
+align = 1
+items = [ "midi view", null, false, 0, null, "jazz chord view", null, false, 1, null, "roman view", null, false, 2, null, "keyboard view", null, false, 3, null ]
+selected = 0
+
+[node name="trackViewScale_sl" type="VSlider" parent="SongViewContainer"]
+margin_left = -40.0
+margin_top = 62.0
+margin_right = -24.0
+margin_bottom = 142.0
+rect_min_size = Vector2( 16, 80 )
+hint_tooltip = "Track zoom factor :
+[F5] : zoom out
+[F6] : zoom in"
+min_value = 1.0
+max_value = 20.0
+value = 2.0
+
+[node name="zoom" type="Label" parent="SongViewContainer"]
+margin_left = -54.0
+margin_top = 32.0
+margin_right = -13.0
+margin_bottom = 55.0
+hint_tooltip = "Zoom setting of the time line.
+[F5] / [F6] to increase / decrease the display zoom  factor"
+custom_colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
+text = "zoom"
+
+[node name="console_panel_pn" type="Panel" parent="."]
+margin_left = 56.0
+margin_top = 122.0
+margin_right = 96.0
+margin_bottom = 162.0
+hint_tooltip = "Compute the avalibale SATB for each chord. When computed, you can listen to the available SATB positions by right-clicking on the chord. (absolutely useless)"
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="logBusConsole_rtl" type="RichTextLabel" parent="console_panel_pn"]
+margin_left = -20.0
+margin_top = -105.0
+margin_right = 632.0
+margin_bottom = 135.0
+rect_min_size = Vector2( 500, 0 )
+theme = ExtResource( 5 )
+custom_colors/default_color = Color( 0.192157, 0.831373, 0, 1 )
+custom_fonts/normal_font = SubResource( 6 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/normal = SubResource( 4 )
+bbcode_enabled = true
+scroll_following = true
+
+[node name="clear_console_btn" type="Button" parent="console_panel_pn"]
+margin_left = -18.0
+margin_top = 146.0
+margin_right = 106.0
+margin_bottom = 176.0
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/focus = SubResource( 11 )
+custom_styles/disabled = SubResource( 11 )
+custom_styles/normal = SubResource( 11 )
+text = "Clear Console"
+
+[node name="export_console_btn" type="Button" parent="console_panel_pn"]
+margin_left = 118.0
+margin_top = 146.0
+margin_right = 242.0
+margin_bottom = 176.0
+text = "Export Console"
+
+[node name="debug_SATB" type="Button" parent="console_panel_pn"]
+margin_left = 270.0
+margin_top = 146.0
+margin_right = 394.0
+margin_bottom = 176.0
+hint_tooltip = "Compute all the possible SATB 
+positions for the progression.
+Right-click on a chord to listen to
+ the available positions"
+text = "SATB Positions"
+
+[node name="Song_panel" type="Panel" parent="."]
+margin_left = 724.0
+margin_top = 16.0
+margin_right = 1244.0
+margin_bottom = 269.0
+rect_min_size = Vector2( 0, 240 )
+theme = ExtResource( 8 )
+custom_styles/panel = SubResource( 1 )
+
+[node name="song_title_lbl" type="Label" parent="Song_panel"]
+margin_left = 12.0
+margin_top = 15.0
+margin_right = 320.0
+margin_bottom = 63.0
+hint_tooltip = "Title of the generated song"
+custom_colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
+custom_fonts/font = SubResource( 19 )
+text = "Untitled Song"
+align = 1
+valign = 1
+
+[node name="seed_sb" type="SpinBox" parent="Song_panel"]
+margin_left = 72.0
+margin_top = 198.0
+margin_right = 330.0
+margin_bottom = 239.0
+hint_tooltip = "The random seed used to
+generate chord progressions"
+max_value = 1e+11
+align = 1
+
+[node name="tempo_sb" type="SpinBox" parent="Song_panel"]
+margin_left = 142.0
+margin_top = 95.0
+margin_right = 228.0
+margin_bottom = 136.0
+hint_tooltip = "Click on the tempo value 
+and use the mouse-wheel 
+to set  the tempo value"
+min_value = 40.0
+max_value = 240.0
+value = 140.0
+align = 1
+
+[node name="time_signature" type="Label" parent="Song_panel"]
+margin_left = 17.0
+margin_top = 68.0
+margin_right = 134.0
+margin_bottom = 99.0
+text = "Time Signature"
+align = 1
+
+[node name="Seed_txt" type="Label" parent="Song_panel"]
+margin_left = 20.0
+margin_top = 199.0
+margin_right = 68.0
+margin_bottom = 239.0
+custom_colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
+text = "Seed"
+align = 1
+valign = 1
+
+[node name="Tempo" type="Label" parent="Song_panel"]
+margin_left = 150.0
+margin_top = 69.0
+margin_right = 204.0
+margin_bottom = 93.0
+text = "Tempo"
+align = 1
+
+[node name="Tempo2" type="Label" parent="Song_panel"]
+margin_left = 236.0
+margin_top = 69.0
+margin_right = 326.0
+margin_bottom = 93.0
+text = "key root"
+align = 1
+
+[node name="Generate_btn" type="Button" parent="Song_panel"]
+margin_left = 340.0
+margin_top = 24.0
+margin_right = 500.0
+margin_bottom = 66.0
+hint_tooltip = "Generate chords.
+When the chord progression is
+empty, the generated chords
+key can be set by the scale
+and root popup selectors.
+If key or scale is set to random,
+the generated chords key will be
+based on the last chord of the
+progression."
+custom_fonts/font = SubResource( 9 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/focus = SubResource( 10 )
+custom_styles/disabled = SubResource( 10 )
+custom_styles/normal = SubResource( 10 )
+text = "Generate"
+
+[node name="auto_seed_cb" type="CheckButton" parent="Song_panel"]
+margin_left = 348.0
+margin_top = 200.0
+margin_right = 492.0
+margin_bottom = 234.0
+hint_tooltip = "If activated (default setting),
+ a new random seed will be
+set each time you generate 
+a chord progression."
+pressed = true
+text = "auto seed"
+align = 1
+
+[node name="time_signature_optButton" type="OptionButton" parent="Song_panel"]
+margin_left = 16.0
+margin_top = 96.0
+margin_right = 124.0
+margin_bottom = 136.0
+hint_tooltip = "Song time signature. 
+Will be applied when 
+you generate a pattern."
+custom_fonts/font = SubResource( 43 )
+text = "4 / 4"
+align = 1
+items = [ "3 / 4", null, false, 0, null, "4 / 4", null, false, 1, null, "5 / 4", null, false, 2, null, "7 / 4", null, false, 3, null ]
+selected = 1
+
+[node name="twoChordsprBar_cb" type="CheckBox" parent="Song_panel"]
+margin_left = 20.0
+margin_top = 156.0
+margin_right = 168.0
+margin_bottom = 180.0
+hint_tooltip = "If checked, 2 chords will be
+generated for each measure.
+(will be applied when you
+generate a chord progression)"
+pressed = true
+text = "2 chords per bar"
+
+[node name="scale_select_ob" type="OptionButton" parent="Song_panel"]
+margin_left = 196.0
+margin_top = 158.0
+margin_right = 323.0
+margin_bottom = 181.0
+hint_tooltip = "Select the scale for the 
+generated chords. 
+Scale can be set when
+the chord progression 
+is empty. 
+If not, the generated chords 
+will adopt the last chord key."
+text = "random scale"
+align = 1
+items = [ "major", null, false, 0, null, "minor", null, false, 1, null, "harmonic minor", null, false, 2, null, "melodic minor", null, false, 3, null, "random scale", null, false, 4, null ]
+selected = 4
+
+[node name="key_root_select_ob" type="OptionButton" parent="Song_panel"]
+margin_left = 244.0
+margin_top = 99.0
+margin_right = 320.0
+margin_bottom = 141.0
+text = "random"
+align = 1
+items = [ "C", null, false, 0, null, "C#", null, false, 1, null, "D", null, false, 2, null, "D#", null, false, 3, null, "E", null, false, 4, null, "F", null, false, 5, null, "F#", null, false, 6, null, "G", null, false, 7, null, "G#", null, false, 8, null, "A", null, false, 9, null, "A#", null, false, 10, null, "B", null, false, 11, null, "random", null, false, 12, null ]
+selected = 12
+
+[node name="Transport" type="Panel" parent="."]
+margin_left = 1072.0
+margin_top = 264.0
+margin_right = 1248.0
+margin_bottom = 520.0
+custom_styles/panel = SubResource( 15 )
+
+[node name="playStop_btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = 16.0
+margin_right = 152.0
+margin_bottom = 80.0
+hint_tooltip = "Press [SPACE] bar to
+play / stop the progression"
+custom_fonts/font = SubResource( 7 )
+custom_styles/hover = SubResource( 8 )
+custom_styles/pressed = SubResource( 8 )
+custom_styles/focus = SubResource( 8 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 8 )
+text = "Play"
+
+[node name="rewind_btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = 91.0
+margin_right = 152.0
+margin_bottom = 139.0
+hint_tooltip = "Rewind to the start of
+the chord progression.
+Keyboard shortcut: [0]"
+custom_fonts/font = SubResource( 7 )
+custom_styles/hover = SubResource( 8 )
+custom_styles/pressed = SubResource( 8 )
+custom_styles/focus = SubResource( 8 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 8 )
+text = "<<"
+
+[node name="guitar_player_btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = 155.0
+margin_right = 152.0
+margin_bottom = 196.0
+hint_tooltip = "Back to menu screen"
+custom_fonts/font = SubResource( 7 )
+custom_styles/hover = SubResource( 45 )
+custom_styles/pressed = SubResource( 45 )
+custom_styles/focus = SubResource( 45 )
+custom_styles/disabled = SubResource( 45 )
+custom_styles/normal = SubResource( 45 )
+text = "Menu"
+
+[node name="Export midi_btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = 208.0
+margin_right = 152.0
+margin_bottom = 250.0
+hint_tooltip = "Export the midifile of 
+the current chord progression"
+custom_fonts/font = SubResource( 9 )
+custom_styles/hover = SubResource( 14 )
+custom_styles/pressed = SubResource( 14 )
+custom_styles/focus = SubResource( 14 )
+custom_styles/disabled = SubResource( 14 )
+custom_styles/normal = SubResource( 14 )
+text = "Export Midi"
+
+[node name="help_btn" type="Button" parent="Transport"]
+margin_left = -547.0
+margin_top = 3.0
+margin_right = -384.0
+margin_bottom = 45.0
+hint_tooltip = "Display the keyboard shortcuts..."
+custom_fonts/font = SubResource( 9 )
+custom_styles/hover = SubResource( 18 )
+custom_styles/pressed = SubResource( 18 )
+custom_styles/focus = SubResource( 18 )
+custom_styles/disabled = SubResource( 18 )
+custom_styles/normal = SubResource( 18 )
+text = "Help"
+
+[node name="compute_SATB_btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = -107.0
+margin_right = 152.0
+margin_bottom = -59.0
+rect_min_size = Vector2( 160, 30 )
+hint_tooltip = "Compute and display the best
+SATB solutions for your chord
+progression"
+custom_fonts/font = SubResource( 22 )
+custom_styles/hover = SubResource( 23 )
+custom_styles/pressed = SubResource( 23 )
+custom_styles/focus = SubResource( 23 )
+custom_styles/disabled = SubResource( 23 )
+custom_styles/normal = SubResource( 23 )
+text = "compute SATB"
+
+[node name="log_satb_btn" type="Button" parent="Transport/compute_SATB_btn"]
+margin_left = -96.0
+margin_top = 267.0
+margin_right = -36.0
+margin_bottom = 290.0
+text = "log_satb"
+
+[node name="Edit_Progression_Btn" type="Button" parent="Transport"]
+margin_left = -8.0
+margin_top = -163.0
+margin_right = 152.0
+margin_bottom = -115.0
+rect_min_size = Vector2( 160, 30 )
+hint_tooltip = "Go to the progression page
+to edit chords."
+custom_fonts/font = SubResource( 22 )
+custom_styles/hover = SubResource( 39 )
+custom_styles/pressed = SubResource( 39 )
+custom_styles/focus = SubResource( 39 )
+custom_styles/disabled = SubResource( 39 )
+custom_styles/normal = SubResource( 39 )
+text = "Edit Chords"
+
+[node name="CenterTabContainer" type="TabContainer" parent="."]
+margin_left = 47.0
+margin_top = 344.0
+margin_right = 896.0
+margin_bottom = 480.0
+custom_colors/font_color_disabled = Color( 0.960784, 0.960784, 0.960784, 1 )
+custom_colors/font_color_bg = Color( 0.458824, 0.458824, 0.458824, 1 )
+custom_colors/font_color_fg = Color( 0.0980392, 0.0980392, 0.0980392, 1 )
+custom_constants/label_valign_fg = 200
+custom_constants/top_margin = 0
+custom_constants/side_margin = 10
+custom_fonts/font = SubResource( 47 )
+custom_styles/tab_fg = SubResource( 48 )
+custom_styles/tab_disabled = SubResource( 49 )
+custom_styles/tab_bg = SubResource( 50 )
+custom_styles/panel = SubResource( 49 )
+tab_align = 0
+
+[node name="SATB" type="Panel" parent="CenterTabContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = 29.0
+rect_min_size = Vector2( 850, 150 )
+custom_styles/panel = SubResource( 16 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterTabContainer/SATB"]
+margin_right = 700.0
+margin_bottom = 100.0
+
+[node name="manettes" type="HBoxContainer" parent="CenterTabContainer/SATB/VBoxContainer"]
+margin_right = 700.0
+margin_bottom = 100.0
+custom_constants/separation = 20
+alignment = 1
+
+[node name="penalty_panel" type="Panel" parent="CenterTabContainer/SATB/VBoxContainer/manettes"]
+margin_left = 48.0
+margin_right = 168.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 120, 60 )
+custom_styles/panel = SubResource( 27 )
+
+[node name="Penalty_Lbl" type="Label" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel"]
+margin_top = 8.0
+margin_right = 115.0
+margin_bottom = 29.0
+custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
+custom_fonts/font = SubResource( 28 )
+text = "Penalty factors"
+align = 1
+
+[node name="Penalty_container" type="HBoxContainer" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel"]
+margin_left = 11.0
+margin_top = 33.0
+margin_right = 141.0
+margin_bottom = 93.0
+custom_constants/separation = 5
+
+[node name="para_fifths_penalty_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container"]
+margin_right = 20.0
+margin_bottom = 60.0
+rect_min_size = Vector2( 20, 60 )
+hint_tooltip = "Parallel fifths Penalty"
+max_value = 1000.0
+value = 1000.0
+
+[node name="para_octave_penalty_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container"]
+margin_left = 25.0
+margin_right = 41.0
+margin_bottom = 60.0
+hint_tooltip = "Parallel octaves Penalty"
+max_value = 1000.0
+value = 1000.0
+
+[node name="total_movement_factor_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container"]
+margin_left = 46.0
+margin_right = 62.0
+margin_bottom = 60.0
+hint_tooltip = "Total movement factor"
+max_value = 10.0
+value = 2.0
+
+[node name="leap_penalty_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container"]
+margin_left = 67.0
+margin_right = 83.0
+margin_bottom = 60.0
+hint_tooltip = "Leap penalty"
+max_value = 20.0
+value = 5.0
+
+[node name="voicing_repetition_penalty_SL2" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container"]
+margin_left = 88.0
+margin_right = 104.0
+margin_bottom = 60.0
+hint_tooltip = "Voicing repetition penalty"
+max_value = 500.0
+
+[node name="Bonus_panel" type="Panel" parent="CenterTabContainer/SATB/VBoxContainer/manettes"]
+margin_left = 188.0
+margin_right = 338.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 150, 60 )
+custom_styles/panel = SubResource( 27 )
+
+[node name="Bonus_Lbl" type="Label" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel"]
+margin_top = 8.0
+margin_right = 142.0
+margin_bottom = 29.0
+custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
+custom_fonts/font = SubResource( 28 )
+text = "Bonus factors"
+align = 1
+
+[node name="Bonus_Container" type="HBoxContainer" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel"]
+margin_left = 11.0
+margin_top = 33.0
+margin_right = 141.0
+margin_bottom = 93.0
+rect_min_size = Vector2( 150, 0 )
+custom_constants/separation = 5
+
+[node name="common_note_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_right = 20.0
+margin_bottom = 60.0
+rect_min_size = Vector2( 20, 60 )
+hint_tooltip = "Common note bonus"
+max_value = 120.0
+value = 30.0
+
+[node name="contrary_motion_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_left = 25.0
+margin_right = 41.0
+margin_bottom = 60.0
+hint_tooltip = "Contrary motion bonus"
+value = 20.0
+
+[node name="Leading_tone_resolution_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_left = 46.0
+margin_right = 62.0
+margin_bottom = 60.0
+hint_tooltip = "leading tone resolution bonus"
+max_value = 200.0
+value = 40.0
+
+[node name="conjunct_motion_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_left = 67.0
+margin_right = 83.0
+margin_bottom = 60.0
+hint_tooltip = "conjunct motion bonus"
+max_value = 50.0
+value = 10.0
+
+[node name="bass_conjunct_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_left = 88.0
+margin_right = 104.0
+margin_bottom = 60.0
+hint_tooltip = "Bass conjunct bonus"
+value = 20.0
+
+[node name="soprano_conjunct_bonus_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container"]
+margin_left = 109.0
+margin_right = 125.0
+margin_bottom = 60.0
+hint_tooltip = "Soprano_conjunct bonus"
+value = 20.0
+
+[node name="SATB_params_panel" type="Panel" parent="CenterTabContainer/SATB/VBoxContainer/manettes"]
+margin_left = 358.0
+margin_right = 498.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 140, 40 )
+custom_styles/panel = SubResource( 52 )
+
+[node name="Bonus_Lbl" type="Label" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel"]
+margin_top = 8.0
+margin_right = 142.0
+margin_bottom = 29.0
+custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
+custom_fonts/font = SubResource( 28 )
+text = "SATB Global"
+align = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel"]
+margin_top = 32.0
+margin_right = 136.0
+margin_bottom = 92.0
+rect_min_size = Vector2( 100, 60 )
+alignment = 1
+
+[node name="temperature_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 10.0
+margin_right = 26.0
+margin_bottom = 60.0
+hint_tooltip = "Temperature:
+At minimum level, only the best solutions are choosed.
+ if increased, the solver will explore paths
+ that are not the best scored locally."
+min_value = 1.0
+max_value = 10.0
+value = 1.0
+
+[node name="temp_proba_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 30.0
+margin_right = 46.0
+margin_bottom = 60.0
+hint_tooltip = "Temperature factor: the probability of temperature exploration. 
+At minimum level, temperature is ignored. "
+max_value = 1.0
+step = 0.1
+value = 0.2
+
+[node name="center_target_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 50.0
+margin_right = 66.0
+margin_bottom = 60.0
+hint_tooltip = "Center_target: set the prefered center pitch of the SATB."
+max_value = 120.0
+value = 60.0
+
+[node name="center_scoring_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 70.0
+margin_right = 86.0
+margin_bottom = 60.0
+hint_tooltip = "center scoring factor"
+max_value = 3.0
+step = 0.1
+value = 0.5
+
+[node name="best_distance_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 90.0
+margin_right = 106.0
+margin_bottom = 60.0
+hint_tooltip = "best_distance: low value will pick close SATB positions .
+High value will pick open SATB positions"
+max_value = 40.0
+value = 20.0
+
+[node name="distance_scoring_SL" type="VSlider" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer"]
+margin_left = 110.0
+margin_right = 126.0
+margin_bottom = 60.0
+hint_tooltip = "Distance scoring factor"
+max_value = 5.0
+step = 0.1
+value = 2.0
+
+[node name="SATB_checkbox" type="VBoxContainer" parent="CenterTabContainer/SATB/VBoxContainer/manettes"]
+margin_left = 518.0
+margin_right = 651.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 0, 100 )
+custom_constants/separation = 12
+alignment = 1
+
+[node name="free_inversion_cb" type="CheckBox" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox"]
+margin_top = 17.0
+margin_right = 133.0
+margin_bottom = 47.0
+rect_min_size = Vector2( 80, 30 )
+hint_tooltip = "If checked, ALL the chords
+inversion settings are ignored,
+so the SATB will freely set the
+chord inversions.
+You can set a free inversion
+individually for each chord using
+the  [*] key, or set the inversion for
+selected chords  using [+] and [-] keys."
+theme = ExtResource( 8 )
+text = "Free Inversions"
+
+[node name="allow_repetition_cb" type="CheckBox" parent="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox"]
+margin_top = 59.0
+margin_right = 133.0
+margin_bottom = 82.0
+hint_tooltip = "If not checked, the SATB solver  sets new  Note  pitches even if 
+the same chord is played twice.
+
+Check this box for \"house\" like
+chord progression when
+repeating chords is preferred."
+pressed = true
+text = "allow repetition"
+
+[node name="interface_switch" type="VBoxContainer" parent="CenterTabContainer/SATB"]
+margin_left = 683.0
+margin_top = 18.0
+margin_right = 803.0
+margin_bottom = 95.0
+rect_min_size = Vector2( 120, 0 )
+custom_constants/separation = 9
+
+[node name="web_api_mode_checkButton" type="CheckButton" parent="CenterTabContainer/SATB/interface_switch"]
+margin_right = 120.0
+margin_bottom = 34.0
+hint_tooltip = "switch to local SATB solver
+when set to local.
+(not available on web)"
+custom_colors/font_color_disabled = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_focus = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover_pressed = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_pressed = Color( 0.396078, 0.458824, 1, 1 )
+pressed = true
+text = "local"
+align = 1
+
+[node name="legato_midi_file_cb" type="CheckButton" parent="CenterTabContainer/SATB/interface_switch"]
+margin_top = 43.0
+margin_right = 120.0
+margin_bottom = 77.0
+hint_tooltip = "When activated, a \"same note
+legato\" will be applied.
+Very useful for string parts:
+repeated  notes are fusionned
+into one long note."
+custom_colors/font_color_disabled = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_focus = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover_pressed = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_pressed = Color( 0.396078, 0.458824, 1, 1 )
+pressed = true
+text = "legato"
+align = 1
+
+[node name="Modulation" type="Panel" parent="CenterTabContainer"]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+rect_min_size = Vector2( 850, 150 )
+custom_styles/panel = SubResource( 51 )
+
+[node name="HContainer" type="HBoxContainer" parent="CenterTabContainer/Modulation"]
+margin_right = 40.0
+margin_bottom = 40.0
+custom_constants/separation = 28
+
+[node name="Techniques" type="VBoxContainer" parent="CenterTabContainer/Modulation/HContainer"]
+margin_right = 166.0
+margin_bottom = 129.0
+
+[node name="techniques_lbl" type="Label" parent="CenterTabContainer/Modulation/HContainer/Techniques"]
+margin_right = 166.0
+margin_bottom = 21.0
+text = "Techniques"
+
+[node name="Pivot_chord_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/Techniques"]
+margin_top = 25.0
+margin_right = 166.0
+margin_bottom = 48.0
+hint_tooltip = "Alllow modulations
+by pivot chord
+Best suited for major
+sixth modulation or
+relative key
+modulation"
+pressed = true
+text = "Pivot Chord"
+
+[node name="other_technique_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/Techniques"]
+margin_top = 52.0
+margin_right = 166.0
+margin_bottom = 75.0
+hint_tooltip = "Allow modulations
+by secondary dominant.
+Best suited for
+modulation 
+by 4th or fifth
+or far key modulation"
+pressed = true
+text = "secondary_dominant"
+
+[node name="chromatic_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/Techniques"]
+margin_top = 79.0
+margin_right = 166.0
+margin_bottom = 102.0
+hint_tooltip = "Allow chromatic modulations.
+Best suited for far keys
+or for mode change 
+(minor <-> major)"
+pressed = true
+text = "chromatic"
+
+[node name="settings" type="VBoxContainer" parent="CenterTabContainer/Modulation/HContainer"]
+margin_left = 194.0
+margin_right = 269.0
+margin_bottom = 129.0
+
+[node name="settings_lbl" type="Label" parent="CenterTabContainer/Modulation/HContainer/settings"]
+margin_right = 75.0
+margin_bottom = 21.0
+text = "settings"
+
+[node name="random_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/settings"]
+margin_top = 25.0
+margin_right = 75.0
+margin_bottom = 48.0
+hint_tooltip = "if checked, the
+modulation is
+randomly chosen. 
+If not checked, 
+apply the best rated
+modulation."
+pressed = true
+text = "random"
+
+[node name="style" type="VBoxContainer" parent="CenterTabContainer/Modulation/HContainer"]
+margin_left = 297.0
+margin_right = 380.0
+margin_bottom = 129.0
+
+[node name="style_lbl" type="Label" parent="CenterTabContainer/Modulation/HContainer/style"]
+margin_right = 83.0
+margin_bottom = 21.0
+text = "style"
+
+[node name="pop_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/style"]
+margin_top = 25.0
+margin_right = 83.0
+margin_bottom = 48.0
+hint_tooltip = "Allow pop style modulations"
+pressed = true
+text = "pop"
+
+[node name="jazz_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/style"]
+margin_top = 52.0
+margin_right = 83.0
+margin_bottom = 75.0
+hint_tooltip = "Allow jazz style
+modulations"
+pressed = true
+text = "jazz"
+
+[node name="romantic_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/style"]
+margin_top = 79.0
+margin_right = 83.0
+margin_bottom = 102.0
+hint_tooltip = "Allow romantic style modulations"
+pressed = true
+text = "romantic"
+
+[node name="classical_cb" type="CheckBox" parent="CenterTabContainer/Modulation/HContainer/style"]
+margin_top = 106.0
+margin_right = 83.0
+margin_bottom = 129.0
+hint_tooltip = "Allow romantic style modulations"
+pressed = true
+text = "classical"
+
+[node name="SATB" type="Node" parent="."]
+
+[node name="HTTPRequest" type="HTTPRequest" parent="SATB"]
+
+[node name="SATBClient" type="Node" parent="SATB"]
+script = ExtResource( 7 )
+
+[node name="SATB_Listen_panel" type="Panel" parent="."]
+margin_left = 17.0
+margin_top = 576.0
+margin_right = 117.0
+margin_bottom = 676.0
+rect_min_size = Vector2( 100, 100 )
+
+[node name="satb_solution_selector_knob" parent="SATB_Listen_panel" instance=ExtResource( 11 )]
+margin_left = 30.0
+margin_top = 40.0
+margin_right = 70.0
+margin_bottom = 80.0
+hint_tooltip = "Select the SATB computed  solution
+of the current chord progression from 1 (the best scored solution) to 300 (if 300 solutions have been found)"
+custom_styles/panel = SubResource( 53 )
+title = "Solution #"
+value = 0.0
+tooltip = "Drag mouse on the number to select a SATB Solution.
+ #1 is the best scored solution"
+title_font_data = ExtResource( 6 )
+title_font_size = 20
+value_font_data = ExtResource( 6 )
+
+[connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
+[connection signal="element_right_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_right_clicked"]
+[connection signal="item_selected" from="SongViewContainer/trackDisplayMode" to="." method="_on_trackDisplayMode_item_selected"]
+[connection signal="value_changed" from="SongViewContainer/trackViewScale_sl" to="." method="_on_trackViewScale_sl_value_changed"]
+[connection signal="pressed" from="console_panel_pn/clear_console_btn" to="." method="_on_clear_console_btn_pressed"]
+[connection signal="pressed" from="console_panel_pn/export_console_btn" to="." method="_on_export_console_btn_pressed"]
+[connection signal="pressed" from="console_panel_pn/debug_SATB" to="." method="_on_debug_SATB_pressed"]
+[connection signal="value_changed" from="Song_panel/tempo_sb" to="." method="_on_tempo_sb_value_changed"]
+[connection signal="pressed" from="Song_panel/Generate_btn" to="." method="_on_Generate_btn_pressed"]
+[connection signal="pressed" from="Transport/playStop_btn" to="." method="_on_playStop_btn_pressed"]
+[connection signal="pressed" from="Transport/rewind_btn" to="." method="_on_rewind_btn_pressed"]
+[connection signal="pressed" from="Transport/guitar_player_btn" to="." method="_on_guitar_player_btn_pressed"]
+[connection signal="pressed" from="Transport/Export midi_btn" to="." method="_on_Export_midi_btn_pressed"]
+[connection signal="pressed" from="Transport/help_btn" to="." method="_on_help_btn_pressed"]
+[connection signal="pressed" from="Transport/compute_SATB_btn" to="." method="_on_compute_SATB_pressed"]
+[connection signal="pressed" from="Transport/Edit_Progression_Btn" to="." method="_on_Edit_Progression_Btn_pressed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container/para_fifths_penalty_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container/para_octave_penalty_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container/total_movement_factor_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container/leap_penalty_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/penalty_panel/Penalty_container/voicing_repetition_penalty_SL2" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/common_note_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/contrary_motion_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/Leading_tone_resolution_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/conjunct_motion_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/bass_conjunct_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/Bonus_panel/Bonus_Container/soprano_conjunct_bonus_SL" to="." method="_on_SATB_request_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/temperature_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/temp_proba_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/center_target_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/center_scoring_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/best_distance_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/distance_scoring_SL" to="." method="_on_SATB_Position_tab_value_changed"]
+[connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton" to="." method="_on_web_api_mode_checkButton_toggled"]
+[connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/legato_midi_file_cb" to="." method="_on_web_api_mode_checkButton_toggled"]
+[connection signal="api_error" from="SATB/SATBClient" to="." method="_on_SATBClient_api_error"]
+[connection signal="api_response" from="SATB/SATBClient" to="." method="_on_SATBClient_api_response"]
+[connection signal="value_changed" from="SATB_Listen_panel/satb_solution_selector_knob" to="." method="_on_satb_solution_selector_knob_value_changed"]

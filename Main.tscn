@@ -1,0 +1,32 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Main.gd" type="Script" id=1]
+[ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=2]
+
+[sub_resource type="DynamicFont" id=1]
+size = 80
+font_data = ExtResource( 2 )
+
+[node name="Main" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+
+[node name="FadeTween" type="Tween" parent="."]
+
+[node name="FadeRect" type="ColorRect" parent="."]
+margin_right = 1272.0
+margin_bottom = 720.0
+rect_min_size = Vector2( 150, 150 )
+mouse_filter = 2
+color = Color( 0, 0, 0, 1 )
+
+[node name="LoadingLabel" type="Label" parent="FadeRect"]
+margin_right = 1280.0
+margin_bottom = 720.0
+rect_min_size = Vector2( 100, 100 )
+custom_colors/font_color = Color( 0, 0.0588235, 0.658824, 1 )
+custom_fonts/font = SubResource( 1 )
+text = "Loading..."
+align = 1
+valign = 1

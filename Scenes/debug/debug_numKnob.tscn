@@ -1,0 +1,76 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://UI/numKnob/numKnob.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Scenes/debug/debug_numKnob.gd" type="Script" id=2]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.5, 0.5, 0.5, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="debug_numKnob" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 2 )
+
+[node name="numKnob" parent="." instance=ExtResource( 1 )]
+custom_styles/panel = SubResource( 1 )
+title = "test numknob"
+tooltip = "test"
+panel_border_width = 1
+
+[node name="monitor" type="Label" parent="."]
+margin_left = 32.0
+margin_top = 112.0
+margin_right = 72.0
+margin_bottom = 126.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+
+[node name="VSlider" type="VSlider" parent="."]
+margin_left = 80.0
+margin_top = 96.0
+margin_right = 96.0
+margin_bottom = 112.0
+rect_min_size = Vector2( 20, 100 )
+step = 10.0
+
+[node name="process_monitor" type="Label" parent="."]
+margin_left = 264.0
+margin_top = 72.0
+margin_right = 304.0
+margin_bottom = 86.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+
+[node name="set_min" type="VSlider" parent="."]
+margin_left = 655.0
+margin_top = 82.0
+margin_right = 685.0
+margin_bottom = 205.0
+
+[node name="set_max" type="VSlider" parent="."]
+margin_left = 719.0
+margin_top = 82.0
+margin_right = 749.0
+margin_bottom = 205.0
+
+[node name="min_lbl" type="Label" parent="."]
+margin_left = 653.0
+margin_top = 223.0
+margin_right = 693.0
+margin_bottom = 237.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+
+[node name="max_lbl" type="Label" parent="."]
+margin_left = 732.0
+margin_top = 230.0
+margin_right = 772.0
+margin_bottom = 244.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+
+[connection signal="value_changed" from="numKnob" to="." method="_on_numKnob_value_changed"]
+[connection signal="value_changed" from="VSlider" to="." method="_on_VSlider_value_changed"]
+[connection signal="value_changed" from="set_min" to="." method="_on_set_min_value_changed"]
+[connection signal="value_changed" from="set_max" to="." method="_on_set_max_value_changed"]

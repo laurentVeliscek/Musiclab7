@@ -1,0 +1,94 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://Scenes/welcome.gd" type="Script" id=1]
+[ext_resource path="res://Themes/musicLab_theme.tres" type="Theme" id=4]
+[ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://Fonts/Roboto-VariableFont_wdth,wght.ttf" type="DynamicFontData" id=6]
+[ext_resource path="res://assets/musicLib5Score.PNG" type="Texture" id=7]
+
+[sub_resource type="DynamicFont" id=1]
+size = 80
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=2]
+size = 14
+font_data = ExtResource( 6 )
+
+[sub_resource type="DynamicFont" id=3]
+size = 37
+font_data = ExtResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0.152941, 0.223529, 0.968627, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="main" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+
+[node name="Welcome" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="ColorRect" type="ColorRect" parent="Welcome"]
+margin_right = 1280.0
+margin_bottom = 720.0
+color = Color( 0, 0, 0, 1 )
+
+[node name="TextureRect" type="TextureRect" parent="Welcome"]
+margin_left = 88.0
+margin_top = 96.0
+margin_right = 1112.0
+margin_bottom = 1120.0
+rect_scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 7 )
+
+[node name="Titre" type="Label" parent="Welcome"]
+margin_left = 680.0
+margin_top = 82.0
+margin_right = 1072.0
+margin_bottom = 181.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_fonts/font = SubResource( 1 )
+text = "MusicLab"
+
+[node name="Credits" type="Label" parent="Welcome"]
+margin_left = 688.0
+margin_top = 192.0
+margin_right = 1152.0
+margin_bottom = 449.0
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+custom_fonts/font = SubResource( 2 )
+text = "Version 7.1
+
+Programmed with love by Laurent Veliscek
+© november 2025
+
+Credits: 
+- Godot development platform :
+	https://godotengine.org/fr/
+- godot-midi-player :  developped by arlez80 -  
+	https://bitbucket.org/arlez80/godot-midi-player/src/master/
+- Guitar Chords database by tombatossals :
+	((https://tombatossals.github.io/react-chords)
+"
+
+[node name="Enter_btn" type="Button" parent="Welcome"]
+margin_left = 691.0
+margin_top = 496.0
+margin_right = 915.0
+margin_bottom = 560.0
+theme = ExtResource( 4 )
+custom_fonts/font = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+text = "Enter"
+
+[connection signal="pressed" from="Welcome/Enter_btn" to="." method="_on_Enter_btn_pressed"]

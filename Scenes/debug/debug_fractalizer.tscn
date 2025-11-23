@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://addons/musiclib/satb_fractalizer/tests/test_example.gd" type="Script" id=1]
+[ext_resource path="res://Scenes/debug/debug_fractalizer.gd" type="Script" id=2]
+
+[node name="debug_fractalizer" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 2 )
+
+[node name="test" type="Node" parent="."]
+script = ExtResource( 1 )
+
+[node name="console" type="RichTextLabel" parent="."]
+margin_left = 72.0
+margin_top = 48.0
+margin_right = 1016.0
+margin_bottom = 640.0
+custom_colors/default_color = Color( 1, 0.74902, 0, 1 )
+scroll_following = true
+
+[node name="export_console_btn" type="Button" parent="."]
+margin_left = 1024.0
+margin_top = 208.0
+margin_right = 1130.0
+margin_bottom = 232.0
+text = "Export console"
+
+[node name="clear_console_btn" type="Button" parent="."]
+margin_left = 1024.0
+margin_top = 240.0
+margin_right = 1122.0
+margin_bottom = 260.0
+text = "Clear console"
+
+[connection signal="pressed" from="export_console_btn" to="." method="_on_export_console_btn_pressed"]
+[connection signal="pressed" from="clear_console_btn" to="." method="_on_clear_console_btn_pressed"]
