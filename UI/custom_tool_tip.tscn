@@ -1,0 +1,15 @@
+[gd_scene format=2]
+
+[node name="custom_tool_tip" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PopupPanel" type="PopupPanel" parent="."]
+visible = true
+margin_right = 100.0
+margin_bottom = 104.0
+rect_min_size = Vector2( 100, 100 )
+
+[node name="Label" type="Label" parent="PopupPanel"]
+margin_right = 32.0
+margin_bottom = 40.0

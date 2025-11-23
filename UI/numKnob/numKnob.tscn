@@ -1,0 +1,60 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://UI/numKnob/numKnob.gd" type="Script" id=1]
+[ext_resource path="res://UI/labelFontSize.gd" type="Script" id=2]
+[ext_resource path="res://addons/knob/Knob.tscn" type="PackedScene" id=3]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 1, 1, 1, 1 )
+border_color = Color( 0.5, 0.5, 0.5, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="numKnob" type="Panel"]
+rect_min_size = Vector2( 40, 40 )
+mouse_filter = 2
+custom_styles/panel = SubResource( 1 )
+script = ExtResource( 1 )
+value = null
+
+[node name="Knob" parent="." instance=ExtResource( 3 )]
+modulate = Color( 1, 1, 1, 0 )
+margin_right = 40.0
+margin_bottom = 40.0
+mouse_default_cursor_shape = 2
+max_value = 1.0
+step = 0.0
+value = 1.0
+travel_multiplier = 5.0
+
+[node name="title_label" type="Label" parent="."]
+margin_left = -40.0
+margin_top = -20.0
+margin_right = 80.0
+margin_bottom = -6.0
+grow_horizontal = 0
+rect_min_size = Vector2( 40, 0 )
+custom_colors/font_color = Color( 0.5, 0.5, 0.5, 1 )
+align = 1
+valign = 2
+script = ExtResource( 2 )
+font_color = Color( 0.5, 0.5, 0.5, 1 )
+
+[node name="value_label" type="Label" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+custom_colors/font_color = Color( 0.5, 0.5, 0.5, 1 )
+text = "99"
+align = 1
+valign = 1
+script = ExtResource( 2 )
+font_size = 30
+font_color = Color( 0.5, 0.5, 0.5, 1 )
+
+[connection signal="mouse_entered" from="Knob" to="." method="_on_Knob_mouse_entered"]
+[connection signal="mouse_exited" from="Knob" to="." method="_on_Knob_mouse_exited"]
+[connection signal="value_changed" from="Knob" to="." method="_on_Knob_value_changed"]
