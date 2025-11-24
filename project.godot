@@ -95,6 +95,11 @@ _global_script_classes=[ {
 "path": "res://UI/labelFontSize.gd"
 }, {
 "base": "Reference",
+"class": "MidiCC",
+"language": "GDScript",
+"path": "res://addons/musiclib/core/MidiCC.gd"
+}, {
+"base": "Reference",
 "class": "MidiFileTools",
 "language": "GDScript",
 "path": "res://addons/musiclib/tools/MidiFileTools.gd"
@@ -198,6 +203,11 @@ _global_script_classes=[ {
 "class": "Voicing_bank",
 "language": "GDScript",
 "path": "res://addons/musiclib/harmony/satb_V3/Voicing_bank.gd"
+}, {
+"base": "Control",
+"class": "WedgeKnob",
+"language": "GDScript",
+"path": "res://UI/vintage_knobs/Wedge85Knob.gd"
 } ]
 _global_script_class_icons={
 "AudioStreamPlayerADSR": "",
@@ -217,6 +227,7 @@ _global_script_class_icons={
 "KeySelect": "",
 "Knob": "res://addons/knob/icon_knob.svg",
 "LabelFontAA": "",
+"MidiCC": "",
 "MidiFileTools": "",
 "MidiPlayer": "res://addons/midi/icon.png",
 "ModulationDatabase": "",
@@ -237,7 +248,8 @@ _global_script_class_icons={
 "TitleGenerator": "",
 "Track": "",
 "Verbose_satb_logger": "",
-"Voicing_bank": ""
+"Voicing_bank": "",
+"WedgeKnob": ""
 }
 
 [application]

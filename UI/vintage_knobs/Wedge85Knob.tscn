@@ -272,6 +272,7 @@ animations = [ {
 margin_right = -1184.0
 margin_bottom = -616.0
 script = ExtResource( 2 )
+init_value = 0.01
 
 [node name="Knob" parent="." instance=ExtResource( 1 )]
 margin_right = 85.0

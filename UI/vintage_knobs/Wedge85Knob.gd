@@ -1,4 +1,5 @@
 extends Control
+class_name  WedgeKnob
 
 signal value_changed(value)	# émis à chaque modif
 
@@ -8,6 +9,8 @@ export(String, MULTILINE) var tooltip:String = ""
 export(DynamicFontData) var font_data 
 export(int, 8, 256) var font_size = 18 
 export(Color) var font_color = Color(.5, .5, .5, 1)
+
+var is_knob:bool = true
 
 onready var value:float setget set_value,get_value
 # Called when the node enters the scene tree for the first time.

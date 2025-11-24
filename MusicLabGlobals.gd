@@ -139,3 +139,92 @@ func reset_all():
 	current_song = null
 	user_settings = {}
 	_save_globals()
+
+
+
+## SAVE !
+
+# file_name sans .mid
+func save_midi_bytes_to_midi_file(bytes: PoolByteArray,filename:String)->String:
+	
+	#var = Song.get_midi_bytes_type1()
+	if bytes.size() <= 0:
+		return "No Midi Bytes to export (bytes.size == 0)."
+		
+	filename += ".mid"	
+	var mime_type = "audio/midi"	
+
+
+	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+		return _html5_download_bytes(bytes, filename, mime_type)
+	else:
+		return _save_locally(bytes, "user://" + filename)
+	
+	
+
+func _html5_download_bytes(bytes: PoolByteArray, fname: String, mime: String) -> String:
+	# Encode en base64 côté Godot (rapide et fiable)
+	var b64: String = Marshalls.raw_to_base64(bytes)
+	
+	# Installe une fonction JS si absente, puis appelle le download
+	var js_win = JavaScript.get_interface("window")
+	if js_win == null:
+		#LogBus.error(TAG,"[MidiExport] JavaScript window interface non available.")
+		return "[MidiExport] JavaScript window interface non disponible."
+	
+	if not js_win.has("musiclib_download_b64"):
+		var code = ""
+		code += "window.musiclib_download_b64 = function(b64, filename, mime) {"
+		code += "  try {"
+		code += "    var bin = atob(b64);"
+		code += "    var len = bin.length;"
+		code += "    var arr = new Uint8Array(len);"
+		code += "    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);"
+		code += "    var blob = new Blob([arr], {type: mime || 'application/octet-stream'});"
+		code += "    var a = document.createElement('a');"
+		code += "    a.href = URL.createObjectURL(blob);"
+		code += "    a.download = filename || 'export.bin';"
+		code += "    document.body.appendChild(a);"
+		code += "    a.click();"
+		code += "    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);"
+		code += "  } catch(e) { console.error('musiclib_download_b64 error', e); }"
+		code += "};"
+		JavaScript.eval(code, true)	#﻿
+	
+	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+		# Appel direct
+		js_win.musiclib_download_b64(b64, fname, mime)
+		return fname + "saved !"
+	else:
+		return "[MidiExport] JavaScript environment required for export."
+
+
+func _save_locally(bytes: PoolByteArray, path: String) -> String:
+	var f = File.new()
+	var err = f.open(path, File.WRITE)
+	if err != OK:
+		return "[MidiExport] Cannot open file: " +  path + " code=" + str(err)
+
+	f.store_buffer(bytes)
+	f.close()
+	return "Midi File saved to " + path + " !"
+
+
+
+#static func save_midi_file_from_bytes(filename: String = "", bytes:PoolByteArray = []) -> bool:
+#
+#	# Gestion du nom du fichier
+#	# si filename est "", on utilise Song.title
+#	var path:String = ""
+#
+#	path = "user://"+filename+".mid"
+#
+#	#var bytes = bytes
+#	var f = File.new()
+#	var err = f.open(path, File.WRITE)
+#	if err != OK:
+#		push_error("Song.save_midi_type1: can't open " + path + " (err " + String(err) + ")")
+#		return false
+#	f.store_buffer(bytes)
+#	f.close()
+#	return true
