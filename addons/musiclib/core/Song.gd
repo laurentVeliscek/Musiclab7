@@ -16,6 +16,7 @@ var time_den: int = 4                        # Dénominateur (4/4 → 4)
 var tempo_changes: Array = []  # chaque item: { "beats": float, "bpm": float }
 var satb_solutions_array:Array = []
 var satb_solutions_index =  -1
+#pour fractalizer
 var satb_request_data:Dictionary = {}
 # ---- Contenu : chaque entrée = { track: Track, offset_beats: float }
 var _entries: Array = []
@@ -30,7 +31,53 @@ const RYTHM_GUITAR_TRACK:String= "Rythm Guitar"
 
 
 
+func clone() -> Song:
+	# ⚠️ factory locale pour éviter la self-référence en 3.x
+	var s = get_script().new()
+	
+	# --- Métadonnées / métrique / tempo initial ---
+	s.title = String(title)
+	s.ppq = int(ppq)
+	s.tempo_bpm = float(tempo_bpm)
+	s.time_num = int(time_num)
+	s.time_den = int(time_den)
 
+	s.satb_solutions_array = satb_solutions_array
+	s.satb_solutions_index =  satb_solutions_index
+	# Pour fratcalizer
+	s.satb_request_data = satb_request_data
+
+
+
+	# --- Tempo map ---
+	s.tempo_changes = []
+	if typeof(tempo_changes) == TYPE_ARRAY:
+		for ev in tempo_changes:
+			if typeof(ev) == TYPE_DICTIONARY:
+				var c: Dictionary = {}
+				c["beats"] = float(ev.get("beats", 0.0))
+				c["bpm"] = float(ev.get("bpm", tempo_bpm))
+				s.tempo_changes.append(c)
+	
+	# --- Pistes + offsets (deep-clone si possible) ---
+	if typeof(_entries) == TYPE_ARRAY:
+		for e in _entries:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			var off = float(e.get("offset_beats", 0.0))
+			var tr = e.get("track", null)
+			var tr_copy = tr
+			if tr != null and typeof(tr) == TYPE_OBJECT:
+				if tr.has_method("clone"):
+					tr_copy = tr.clone()
+				elif tr.has_method("duplicate"):
+					# au cas où ce soit un Node et pas un Reference
+					tr_copy = tr.duplicate(true)
+			s._entries.append({"track": tr_copy, "offset_beats": off})
+	
+	return s
+
+#
 func get_satb_request_data()-> Dictionary:
 	if satb_request_data != {} :
 		return satb_request_data
@@ -575,46 +622,4 @@ func to_string() -> String:
 	return s
 
 
-func to_dict()->Dictionary:
-	var d = {}
-	return d
 
-
-func clone() -> Song:
-	# ⚠️ factory locale pour éviter la self-référence en 3.x
-	var s = get_script().new()
-	
-	# --- Métadonnées / métrique / tempo initial ---
-	s.title = String(title)
-	s.ppq = int(ppq)
-	s.tempo_bpm = float(tempo_bpm)
-	s.time_num = int(time_num)
-	s.time_den = int(time_den)
-	
-	# --- Tempo map ---
-	s.tempo_changes = []
-	if typeof(tempo_changes) == TYPE_ARRAY:
-		for ev in tempo_changes:
-			if typeof(ev) == TYPE_DICTIONARY:
-				var c: Dictionary = {}
-				c["beats"] = float(ev.get("beats", 0.0))
-				c["bpm"] = float(ev.get("bpm", tempo_bpm))
-				s.tempo_changes.append(c)
-	
-	# --- Pistes + offsets (deep-clone si possible) ---
-	if typeof(_entries) == TYPE_ARRAY:
-		for e in _entries:
-			if typeof(e) != TYPE_DICTIONARY:
-				continue
-			var off = float(e.get("offset_beats", 0.0))
-			var tr = e.get("track", null)
-			var tr_copy = tr
-			if tr != null and typeof(tr) == TYPE_OBJECT:
-				if tr.has_method("clone"):
-					tr_copy = tr.clone()
-				elif tr.has_method("duplicate"):
-					# au cas où ce soit un Node et pas un Reference
-					tr_copy = tr.duplicate(true)
-			s._entries.append({"track": tr_copy, "offset_beats": off})
-	
-	return s

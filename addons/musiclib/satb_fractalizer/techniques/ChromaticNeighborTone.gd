@@ -1,17 +1,17 @@
 extends "res://addons/musiclib/satb_fractalizer/techniques/TechniqueBase.gd"
 
-const TAG = "EscapeTone"
+const TAG = "ChromaticNeighborTone"
 
 # =============================================================================
-# ESCAPE TONE (Échappée)
+# CHROMATIC NEIGHBOR TONE
 # =============================================================================
-# Pattern: chord_tone → step (up/down) → leap (opposite direction) to target
-# Example: C → D (step up) → A (leap down)
-# The escape note leaves by step and resolves by leap in the opposite direction
+# Similar to neighbor_tone but uses a chromatic (non-diatonic) neighbor
+# Pattern: anchor → chromatic_neighbor → anchor
+# The chromatic neighbor is ±1 semitone from the anchor
 # =============================================================================
 
 func apply(progression, params):
-	LogBus.info(TAG, "Applying escape_tone technique")
+	LogBus.info(TAG, "Applying chromatic_neighbor_tone technique")
 
 	# Extract params
 	var window = params.get("time_window", {"start": 0.0, "end": 2.0})
@@ -40,28 +40,46 @@ func apply(progression, params):
 	var from_pitch = chord_a.get_voice_pitch(voice_id)
 	var to_pitch = chord_b.get_voice_pitch(voice_id)
 
-	# Escape tone works best when pitches are different
-	if from_pitch == to_pitch:
-		LogBus.warn(TAG, "Escape tone requires different pitches (from=" + str(from_pitch) + ", to=" + str(to_pitch) + ")")
+	# Chromatic neighbor tone requires same pitch (returns to starting pitch)
+	if from_pitch != to_pitch:
+		LogBus.warn(TAG, "Chromatic neighbor tone requires same pitch (from=" + str(from_pitch) + ", to=" + str(to_pitch) + ")")
 		return progression
 
-	# 4. Calculate escape pitch
+	# 4. Calculate chromatic neighbor
 	# NCT always uses the previous chord's scale context
 	var scale = chord_a.scale_context
+	var anchor_pitch = from_pitch
 
-	# Choose direction for the step (up or down)
-	var step_direction = params.get("escape_step_direction", null)
-	if step_direction == null:
-		# Random choice
-		step_direction = "upper" if (randi() % 2 == 0) else "lower"
-
-	# Get the escape pitch (step from anchor)
-	var escape_pitch = scale.get_neighbor_pitches(from_pitch, step_direction)
-	if escape_pitch == null:
-		LogBus.warn(TAG, "No " + step_direction + " neighbor found for escape anchor " + str(from_pitch))
+	# Check that anchor is diatonic
+	if not scale.is_diatonic(anchor_pitch):
+		LogBus.warn(TAG, "Anchor pitch " + str(anchor_pitch) + " is not diatonic")
 		return progression
 
-	LogBus.debug(TAG, "Escape tone: " + str(from_pitch) + " → " + str(escape_pitch) + " (step " + step_direction + ") → " + str(to_pitch) + " (leap)")
+	# Choose direction (upper or lower chromatic neighbor)
+	var neighbor_direction = params.get("chromatic_neighbor_direction", null)
+	if neighbor_direction == null:
+		# Random choice
+		neighbor_direction = "upper" if (randi() % 2 == 0) else "lower"
+
+	# Chromatic neighbor is ±1 semitone
+	var chromatic_neighbor = anchor_pitch + 1 if neighbor_direction == "upper" else anchor_pitch - 1
+
+	# Verify that the chromatic neighbor is NOT diatonic (that's what makes it chromatic!)
+	if scale.is_diatonic(chromatic_neighbor):
+		# If it's diatonic, it's not a chromatic neighbor - try the other direction
+		if neighbor_direction == "upper":
+			chromatic_neighbor = anchor_pitch - 1
+			neighbor_direction = "lower"
+		else:
+			chromatic_neighbor = anchor_pitch + 1
+			neighbor_direction = "upper"
+
+		# Check again
+		if scale.is_diatonic(chromatic_neighbor):
+			LogBus.warn(TAG, "No chromatic neighbor found (both ±1 semitones are diatonic)")
+			return progression
+
+	LogBus.debug(TAG, "Chromatic neighbor tone: " + str(anchor_pitch) + " → " + str(chromatic_neighbor) + " (chromatic " + neighbor_direction + ") → " + str(anchor_pitch))
 
 	# 5. Compute span and rhythm pattern
 	var span = pair_info.effective_end - pair_info.effective_start
@@ -71,17 +89,17 @@ func apply(progression, params):
 		LogBus.warn(TAG, "Span too small for 3-note pattern (n_cells=" + str(n_cells) + ")")
 		return progression
 
-	var pattern = _choose_rhythm_pattern(n_cells, progression, Constants.TECHNIQUE_ESCAPE_TONE, triplet_allowed)
+	var pattern = _choose_rhythm_pattern(n_cells, progression, Constants.TECHNIQUE_CHROMATIC_NEIGHBOR_TONE, triplet_allowed)
 	if not pattern:
 		LogBus.warn(TAG, "No rhythm pattern found for n_cells=" + str(n_cells))
 		return progression
 
-	# 6. Build the 3-note pattern
+	# 6. Build 3-note pattern: anchor → chromatic_neighbor → anchor
 	var note_count = pattern.pattern.size()
 	var pitches = []
 
 	if note_count == 3:
-		pitches = [from_pitch, escape_pitch, to_pitch]
+		pitches = [anchor_pitch, chromatic_neighbor, anchor_pitch]
 	else:
 		# Force 3-note pattern
 		var cell_per_note = n_cells / 3.0
@@ -91,7 +109,7 @@ func apply(progression, params):
 						cell_per_note * progression.time_grid.grid_unit],
 			"triplet": false
 		}
-		pitches = [from_pitch, escape_pitch, to_pitch]
+		pitches = [anchor_pitch, chromatic_neighbor, anchor_pitch]
 
 	# 7. Create new chords
 	var generation_depth = progression.metadata.get("generation_depth", 0) + 1
@@ -101,8 +119,8 @@ func apply(progression, params):
 		pattern,
 		voice_id,
 		pitches,
-		Constants.TECHNIQUE_ESCAPE_TONE,
-		Constants.ROLE_ESCAPE_TONE,
+		Constants.TECHNIQUE_CHROMATIC_NEIGHBOR_TONE,
+		Constants.ROLE_NEIGHBOR_TONE,  # Use NEIGHBOR_TONE role
 		progression.time_grid,
 		generation_depth
 	)
@@ -118,6 +136,6 @@ func apply(progression, params):
 		return progression
 
 	# 10. Log success
-	LogBus.info(TAG, "Successfully applied escape_tone: " + str(new_chords.size()) + " chords inserted")
+	LogBus.info(TAG, "Successfully applied chromatic_neighbor_tone: " + str(new_chords.size()) + " chords inserted")
 
 	return progression

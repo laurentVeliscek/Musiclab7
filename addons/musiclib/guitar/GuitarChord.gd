@@ -454,18 +454,19 @@ func get_bass_notes_with_string()->Array:
 
 func get_arp_note(idx:int)-> int:
 	var notes = midiNotes()
+	var size = midiNotes().size()
 	match idx:
 			4: return notes[-1]
-			3: return notes[-2]
-			2: return notes[-3]
-			1: return notes[-4]
-			0: 
+			3: return notes[-(2 % size)]
+			2: return notes[-(3 % size)]
+			1: return notes[-(4 % size)]
+			0:
 				if notes.size() > 4:
 					return notes[-5]
 				else:
 					return notes[-4]
 			_:
-				return notes[idx % notes.size()]
+				return notes[idx % size]
 		
 		
 func get_arp_note_with_string(idx:int)-> Dictionary:
