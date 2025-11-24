@@ -1,13 +1,12 @@
 extends Control
 
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
 onready var fade = FadeUtils.new()
 
+
 func _ready():
+
+	
 	add_child(fade) # utile si pas en autoload
 	$pony.modulate.a = 0
 	$musiclab.modulate.a = 0

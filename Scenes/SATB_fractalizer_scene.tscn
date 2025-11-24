@@ -1,8 +1,14 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://assets/Blue_SATB_Fractalizer.PNG" type="Texture" id=1]
-[ext_resource path="res://Fonts/AtkinsonHyperlegible-Regular.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://Scenes/SATB_fractalizer_scene.gd" type="Script" id=3]
+[ext_resource path="res://UI/vintage_knobs/Wedge85Knob.tscn" type="PackedScene" id=4]
+[ext_resource path="res://addons/musiclib/LegoBox/SongTrackView.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Themes/musicLab_theme.tres" type="Theme" id=6]
+[ext_resource path="res://Fonts/uwch.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://Fonts/Hymnus212.ttf" type="DynamicFontData" id=8]
+[ext_resource path="res://them_popup_window_fractal.tres" type="Theme" id=9]
+[ext_resource path="res://Fonts/ShadowsIntoLight-Regular.ttf" type="DynamicFontData" id=10]
 
 [sub_resource type="GDScript" id=2]
 script/source = "extends Control
@@ -17,10 +23,6 @@ script/source = "extends Control
 func _ready():
 	pass # Replace with function body.
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
 
 
 func _on_clear_console_btn_pressed():
@@ -43,14 +45,192 @@ func _save_text_to_disk(content: String, filename: String) -> void:
 		f.close()
 "
 
+[sub_resource type="DynamicFontData" id=3]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
 [sub_resource type="DynamicFont" id=1]
-size = 15
-font_data = ExtResource( 2 )
+size = 20
+font_data = SubResource( 3 )
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 1, 1, 1, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+border_blend = true
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="GDScript" id=5]
+script/source = "extends VBoxContainer
+var TAG = \"Techniques Sliders\"		#à adapter selon ton LogBus
+var knobs:Array = []
+
+onready var console:RichTextLabel = $\"../Console_Node/Console\"
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	yield(get_tree(), \"idle_frame\") 
+	var children = get_all_children(self)
+	#LogBus.debug(TAG,\"children = \" + str(children.size()))
+
+	for c in children:
+		if c is WedgeKnob:
+			knobs.append(c)
+			c.connect(\"value_changed\", self, \"_on_slider_value_changed\", [c])
+	#LogBus.info(TAG,\"knobs->\" + str(knobs.size()))
+			
+	
+
+func _on_slider_value_changed(value, slider):
+	console.text = \"\"
+	# calcule somme de tous les knobs
+	var total:float = 0
+	for k in knobs:
+		total += k.value
+		
+	var proba = 100 / 14.0
+	if total > 0 :
+		proba = 100 * value / total
+	
+	proba = round(proba * 100) / 100
+	#proba = int(proba)
+	
+	var slider_name = slider.get_name().replace(\"_\",\" \")
+	LogBus.info(TAG, capitalize_words(slider_name) + \" probability : \" + str(proba) + \" %\")
+	
+
+
+
+func get_all_children(node):
+	var tous_les_enfants = []
+
+	# Parcourir tous les enfants directs du nœud
+	for enfant in node.get_children():
+		# Ajouter l'enfant à la liste
+		tous_les_enfants.append(enfant)
+		# Appel récursif pour obtenir les descendants de l'enfant
+		tous_les_enfants += get_all_children(enfant)
+
+	return tous_les_enfants
+
+func capitalize_words(text):
+	var parts = text.split(\" \")
+	var result = \"\"
+	var i = 0
+
+	for p in parts:
+		if p.length() > 0:
+			var first = p[0].to_upper()
+			var rest = \"\"
+			if p.length() > 1:
+				rest = p.substr(1, p.length() - 1)
+			p = first + rest
+
+		if result == \"\":
+			result = p
+		else:
+			result += \" \" + p
+
+	return result
+
+func technique_weights()->Dictionary:
+	var d = {}
+	for k in knobs:
+		var name = k.name
+		var value = k.value
+		d[name] = value
+		
+	return d
+
+"
+
+[sub_resource type="DynamicFontData" id=6]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=7]
+size = 17
+use_mipmaps = true
+use_filter = true
+extra_spacing_top = -9
+extra_spacing_bottom = -2
+extra_spacing_char = 1
+font_data = SubResource( 6 )
+
+[sub_resource type="GDScript" id=8]
+resource_name = "get_text_from_parent"
+script/source = "extends Label
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	var name = get_parent().name
+	self.text = name.replace(\"_\",\"\\n\")
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+"
+
+[sub_resource type="DynamicFont" id=13]
+size = 20
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 10 )
+
+[sub_resource type="DynamicFont" id=10]
+size = 50
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 8 )
+
+[sub_resource type="StyleBoxFlat" id=11]
+bg_color = Color( 1, 1, 1, 1 )
+
+[sub_resource type="GDScript" id=12]
+resource_name = "get_text_from_parent"
+script/source = "extends OptionButton
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	# Charge une police personnalisée (remplace \"res://path/to/font.ttf\")
+	var font = DynamicFont.new()
+	font.font_data = load(\"res://Fonts/Hymnus212.ttf\")
+	font.size = 30  # Taille de la police
+
+	# Applique la police au PopupMenu interne
+	get_popup().add_font_override(\"font\", font)
+"
+
+[sub_resource type="DynamicFont" id=9]
+size = 23
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 7 )
 
 [node name="SATB_fractalizer_scene" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 3 )
+
+[node name="ColorRect" type="ColorRect" parent="."]
+margin_right = 1280.0
+margin_bottom = 720.0
 
 [node name="BlueSatbFractalizer" type="Sprite" parent="."]
 position = Vector2( 216, 216 )
@@ -63,27 +243,413 @@ margin_bottom = 40.0
 script = SubResource( 2 )
 
 [node name="Console" type="RichTextLabel" parent="Console_Node"]
-margin_left = 432.0
+margin_left = 400.0
 margin_top = 60.0
-margin_right = 1024.0
-margin_bottom = 376.0
-custom_colors/default_color = Color( 0, 0.611765, 0.976471, 1 )
+margin_right = 904.0
+margin_bottom = 344.0
+custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/normal_font = SubResource( 1 )
+custom_styles/normal = SubResource( 4 )
+text = "test texte"
 scroll_following = true
 
 [node name="export_console_btn" type="Button" parent="Console_Node"]
-margin_left = 456.0
-margin_top = 404.0
-margin_right = 562.0
-margin_bottom = 424.0
+margin_left = 401.0
+margin_top = 356.0
+margin_right = 507.0
+margin_bottom = 376.0
 text = "Export console"
 
 [node name="clear_console_btn" type="Button" parent="Console_Node"]
-margin_left = 592.0
-margin_top = 404.0
-margin_right = 690.0
-margin_bottom = 424.0
+margin_left = 537.0
+margin_top = 356.0
+margin_right = 635.0
+margin_bottom = 376.0
 text = "Clear console"
+
+[node name="techniques" type="VBoxContainer" parent="."]
+margin_left = 48.0
+margin_top = 460.0
+margin_right = 618.0
+margin_bottom = 616.0
+custom_constants/separation = 156
+script = SubResource( 5 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="upper" type="HBoxContainer" parent="techniques"]
+margin_right = 570.0
+custom_constants/separation = 90
+alignment = 1
+
+[node name="passing_tone" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 60.0
+margin_right = 60.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/passing_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="neighbor_tone" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 150.0
+margin_right = 150.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/neighbor_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="neighbor_tone_forced" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 240.0
+margin_right = 240.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/neighbor_tone_forced"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="appoggiatura" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 330.0
+margin_right = 330.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/appoggiatura"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="chromatic_passing_tone" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 420.0
+margin_right = 420.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/chromatic_passing_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="chromatic_neighbor_tone" parent="techniques/upper" instance=ExtResource( 4 )]
+margin_left = 510.0
+margin_right = 510.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/upper/chromatic_neighbor_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="lower" type="HBoxContainer" parent="techniques"]
+margin_top = 156.0
+margin_right = 570.0
+margin_bottom = 156.0
+custom_constants/separation = 90
+alignment = 1
+
+[node name="double_neighbor" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 15.0
+margin_right = 15.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/double_neighbor"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="escape_tone" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 105.0
+margin_right = 105.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/escape_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="anticipation" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 195.0
+margin_right = 195.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/anticipation"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="suspension" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 285.0
+margin_right = 285.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/suspension"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="retardation" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 375.0
+margin_right = 375.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/retardation"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="pedal" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 465.0
+margin_right = 465.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/pedal"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="extended_passing_tone" parent="techniques/lower" instance=ExtResource( 4 )]
+margin_left = 555.0
+margin_right = 555.0
+margin_bottom = 0.0
+
+[node name="Label" type="Label" parent="techniques/lower/extended_passing_tone"]
+margin_left = -16.0
+margin_top = -52.0
+margin_right = 95.0
+margin_bottom = 5.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 7 )
+text = "passing
+tone
+forced"
+align = 1
+valign = 1
+script = SubResource( 8 )
+
+[node name="SongViewContainer" type="Control" parent="."]
+margin_left = 715.0
+margin_top = 538.0
+margin_right = 1215.0
+margin_bottom = 678.0
+hint_tooltip = "
+"
+theme = ExtResource( 6 )
+
+[node name="backGround_cr" type="ColorRect" parent="SongViewContainer"]
+margin_left = 16.0
+margin_right = 516.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 500, 140 )
+color = Color( 0, 0, 0, 1 )
+
+[node name="SongTrackView" parent="SongViewContainer" instance=ExtResource( 5 )]
+margin_left = 16.0
+margin_right = -14.0
+rect_min_size = Vector2( 500, 140 )
+hint_tooltip = "[F1] [F2] [F3] [F4] to change display
+[F5] [F6] to zoom in / out
+Use the mouse wheel or the scroll bar  to set the play position
+[Shift . ] to set a playing marker
+[space bar] to play /stop
+[0] to rewind"
+ruler_font_path = "res://Fonts/Roboto-VariableFont_wdth,wght.ttf"
+ruler_font_size = 11
+font_size = 8
+selected_border_color = Color( 0, 0.0156863, 1, 1 )
+selection_border_px = 2
+rn_view_font_size = 18
+rn_view_scale_font_path = "res://Fonts/AtkinsonHyperlegible-Regular.ttf"
+rn_view_scale_font_size = 12
+
+[node name="play_head_cr" type="ColorRect" parent="SongViewContainer"]
+margin_left = 13.0
+margin_right = 17.0
+margin_bottom = 144.0
+rect_min_size = Vector2( 4, 130 )
+color = Color( 0.239216, 0.321569, 1, 1 )
+
+[node name="zoom" type="Label" parent="SongViewContainer"]
+margin_left = 20.0
+margin_top = -54.0
+margin_right = 181.0
+margin_bottom = -21.0
+hint_tooltip = "Zoom setting of the time line.
+[F5] / [F6] to increase / decrease the display zoom  factor"
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 13 )
+text = "Zoom setting"
+align = 1
+
+[node name="trackViewScale_sl" type="HSlider" parent="SongViewContainer"]
+margin_left = 13.0
+margin_top = -26.0
+margin_right = 183.0
+margin_bottom = -10.0
+rect_min_size = Vector2( 70, 0 )
+min_value = 1.0
+max_value = 30.0
+value = 1.0
+
+[node name="params" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="Window_length" type="OptionButton" parent="params"]
+margin_left = 724.0
+margin_top = 408.0
+margin_right = 912.0
+margin_bottom = 486.0
+theme = ExtResource( 9 )
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 10 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/focus = SubResource( 11 )
+custom_styles/disabled = SubResource( 11 )
+custom_styles/normal = SubResource( 11 )
+text = "=!=====s===s====="
+items = [ "=!=s=s=s=s==", null, false, 0, null, "=!===s==s==s==", null, false, 1, null, "=!=====s===s=====", null, false, 2, null, "=!=======s=========", null, false, 3, null, "=!=======A=========", null, false, 4, null, "=!=======a=========", null, false, 5, null ]
+selected = 2
+script = SubResource( 12 )
+
+[node name="Window_length_lbl" type="Label" parent="params"]
+margin_left = 720.0
+margin_top = 384.0
+margin_right = 904.0
+margin_bottom = 424.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 13 )
+text = "Window length"
+align = 1
+valign = 1
+
+[node name="Commands" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="fractalize_btn" type="Button" parent="Commands"]
+margin_left = 1080.0
+margin_top = 491.0
+margin_right = 1228.0
+margin_bottom = 523.0
+custom_fonts/font = SubResource( 9 )
+text = "Fractalize"
 
 [connection signal="pressed" from="Console_Node/export_console_btn" to="Console_Node" method="_on_export_console_btn_pressed"]
 [connection signal="pressed" from="Console_Node/clear_console_btn" to="Console_Node" method="_on_clear_console_btn_pressed"]
+[connection signal="pressed" from="Commands/fractalize_btn" to="." method="_on_fractalize_btn_pressed"]

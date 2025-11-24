@@ -520,4 +520,5 @@ func _on_Export_tabs_pressed():
 
 
 func _on_Menu_btn_pressed():
+	midi_player.stop()
 	get_tree().get_root().get_node("Main").change_scene_preloaded("menu")

@@ -4,13 +4,13 @@ const TAG = "Musiclab"
 
 const TONAL_KEYS:Array = ["major","minor","harmonic_minor", "melodic_minor"  ]
 
-onready var myScene:Control = $"."
 
-const mySoundFontPath = "res://soundfonts/Aspirin-Stereo.sf2"
+
+#const mySoundFontPath = "res://soundfonts/Aspirin-Stereo.sf2"
 onready var midi_player:MidiPlayer
 onready var songTrackView:SongTrackView = $SongViewContainer/SongTrackView
 onready var playStopBtn:Button = $Transport/playStop_btn
-onready var guitar_player_btn:Button = $Transport/guitar_player_btn
+onready var menu_btn:Button = $Transport/menu_btn
 onready var rewindBtn:Button = $Transport/rewind_btn
 onready var playHead:ColorRect = $SongViewContainer/play_head_cr
 onready var console:RichTextLabel = $console_panel_pn/logBusConsole_rtl
@@ -26,7 +26,7 @@ onready var two_chords_per_bar_sb:CheckBox = $Song_panel/twoChordsprBar_cb
 onready var satb_client = $SATB/SATBClient
 onready var web_api_mode_btn:CheckButton = $CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton
 onready var legato_midi_cb:CheckButton = $CenterTabContainer/SATB/interface_switch/legato_midi_file_cb
-
+onready var separate_satb_cb:CheckButton = $CenterTabContainer/SATB/interface_switch/separate_cb
 onready var satb_solution_selector_knob:Numeric_Knob = $SATB_Listen_panel/satb_solution_selector_knob
 onready var free_inversion_cb = $CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox/free_inversion_cb
 onready var allow_repetition_cb = $CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox/allow_repetition_cb
@@ -195,7 +195,7 @@ func _ready():
 		playHead.hide()
 		export_midi_btn.hide()
 		satb_solution_selector_knob.hide()
-		guitar_player_btn.hide()
+		menu_btn.hide()
 	else:
 		compute_satb_btn.show()
 		edit_progression_btn.hide()
@@ -204,20 +204,26 @@ func _ready():
 		playHead.hide()
 		export_midi_btn.show()
 		satb_solution_selector_knob.hide()
-		guitar_player_btn.hide()
+		menu_btn.hide()
 	
 	#myScene.grab_focus()
 	modManager = ModulationManager.new()
 	modManager.load_modulation_database()
 	
 	
+	yield(get_tree(), "physics_frame")
+		
+	set_song_display()
 	run_debug_test()
 	
 
-
+func set_song_display():
+	$Song_panel/tempo_sb.value = myMasterSong.tempo_bpm
+	song_title_lbl.text = myMasterSong.title
+	
 func run_debug_test():
 	pass
-#
+#	
 #	var k1:HarmonicKey = HarmonicKey.new()
 #	k1.scale_name = "major"
 #	k1.root = 0
@@ -251,8 +257,6 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 		LogBus.info(TAG,"modulation can only be applied to diatonic major or minor chords")
 		return []
 	
-	
-	
 	# on récupère toutres les modulations possibles
 	#get_all_modulations(from_key:int,from_mode:String, to_key: int, to_mode:String) -> Array:
 	var modulations = modManager.get_all_modulations(d_from.key.root_midi % 12,d_from.key.scale_name, d_to.key.root_midi % 12,d_to.key.scale_name)
@@ -275,29 +279,6 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 			filtered.append(p)
 	LogBus.debug(TAG,"after technique: " + str(filtered.size()))	
 	
-#	modulations = filtered
-#	filtered = []
-#
-#	# filtre seventh
-#	for p in modulations:
-#		if d_from.realization.size() > 3 and p["chords"][0]["seventh"] == true :
-#			filtered.append(p)
-#		elif d_from.realization.size() ==  3 and p["chords"][0]["seventh"] == false: 
-#			filtered.append(p)
-#
-	#LogBus.debug(TAG,"after seventh: " + str(filtered.size()))	
-	
-	# filtre inversion
-#	modulations = filtered
-#	filtered = []
-#
-#	for p in modulations:
-#		if p["from_inversion"] == d_from.inversion or mod_inversion_cb.pressed == false :
-#			filtered.append(p)
-#
-	#LogBus.debug(TAG,"after inversions: " + str(filtered.size()))		
-	
-	
 	# filtre style
 	modulations = filtered
 	filtered = []
@@ -313,7 +294,8 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 	
 	#LogBus.debug(TAG,"after style: " + str(filtered.size()))		
 	
-
+	if filtered.size() == 0:
+		LogBus.info(TAG,"No modulation Path found")
 	
 	LogBus.info(TAG,"modulation -> found " + str(filtered.size()) + " paths\n")
 	var selected = null
@@ -607,6 +589,7 @@ func _on_Generate_btn_pressed():
 	export_midi_btn.show()
 	compute_satb_btn.show()
 	#_compute_progression_satbs()
+	set_song_display()
 	rewind()
 	
 
@@ -639,17 +622,30 @@ func _randomize_seed():
 
 
 
+
+
 func _on_tempo_sb_value_changed(value):
 	myPlayingSong.tempo_bpm = value
 	myMasterSong.tempo_bpm = value
 	midi_player.stop()
 	rewind()
 	playStopBtn.text = "Play"
-
+	
+	
+	
 func _on_Export_midi_btn_pressed():
+	
 	var mime_type = "audio/midi"	
-	var filename = myMasterSong.title + ".mid"
-	var bytes: PoolByteArray = myPlayingSong.get_midi_bytes_type1()
+	var filename = myMasterSong.title 
+	var bytes: PoolByteArray 
+	# construction de la song SATB
+	if is_displaying_SATB and separate_satb_cb.pressed:
+		bytes =  myMasterSong.get_midi_bytes_type1()
+		filename += " [SATB]"
+	else:	
+		bytes = myPlayingSong.get_midi_bytes_type1()
+		filename += " "
+		
 	if bytes.size() <= 0:
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
 		return
@@ -657,59 +653,80 @@ func _on_Export_midi_btn_pressed():
 	if legato_midi_cb.pressed :
 		var MFT:MidiFileTools = MidiFileTools.new()
 		bytes = MFT.same_pitch_legato(bytes,1)	
-	
-	
-	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-		_html5_download_bytes(bytes, filename, mime_type)
-	else:
-		_save_locally(bytes, "user://" + filename)
-		LogBus.info("[MidiExport]", "midifile Exported to user://" + filename)
+		filename += "[Legato]" 
+	filename += ".mid"
+	LogBus.info(TAG,MusicLabGlobals.save_midi_bytes_to_midi_file(bytes,filename))
+#	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+#		_html5_download_bytes(bytes, filename, mime_type)
+#	else:
+#		_save_locally(bytes, "user://" + filename)
+#		LogBus.info("[MidiExport]", "midifile Exported to user://" + filename)
 
-func _html5_download_bytes(bytes: PoolByteArray, fname: String, mime: String) -> void:
-	# Encode en base64 côté Godot (rapide et fiable)
-	var b64: String = Marshalls.raw_to_base64(bytes)
-	
-	# Installe une fonction JS si absente, puis appelle le download
-	var js_win = JavaScript.get_interface("window")
-	if js_win == null:
-		LogBus.error(TAG,"[MidiExport] JavaScript window interface non available.")
-		printerr("[MidiExport] JavaScript window interface non disponible.")
-		return
-	
-	if not js_win.has("musiclib_download_b64"):
-		var code = ""
-		code += "window.musiclib_download_b64 = function(b64, filename, mime) {"
-		code += "  try {"
-		code += "    var bin = atob(b64);"
-		code += "    var len = bin.length;"
-		code += "    var arr = new Uint8Array(len);"
-		code += "    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);"
-		code += "    var blob = new Blob([arr], {type: mime || 'application/octet-stream'});"
-		code += "    var a = document.createElement('a');"
-		code += "    a.href = URL.createObjectURL(blob);"
-		code += "    a.download = filename || 'export.bin';"
-		code += "    document.body.appendChild(a);"
-		code += "    a.click();"
-		code += "    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);"
-		code += "  } catch(e) { console.error('musiclib_download_b64 error', e); }"
-		code += "};"
-		JavaScript.eval(code, true)	#﻿
-	
-	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-		# Appel direct
-		js_win.musiclib_download_b64(b64, fname, mime)
-	else:
-		LogBus.error(TAG,"[MidiExport] JavaScript environment required for export.")
-
-
-func _save_locally(bytes: PoolByteArray, path: String) -> void:
-	var f = File.new()
-	var err = f.open(path, File.WRITE)
-	if err != OK:
-		LogBus.error("[MidiExport]","Cannot open file: " +  path + " code=" + err)
-		return
-	f.store_buffer(bytes)
-	f.close()
+#
+#func _on_Export_midi_btn_pressed():
+#	var mime_type = "audio/midi"	
+#	var filename = myMasterSong.title + ".mid"
+#	var bytes: PoolByteArray = myPlayingSong.get_midi_bytes_type1()
+#	if bytes.size() <= 0:
+#		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
+#		return
+#
+#	if legato_midi_cb.pressed :
+#		var MFT:MidiFileTools = MidiFileTools.new()
+#		bytes = MFT.same_pitch_legato(bytes,1)	
+#
+#
+#	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+#		_html5_download_bytes(bytes, filename, mime_type)
+#	else:
+#		_save_locally(bytes, "user://" + filename)
+#		LogBus.info("[MidiExport]", "midifile Exported to user://" + filename)
+#
+#func _html5_download_bytes(bytes: PoolByteArray, fname: String, mime: String) -> void:
+#	# Encode en base64 côté Godot (rapide et fiable)
+#	var b64: String = Marshalls.raw_to_base64(bytes)
+#
+#	# Installe une fonction JS si absente, puis appelle le download
+#	var js_win = JavaScript.get_interface("window")
+#	if js_win == null:
+#		LogBus.error(TAG,"[MidiExport] JavaScript window interface non available.")
+#		printerr("[MidiExport] JavaScript window interface non disponible.")
+#		return
+#
+#	if not js_win.has("musiclib_download_b64"):
+#		var code = ""
+#		code += "window.musiclib_download_b64 = function(b64, filename, mime) {"
+#		code += "  try {"
+#		code += "    var bin = atob(b64);"
+#		code += "    var len = bin.length;"
+#		code += "    var arr = new Uint8Array(len);"
+#		code += "    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);"
+#		code += "    var blob = new Blob([arr], {type: mime || 'application/octet-stream'});"
+#		code += "    var a = document.createElement('a');"
+#		code += "    a.href = URL.createObjectURL(blob);"
+#		code += "    a.download = filename || 'export.bin';"
+#		code += "    document.body.appendChild(a);"
+#		code += "    a.click();"
+#		code += "    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);"
+#		code += "  } catch(e) { console.error('musiclib_download_b64 error', e); }"
+#		code += "};"
+#		JavaScript.eval(code, true)	#﻿
+#
+#	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+#		# Appel direct
+#		js_win.musiclib_download_b64(b64, fname, mime)
+#	else:
+#		LogBus.error(TAG,"[MidiExport] JavaScript environment required for export.")
+#
+#
+#func _save_locally(bytes: PoolByteArray, path: String) -> void:
+#	var f = File.new()
+#	var err = f.open(path, File.WRITE)
+#	if err != OK:
+#		LogBus.error("[MidiExport]","Cannot open file: " +  path + " code=" + err)
+#		return
+#	f.store_buffer(bytes)
+#	f.close()
 
 func _input(event):
 	if event is InputEventKey :
@@ -3494,7 +3511,7 @@ func _on_Edit_Progression_Btn_pressed():
 	songTrackView_view_display_mode_option.show()
 	generate_btn.show()
 	edit_progression_btn.hide()
-	guitar_player_btn.hide()
+	menu_btn.hide()
 	rewind()# Replace with function body.
 	#LogBus.debug(TAG,"self: "+str(self))
 	#self.grab_focus()
@@ -3671,7 +3688,7 @@ func display_SATB(satb_index:int):
 	compute_satb_btn.show()
 	playStopBtn.show()
 	rewindBtn.hide()
-	guitar_player_btn.show()
+	menu_btn.show()
 	export_midi_btn.show()
 	songTrackView.show()
 	rewind()	
@@ -3783,7 +3800,7 @@ func scale_preview_string(key:HarmonicKey) -> String:
 	return preview_txt
 
 
-func _on_guitar_player_btn_pressed():
+func _on_menu_btn_pressed():
 	MusicLabGlobals.set_song(myMasterSong)
 	midi_player.stop()
 	#get_tree().get_root().get_node("Main").change_scene_preloaded("guitar_player_scene")

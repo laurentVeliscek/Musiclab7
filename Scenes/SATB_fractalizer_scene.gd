@@ -4,9 +4,11 @@ const TAG = "SATB_Fractalizer_Scene"
 
 
 var myMasterSong:Song
-
+var myPlayingSong:Song
 
 onready var console = $Console_Node/Console
+onready var songTrackView:SongTrackView = $SongViewContainer/SongTrackView
+onready var songTrackView_scale_option = $SongViewContainer/trackViewScale_sl
 
 
 func _ready():
@@ -15,16 +17,33 @@ func _ready():
 	LogBus.connect("log_entry", self, "_on_log_entry")
 	LogBus._verbose = true
 	
+	
+	
+	var myGlobalSong= MusicLabGlobals.get_song()
+	#on initialise myMasterSong
+	if  myGlobalSong != null and myGlobalSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME) != null:
+		
+		myMasterSong = MusicLabGlobals.get_song()
+		myPlayingSong = Song.new()
+		myPlayingSong.add_track(myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME))
+		
+	else :
+		var my_empty_progression_track = Track.new()
+		my_empty_progression_track.name = Song.PROGRESSION_TRACK_NAME
+		myMasterSong = Song.new()
+		myMasterSong.add_track(my_empty_progression_track)
+	
+	songTrackView.song = myMasterSong
+	songTrackView.trackName = Song.PROGRESSION_TRACK_NAME
+	songTrackView.set_degree_display("roman")
+	
+		
+func setup_SATB():
 	#JSON.print(d, "\t")
 	var request_array = myMasterSong.get_satb_request_data()
 	var satb_array = myMasterSong.get_satb()
 
-#	LogBus.debug(TAG,"REQUEST: ")
-#	LogBus.debug(TAG,JSON.print(request_array,"\t"))
-#	LogBus.debug(TAG,"********************************\n")
-#	LogBus.debug(TAG,"SATB: ")
-#	LogBus.debug(TAG,JSON.print(satb_array,"\t"))
-#
+
 	var req_chords = request_array["chords"]
 	var satb_chords = satb_array["best_progression"]
 	LogBus.debug(TAG,"nb Request Chords: " + str(req_chords.size()))
@@ -56,7 +75,9 @@ func _ready():
 	LogBus.debug(TAG,str(chords))	
 	LogBus.debug(TAG,"********************************\n")
 	LogBus.debug(TAG,"chords: ")
-	LogBus.debug(TAG,JSON.print(chords,"\t"))
+	LogBus.debug(TAG,JSON.print(chords,"\t"))	
+		
+		
 		
 func _on_log_entry(entry):
 	#entry = {time_str, msec, level, tag, message}
@@ -71,3 +92,8 @@ func _on_log_entry(entry):
 		console.text += level + "|"  + tag + "|" + message + "\n"
 
 
+
+
+func _on_fractalize_btn_pressed():
+	var technique_weights:Dictionary = $techniques.technique_weights()
+	LogBus.debug(TAG,str(technique_weights))

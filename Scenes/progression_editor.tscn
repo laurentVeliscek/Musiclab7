@@ -559,7 +559,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 8 )
 text = "<<"
 
-[node name="guitar_player_btn" type="Button" parent="Transport"]
+[node name="menu_btn" type="Button" parent="Transport"]
 margin_left = -8.0
 margin_top = 155.0
 margin_right = 152.0
@@ -618,13 +618,6 @@ custom_styles/focus = SubResource( 23 )
 custom_styles/disabled = SubResource( 23 )
 custom_styles/normal = SubResource( 23 )
 text = "compute SATB"
-
-[node name="log_satb_btn" type="Button" parent="Transport/compute_SATB_btn"]
-margin_left = -96.0
-margin_top = 267.0
-margin_right = -36.0
-margin_bottom = 290.0
-text = "log_satb"
 
 [node name="Edit_Progression_Btn" type="Button" parent="Transport"]
 margin_left = -8.0
@@ -934,7 +927,7 @@ rect_min_size = Vector2( 120, 0 )
 custom_constants/separation = 9
 
 [node name="web_api_mode_checkButton" type="CheckButton" parent="CenterTabContainer/SATB/interface_switch"]
-margin_right = 120.0
+margin_right = 133.0
 margin_bottom = 34.0
 hint_tooltip = "switch to local SATB solver
 when set to local.
@@ -951,7 +944,7 @@ align = 1
 
 [node name="legato_midi_file_cb" type="CheckButton" parent="CenterTabContainer/SATB/interface_switch"]
 margin_top = 43.0
-margin_right = 120.0
+margin_right = 133.0
 margin_bottom = 77.0
 hint_tooltip = "When activated, a \"same note
 legato\" will be applied.
@@ -966,6 +959,25 @@ custom_colors/font_color_hover = Color( 0.396078, 0.458824, 1, 1 )
 custom_colors/font_color_pressed = Color( 0.396078, 0.458824, 1, 1 )
 pressed = true
 text = "legato"
+align = 1
+
+[node name="separate_cb" type="CheckButton" parent="CenterTabContainer/SATB/interface_switch"]
+margin_top = 86.0
+margin_right = 133.0
+margin_bottom = 120.0
+hint_tooltip = "When activated, a \"same note
+legato\" will be applied.
+Very useful for string parts:
+repeated  notes are fusionned
+into one long note."
+custom_colors/font_color_disabled = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_focus = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover_pressed = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_hover = Color( 0.396078, 0.458824, 1, 1 )
+custom_colors/font_color_pressed = Color( 0.396078, 0.458824, 1, 1 )
+pressed = true
+text = "Separate"
 align = 1
 
 [node name="Modulation" type="Panel" parent="CenterTabContainer"]
@@ -1133,7 +1145,7 @@ value_font_data = ExtResource( 6 )
 [connection signal="pressed" from="Song_panel/Generate_btn" to="." method="_on_Generate_btn_pressed"]
 [connection signal="pressed" from="Transport/playStop_btn" to="." method="_on_playStop_btn_pressed"]
 [connection signal="pressed" from="Transport/rewind_btn" to="." method="_on_rewind_btn_pressed"]
-[connection signal="pressed" from="Transport/guitar_player_btn" to="." method="_on_guitar_player_btn_pressed"]
+[connection signal="pressed" from="Transport/menu_btn" to="." method="_on_menu_btn_pressed"]
 [connection signal="pressed" from="Transport/Export midi_btn" to="." method="_on_Export_midi_btn_pressed"]
 [connection signal="pressed" from="Transport/help_btn" to="." method="_on_help_btn_pressed"]
 [connection signal="pressed" from="Transport/compute_SATB_btn" to="." method="_on_compute_SATB_pressed"]
@@ -1157,6 +1169,7 @@ value_font_data = ExtResource( 6 )
 [connection signal="value_changed" from="CenterTabContainer/SATB/VBoxContainer/manettes/SATB_params_panel/HBoxContainer/distance_scoring_SL" to="." method="_on_SATB_Position_tab_value_changed"]
 [connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton" to="." method="_on_web_api_mode_checkButton_toggled"]
 [connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/legato_midi_file_cb" to="." method="_on_web_api_mode_checkButton_toggled"]
+[connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/separate_cb" to="." method="_on_web_api_mode_checkButton_toggled"]
 [connection signal="api_error" from="SATB/SATBClient" to="." method="_on_SATBClient_api_error"]
 [connection signal="api_response" from="SATB/SATBClient" to="." method="_on_SATBClient_api_response"]
 [connection signal="value_changed" from="SATB_Listen_panel/satb_solution_selector_knob" to="." method="_on_satb_solution_selector_knob_value_changed"]

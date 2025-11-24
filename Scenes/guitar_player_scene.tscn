@@ -428,6 +428,7 @@ func _on_step_beat_length_btn_pressed():
 	var sp:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[pattern.current]
 	sp.step_beat_length = l
 	guitar_player_scene.clear_console()
+	pattern._update_pattern_display()
 	LogBus.info(TAG,\"Pattern length set to \"+str(16 * l)+ \" beats\")
 
 func update_step_beat_display(value):
