@@ -15,6 +15,20 @@ func clone()-> ProgramChange:
 	return p
 
 
+func to_dict() -> Dictionary:
+	return {
+		"channel": int(channel),
+		"program": int(program)
+	}
+
+
+static func from_dict(data: Dictionary) -> ProgramChange:
+	var p: ProgramChange = ProgramChange.new()
+	p.channel = data.get("channel", 0)
+	p.program = data.get("program", 0)
+	return p
+
+
 # --- API ---
 func to_midi_event_dict(tick: int = 0) -> Dictionary:
 	var ch = int(clamp(channel, 0, 15))
