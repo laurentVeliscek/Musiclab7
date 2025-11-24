@@ -19,6 +19,22 @@ func clone() -> MidiCC:
 	return cc
 
 
+func to_dict() -> Dictionary:
+	return {
+		"controller": int(controller),
+		"value": int(value),
+		"channel": int(channel)
+	}
+
+
+static func from_dict(data: Dictionary) -> MidiCC:
+	var cc: MidiCC = MidiCC.new()
+	cc.controller = data.get("controller", 1)
+	cc.value = data.get("value", 0)
+	cc.channel = data.get("channel", 0)
+	return cc
+
+
 # --- API ---
 func to_midi_event_dict(tick: int = 0) -> Dictionary:
 	var ch = int(clamp(channel, 0, 15))
