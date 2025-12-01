@@ -1,4 +1,4 @@
-[gd_scene load_steps=62 format=2]
+[gd_scene load_steps=85 format=2]
 
 [ext_resource path="res://Scenes/guitar_player_scene.gd" type="Script" id=1]
 [ext_resource path="res://assets/guitar_robot.PNG" type="Texture" id=2]
@@ -13,6 +13,9 @@
 [ext_resource path="res://Fonts/Hymnus212.ttf" type="DynamicFontData" id=11]
 [ext_resource path="res://pattern_number.tres" type="Theme" id=12]
 [ext_resource path="res://Fonts/distro.bats.ttf" type="DynamicFontData" id=13]
+[ext_resource path="res://Themes/Tempo_guitar_player.tres" type="Theme" id=14]
+[ext_resource path="res://Fonts/Littlearrows-Regular.otf" type="DynamicFontData" id=15]
+[ext_resource path="res://Scenes/voicing_offset_container.gd" type="Script" id=16]
 
 [sub_resource type="DynamicFont" id=1]
 size = 70
@@ -34,6 +37,25 @@ tracks/0/keys = {
 "values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
 }
 
+[sub_resource type="DynamicFont" id=21]
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=22]
+bg_color = Color( 0, 0.0705882, 1, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id=55]
+bg_color = Color( 1, 1, 1, 1 )
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [sub_resource type="DynamicFont" id=40]
 font_data = ExtResource( 5 )
 
@@ -41,6 +63,8 @@ font_data = ExtResource( 5 )
 font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=44]
+use_mipmaps = true
+use_filter = true
 font_data = SubResource( 43 )
 
 [sub_resource type="DynamicFontData" id=41]
@@ -48,6 +72,8 @@ font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=42]
 size = 27
+use_mipmaps = true
+use_filter = true
 font_data = SubResource( 41 )
 
 [sub_resource type="DynamicFontData" id=11]
@@ -74,6 +100,13 @@ size = 12
 use_mipmaps = true
 use_filter = true
 font_data = SubResource( 7 )
+
+[sub_resource type="DynamicFontData" id=66]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=67]
+size = 20
+font_data = SubResource( 66 )
 
 [sub_resource type="DynamicFont" id=15]
 size = 26
@@ -116,30 +149,46 @@ corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id=24]
-bg_color = Color( 0.529412, 0.388235, 0.00784314, 1 )
+bg_color = Color( 0.0745098, 0, 0.615686, 1 )
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="GDScript" id=51]
+script/source = "extends SpinBox
+
+
+onready var scene = $\"../..\"
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	var song:Song = MusicLabGlobals.get_song()
+	value = song.tempo_bpm
+	
+
+
+
+func _on_tempo_SB_value_changed(value):
+	yield(get_tree(), \"idle_frame\") 
+	scene.midi_player.stop()
+	var song:Song = scene.myMasterSong
+	song.tempo_bpm = value
+	$\"../../Pattern\"._update_pattern_display()
+	
+#	if song != null:
+#		scene.midi_player.stop()
+#		song.tempo_bpm = value
+#
+"
+
 [sub_resource type="DynamicFontData" id=3]
-font_path = "res://Fonts/KIN668.TTF"
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=4]
-size = 14
 use_mipmaps = true
 use_filter = true
 font_data = SubResource( 3 )
-
-[sub_resource type="DynamicFont" id=21]
-font_data = ExtResource( 5 )
-
-[sub_resource type="StyleBoxFlat" id=22]
-bg_color = Color( 0, 0.0705882, 1, 1 )
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id=23]
 bg_color = Color( 0.988235, 0, 0, 1 )
@@ -155,41 +204,45 @@ var TAG = \"Pattern\"
 
 # index du StrumPattern courant
 var current:int = 0 
+var preview_guitar_player: FolkGuitarPlayer
+var preview_playing = false
 
 #onready var guitar_player:FolkGuitarPlayer = null
 onready var step_beat_length_btn:Button = $step_beat_length_btn
 onready var pattern_number_sb:SpinBox = $pattern_number_sb
-onready var guitar_player_scene = $\"..\"
+onready var scene = $\"..\"
 onready var delete_btn = $delete_btn
 onready var info_pattern_label:Label = $info_pattern_label
 onready var pattern = $\".\"
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	delete_btn.hide()
-	#guitar_player = $\"..\".guitar_player
-	#current_strum_pattern = guitar_player.pattern_sequence[0]
+	preview_guitar_player = FolkGuitarPlayer.new()
+	
 
-
-#func _update_pattern(pat:String,step_length:float):
-#	var currentStrumPattern:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[current]
-#	currentStrumPattern.pattern = pat
-#	currentStrumPattern.step_beat_length = step_length
 
 func _update_pattern_display():
-	yield(get_tree(), \"idle_frame\") 
 	
-	var currentStrumPattern:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[current]
+	var currentStrumPattern:StrumPattern = scene.gp.pattern_sequence[current]
 	pattern_number_sb.value = current + 1
-	#$step_beat_length_btn.set_step_length(currentStrumPattern.step_beat_length)
 	step_beat_length_btn.step_length = currentStrumPattern.step_beat_length
 	$pattern_lineEdit.text = currentStrumPattern.pattern.rstrip(\" \")
-	guitar_player_scene.set_player_config(currentStrumPattern)
-	var info_txt = \"Pattern \" + str(current+1) + \" / \" + str(guitar_player_scene.guitar_player.pattern_sequence.size())
-	info_txt += \"  - duration: \" + str(guitar_player_scene.guitar_player._calculate_patterns_duration()) + \" measures\"
+	scene.set_player_config(currentStrumPattern)
+	var info_txt = str(scene.gp.pattern_sequence.size())
+	#info_txt += \"  - duration: \" + str() + \" measures\"
+#	var nb_temps = guitar_player_scene.guitar_player._calculate_patterns_duration()
+#	var time_num = guitar_player_scene.myMasterSong.time_num
+#	if time_num > 0:
+#		var tempo = guitar_player_scene.myMasterSong.tempo_bpm
+#		var nb_secondes =  nb_temps * 60.0 / tempo
+#		var ms = convert_to_minutes_seconds(nb_secondes)
+#
+#		info_txt += \"  - total duration: \" +  str( float(nb_temps) / float(time_num) )+ \" measures = \"+str(ms[\"minutes\"]) + \"'\" + str(ms[\"seconds\"]) + '\"'
+#	else:
+#		info_txt += \" - duration = 0\"
 	info_pattern_label.text = info_txt
 
 func _on_delete_btn_pressed():
-	var seq = guitar_player_scene.guitar_player.pattern_sequence
+	var seq = scene.gp.pattern_sequence
 	if seq.size() > 1:
 		seq.remove(current)
 		$pattern_number_sb._on_pattern_number_sb_value_changed(current) 
@@ -200,14 +253,12 @@ func _on_delete_btn_pressed():
 	_update_pattern_display()
 	
 	$\"..\".clear_console()
-	$\"..\".midi_player.stop()
+	$\"..\".rewind()
 	LogBus.info(TAG,\"Pattern deleted\")
 	
 
-
-
 func _on_generate_btn_pressed():
-	guitar_player_scene.rewind()
+	scene.rewind()
 	var generator = GuitarPatternGenerator.new()
 	var style = \"\"
 	match $pattern_style_ob.selected :
@@ -215,36 +266,140 @@ func _on_generate_btn_pressed():
 		1: style = \"Funky\"
 		2: style = \"R'n B\"
 		3: style = \"Bossa\"
-	#LogBus.debug(TAG, style)
+		4: style = \"random\"
+		5: style = \"random_no_gap\"
+		6: style = \"random_melody\"
+		7: style = \"brassens\"
+		8: style = \"arpeggio1\"
+		9: style = \"arpeggio2\"
+		10: style = \"ska\"
+		11: style = \"reggae\"
+		12: style = \"shame_shame\"
+		13: style = \"torn\"
+		14: style = \"london_calling\"
+		15: style = \"playa\"
+
+
+		
 	var answer = generator.generate(style)
-	#return {\"pattern\": pattern, \"step_beat_length\": step}
-	#$pattern_lineEdit.text = answer[\"pattern\"]
-	#$step_beat_length_btn.set_step_length(answer[\"step_beat_length\"])
-	var currentStrumPattern:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[current]
+	var currentStrumPattern:StrumPattern = scene.gp.pattern_sequence[current]
 	currentStrumPattern.pattern = answer[\"pattern\"]
-	var step_beat = max(answer[\"step_beat_length\"] *2 ,.25)
+	currentStrumPattern.step_beat_length = answer[\"step_beat_length\"] * 2
 	
-	currentStrumPattern.step_beat_length = step_beat
+	
 	_update_pattern_display()
-	guitar_player_scene.clear_console()
+	scene.rewind()
+	play_preview()
 	LogBus.info(TAG,style +\" Pattern generated\")
-	LogBus.debug(TAG,\"beat-> \" + str(answer[\"step_beat_length\"]))
-	#guitar_player_scene._on_playStop_btn_pressed()
 
 func _on_pattern_style_ob_item_selected(index):
 	yield(get_tree(), \"idle_frame\") 
 	_on_generate_btn_pressed()
 	
+func convert_to_minutes_seconds(number_of_seconds: float) -> Dictionary:
+	var minutes = int(number_of_seconds / 60)
+	var seconds = int(number_of_seconds) % 60
+	return {\"minutes\": minutes, \"seconds\": seconds}
+
+
+func _on_preview_btn_pressed():
+	play_preview()
+	
+func play_preview():
+	if preview_playing:
+		scene.midi_player.stop()
+		scene.playStopBtn.text = \"Play\"
+		return
+	scene.midi_player.stop()
+	
+	#On récupère la valeur de transpose
+	var transpose = $\"../octave/HBoxContainer/octave_offset_vs\".value * 12
+	var sp:StrumPattern = scene.gp.pattern_sequence[current].clone()
+	var gc:GuitarChord = $\"../voicingContainer/voicing_view\".get_current_guitar_chord().clone()
+	var step = sp.step_beat_length
+	var pattern_length = 16 * step
+	gc.length_beats = pattern_length
+	preview_guitar_player.chord_grid = [gc]
+	preview_guitar_player.pattern_sequence = [sp]
+	var guitar_track:Track = preview_guitar_player.generate_track(transpose)
+	
+	# on récupère les settings midi
+
+	var num_program_change = int($\"../instruments/guitar_program_ob\".selected)
+	var volume = int($\"../Volume/Volumes/guitar_volume/Guitar_volume_VS\".value)
+	
+	
+	
+	var pc:ProgramChange = ProgramChange.new()
+	pc.set_program(num_program_change)
+	guitar_track.program_change = pc
+	var volume_midi_cc:MidiCC = MidiCC.new()
+	volume_midi_cc.set_controller(7)
+	volume_midi_cc.set_value(volume)
+	guitar_track.add_midiCC(0,volume_midi_cc)
+	
+	var previewSong = Song.new()
+	previewSong.tempo_bpm = scene.myMasterSong.tempo_bpm
+	previewSong.time_num = scene.myMasterSong.time_num
+	previewSong.time_den = scene.myMasterSong.time_den
+	previewSong.add_track(guitar_track)
+	scene.anim_songTrack_view = false
+	var bytes = previewSong.get_midi_bytes_type1()
+	scene.midi_player.load_from_bytes(bytes)
+	scene.playStopBtn.text = \"Stop\"
+
+	preview_playing = true
+	scene.song_playing_ended = false
+	scene.clear_console()
+	$preview_btn.text = \"Stop\"
+	LogBus.info(TAG,\"Playing preview...\")
+	scene.midi_player.play()
+	
+
+
+func _on_variation_btn_pressed():
+	scene.midi_player.stop()
+	yield(get_tree(), \"idle_frame\") 
+	var patternLineEdit = $pattern_lineEdit
+	var monTexte = patternLineEdit.text
+	var allowed = \" .DdUu01234xXBbFf\"
+	var random_pos = randi() % 16
+	var _char = monTexte[random_pos]
+	
+	var is_the_same:bool = true
+	while is_the_same:
+		var new_char = allowed[randi() % allowed.length()]
+		if new_char != _char:
+			monTexte = change_char(monTexte, random_pos, new_char)
+			is_the_same = false
+		
+	patternLineEdit.text = monTexte
+	patternLineEdit._on_text_changed(monTexte)
+	_update_pattern_display()
+	scene.rewind()
+	play_preview()
+	LogBus.info(TAG,\"Variation generated\")
+	
+func change_char(s: String, pos: int, new_char: String) -> String:
+	# Vérifie que la position est valide
+	if pos < 0 or pos >= s.length():
+		return s  # Retourne la chaîne inchangée si la position est invalide
+
+	# Construit la nouvelle chaîne en remplaçant le caractère à la position 'pos'
+	return s.substr(0, pos) + new_char + s.substr(pos + 1)
 "
 
 [sub_resource type="DynamicFontData" id=38]
 font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=39]
-size = 15
+size = 14
 use_mipmaps = true
 use_filter = true
 font_data = SubResource( 38 )
+
+[sub_resource type="StyleBoxFlat" id=56]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
 
 [sub_resource type="DynamicFont" id=13]
 size = 45
@@ -278,17 +433,21 @@ script/source = "extends LineEdit
 
 const TAG =\"lineEdit\"
 var ALLOWED = \" .DdUu01234xXBbFfwW\"
-onready var guitar_player_scene =  $\"../..\"
+onready var scene =  $\"../..\"
 onready var pattern = $\"..\"
 # drapeau pour éviter la boucle quand on modifie .text dans text_changed
 var _ignore = false
+var undo_pattern_string=\"\"
+
+
 
 func _ready():
 	connect(\"text_changed\", self, \"_on_text_changed\")
 
 
 func _on_text_changed(new_text):
-	guitar_player_scene.rewind()
+	scene.rewind()
+
 	if _ignore:
 		return
 	
@@ -310,9 +469,9 @@ func _on_text_changed(new_text):
 				removed_before_caret += 1
 		i += 1
 
-	var currentStrumPattern:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[pattern.current]
+	var currentStrumPattern:StrumPattern = scene.gp.pattern_sequence[pattern.current]
 	currentStrumPattern.pattern = filtered.rstrip(\" \")
-	#LogBus.debug(TAG,\"\\n>\"+  currentStrumPattern.pattern + \"<\")
+
 	
 
 	# si rien à corriger, ne touche pas au caret
@@ -338,17 +497,17 @@ func _on_text_changed(new_text):
 
 
 func _gui_input(event):
-	
-	
-	
 	if event is InputEventKey and event.pressed:
 		# --- Détection de Enter / Return ---
-		if event.scancode == KEY_ENTER :
+		if event.scancode == KEY_ENTER or event.scancode == 16777222:
 			# Ici tu mets ce que tu veux faire quand Enter est pressé
 			print(\"ENTER / RETURN détecté :\", text)
 			LogBus.debug(TAG,\"ENTER DETECTED -> PREVIEW !\")
+			scene.grab_focus()
+			pattern.play_preview()
+			
 			# Tu peux remplacer par emit_signal(), callback parent, etc.
-			accept_event()
+			#accept_event()
 			return
 		
 		
@@ -357,6 +516,8 @@ func _gui_input(event):
 
 		if not (_char in ALLOWED):
 			accept_event()
+
+
 "
 
 [sub_resource type="DynamicFont" id=27]
@@ -384,13 +545,16 @@ onready var button = $\".\"
 onready var pattern = $\"..\"
 onready var guitar_player_scene = $\"../..\"
 
+
 var step_length:float = .5 setget set_step_length,get_step_length
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	pass # Replace with function body.
 	
 func set_step_length(l:float):
+	guitar_player_scene.current_step_beat_value = l
 	step_length = l
 	match l:
 		.25: button.text = \"$\"
@@ -413,23 +577,28 @@ func get_step_length()->float:
 
 func _on_step_beat_length_btn_pressed():
 	guitar_player_scene.rewind()
+	var length_text = \"\"
 	var l:float
 	match button.text :
 		\"$\":
 			button.text = \".\"
 			l = .5
+			length_text = \"8th\"
 		\".\":
 			button.text = \")\"
 			l = 1.0
+			length_text = \"1 beat\"
 		\")\":
 			button.text = \"$\"
 			l = 0.25
+			length_text = \"16th\"
 	#var gp:FolkGuitarPlayer = pattern.guitar_player
-	var sp:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[pattern.current]
-	sp.step_beat_length = l
+	for sp in guitar_player_scene.gp.pattern_sequence:
+		sp.step_beat_length = l
+	
 	guitar_player_scene.clear_console()
 	pattern._update_pattern_display()
-	LogBus.info(TAG,\"Pattern length set to \"+str(16 * l)+ \" beats\")
+	LogBus.info(TAG,\"Pattern step set to \"+length_text)
 
 func update_step_beat_display(value):
 	step_length = value
@@ -443,6 +612,27 @@ font_data = ExtResource( 5 )
 
 [sub_resource type="StyleBoxFlat" id=34]
 bg_color = Color( 0, 0.321569, 1, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=65]
+bg_color = Color( 0.529412, 0, 0.929412, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=64]
+bg_color = Color( 0.905882, 0.423529, 0, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=52]
+bg_color = Color( 0, 0.486275, 0.0313726, 1 )
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -469,6 +659,12 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="DynamicFont" id=57]
+size = 25
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 5 )
+
 [sub_resource type="StyleBoxFlat" id=35]
 bg_color = Color( 0.694118, 0, 0, 1 )
 corner_radius_top_left = 4
@@ -479,7 +675,7 @@ corner_radius_bottom_left = 4
 [sub_resource type="GDScript" id=33]
 script/source = "extends SpinBox
 
-onready var guitar_player_scene = $\"../..\"
+onready var scene = $\"../..\"
 onready var pattern = $\"..\"
 onready var previous_btn = $\"../previous_btn\"
 onready var next_btn = $\"../next_btn\"
@@ -487,7 +683,7 @@ onready var next_btn = $\"../next_btn\"
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	$\".\".value = 1
-	next_btn.hide()
+	#next_btn.hide()
 	previous_btn.hide()
 
 
@@ -497,7 +693,7 @@ func _ready():
 
 
 func _on_pattern_number_sb_value_changed(value):
-	var pattern_seq = guitar_player_scene.guitar_player.pattern_sequence
+	var pattern_seq = scene.gp.pattern_sequence
 	value = clamp(value,1,pattern_seq.size())
 	pattern.current = value -1
 	if pattern.current  < 1:
@@ -509,8 +705,6 @@ func _on_pattern_number_sb_value_changed(value):
 		next_btn.show()
 	else:
 		next_btn.hide()
-	
-		
 		
 	pattern._update_pattern_display()
 
@@ -529,28 +723,38 @@ func _on_next_btn_pressed():
 	pattern._update_pattern_display()
 "
 
-[sub_resource type="DynamicFontData" id=47]
-font_path = "res://Fonts/AtkinsonHyperlegible-Regular.ttf"
+[sub_resource type="DynamicFontData" id=59]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=48]
-font_data = SubResource( 47 )
+size = 32
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 59 )
 
 [sub_resource type="DynamicFont" id=49]
 size = 22
 font_data = ExtResource( 5 )
 
+[sub_resource type="StyleBoxFlat" id=72]
+bg_color = Color( 0.109804, 0.109804, 0.109804, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="DynamicFontData" id=25]
 font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=26]
-size = 39
+size = 21
 font_data = SubResource( 25 )
 
 [sub_resource type="GDScript" id=30]
 script/source = "extends HBoxContainer
 
 var TAG = \"ConfigSliders\"		#à adapter selon ton LogBus
-onready var guitar_player_scene = $\"../../..\"
+onready var scene = $\"../../..\"
 onready var pattern = $\"../../../Pattern\"
 
 func _ready():
@@ -558,7 +762,7 @@ func _ready():
 	_connect_all_sliders()
 	
 	var SP:StrumPattern = StrumPattern.new()
-	guitar_player_scene.set_player_config(SP)
+	scene.set_player_config(SP)
 
 
 func _connect_all_sliders():
@@ -568,20 +772,18 @@ func _connect_all_sliders():
 			print(\"connect \"+ str(child))
 			# connecter chaque slider à la même méthode
 			child.connect(\"value_changed\", self, \"_on_slider_value_changed\", [child])
-			#LogBus.debug(TAG, \"connecté : \" + child.get_name())	#pour debug si besoin
+
 
 
 func _on_slider_value_changed(value, slider):
-	
-	guitar_player_scene.clear_console()
-	#guitar_player_scene.midi_player.stop()
-	guitar_player_scene.rewind()
+	scene.rewind()
 	
 	var slider_name = slider.get_name().replace(\"_\",\" \")
-	LogBus.info(TAG, capitalize_words(slider_name) + \"\\n-> \" + str(value))
+	if scene.scene_is_ready :
+		LogBus.info(TAG, capitalize_words(slider_name) + \"\\n-> \" + str(value))
 	var index_pattern = pattern.current 
-	var sp:StrumPattern = guitar_player_scene.guitar_player.pattern_sequence[index_pattern]
-	sp.config_override = guitar_player_scene.get_player_config()
+	var sp:StrumPattern = scene.gp.pattern_sequence[index_pattern]
+	sp.config_override = scene.get_player_config()
 
 func capitalize_words(text):
 	var parts = text.split(\" \")
@@ -602,22 +804,86 @@ func capitalize_words(text):
 			result += \" \" + p
 
 	return result
+
+
+func _on_apply_to_all_btn_pressed():
+	scene.rewind()
+	var current_config = scene.get_player_config()
+	for sp in scene.guitar_player.pattern_sequence:
+		sp.config_override = current_config
+	LogBus.info(TAG,\"Current guitar config applied to all sequence patterns\")
+	
+		
 "
+
+[sub_resource type="DynamicFont" id=62]
+size = 15
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 5 )
+
+[sub_resource type="StyleBoxFlat" id=63]
+bg_color = Color( 0, 0.0784314, 0.929412, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+expand_margin_left = 5.0
+expand_margin_right = 5.0
+
+[sub_resource type="DynamicFont" id=53]
+size = 40
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 15 )
+
+[sub_resource type="StyleBoxFlat" id=54]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+
+[sub_resource type="DynamicFontData" id=68]
+font_path = "res://Fonts/Casino2.ttf"
+
+[sub_resource type="DynamicFont" id=69]
+size = 47
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 68 )
+
+[sub_resource type="DynamicFontData" id=70]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=71]
+size = 24
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 70 )
+
+[sub_resource type="DynamicFontData" id=60]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=61]
+size = 33
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 60 )
 
 [node name="guitar_player_scene" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+margin_top = -1.0
+margin_bottom = -1.0
+rect_pivot_offset = Vector2( 802, 404 )
 script = ExtResource( 1 )
 
 [node name="GuitarRobot" type="Sprite" parent="."]
-position = Vector2( 194, 178 )
+position = Vector2( 178, 178 )
 scale = Vector2( 0.277344, 0.277344 )
 texture = ExtResource( 2 )
 
 [node name="SongViewContainer" type="Control" parent="."]
-margin_left = 179.0
+margin_left = 163.0
 margin_top = 538.0
-margin_right = 1259.0
+margin_right = 963.0
 margin_bottom = 678.0
 hint_tooltip = "
 "
@@ -625,14 +891,14 @@ theme = ExtResource( 4 )
 
 [node name="backGround_cr" type="ColorRect" parent="SongViewContainer"]
 margin_left = 16.0
-margin_right = 1056.0
+margin_right = 916.0
 margin_bottom = 140.0
-rect_min_size = Vector2( 1040, 140 )
+rect_min_size = Vector2( 900, 140 )
 color = Color( 0, 0, 0, 1 )
 
 [node name="computing_label" type="Label" parent="SongViewContainer"]
 modulate = Color( 1, 1, 1, 0.75 )
-margin_right = 1045.0
+margin_right = 900.0
 margin_bottom = 134.0
 custom_colors/font_color = Color( 0.356863, 0.356863, 0.356863, 1 )
 custom_fonts/font = SubResource( 1 )
@@ -645,8 +911,8 @@ anims/anim = SubResource( 2 )
 
 [node name="SongTrackView" parent="SongViewContainer" instance=ExtResource( 3 )]
 margin_left = 16.0
-margin_right = -14.0
-rect_min_size = Vector2( 1050, 140 )
+margin_right = 116.0
+rect_min_size = Vector2( 800, 140 )
 hint_tooltip = "[F1] [F2] [F3] [F4] to change display
 [F5] [F6] to zoom in / out
 Use the mouse wheel or the scroll bar  to set the play position
@@ -671,6 +937,7 @@ rect_min_size = Vector2( 4, 130 )
 color = Color( 0.239216, 0.321569, 1, 1 )
 
 [node name="trackDisplayMode" type="OptionButton" parent="SongViewContainer"]
+visible = false
 margin_left = -131.0
 margin_right = -3.0
 margin_bottom = 23.0
@@ -689,90 +956,110 @@ selected = 1
 
 [node name="trackViewScale_sl" type="VSlider" parent="SongViewContainer"]
 margin_left = -40.0
-margin_top = 62.0
+margin_top = 38.0
 margin_right = -24.0
 margin_bottom = 142.0
 rect_min_size = Vector2( 16, 80 )
 hint_tooltip = "Track zoom factor :
 [F5] : zoom out
 [F6] : zoom in"
-min_value = 1.0
-max_value = 20.0
+min_value = 0.1
+max_value = 30.0
+step = 0.1
 value = 2.0
 
 [node name="zoom" type="Label" parent="SongViewContainer"]
 margin_left = -54.0
-margin_top = 32.0
 margin_right = -13.0
-margin_bottom = 55.0
+margin_bottom = 23.0
 hint_tooltip = "Zoom setting of the time line.
 [F5] / [F6] to increase / decrease the display zoom  factor"
 custom_colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
 text = "zoom"
 
-[node name="voicingContainer" type="CenterContainer" parent="."]
-margin_left = 360.0
-margin_top = 40.0
-margin_right = 640.0
-margin_bottom = 320.0
-rect_min_size = Vector2( 260, 280 )
+[node name="view_midi_btn" type="Button" parent="SongViewContainer"]
+margin_left = -119.0
+margin_top = 79.0
+margin_right = -67.0
+margin_bottom = 104.0
+hint_tooltip = "Set the timeline display
+to midi notes..
+(they must be played
+at least once in order
+to be computed)"
+custom_fonts/font = SubResource( 21 )
+custom_styles/hover = SubResource( 22 )
+custom_styles/pressed = SubResource( 22 )
+custom_styles/focus = SubResource( 22 )
+custom_styles/disabled = SubResource( 22 )
+custom_styles/normal = SubResource( 22 )
+text = "midi"
 
-[node name="ColorRect" type="ColorRect" parent="voicingContainer"]
+[node name="view_chords" type="Button" parent="SongViewContainer"]
+margin_left = -119.0
+margin_top = 43.0
+margin_right = -67.0
+margin_bottom = 68.0
+hint_tooltip = "Set the timelinedisplay
+to jazz-chords notation.."
+custom_fonts/font = SubResource( 21 )
+custom_styles/hover = SubResource( 22 )
+custom_styles/pressed = SubResource( 22 )
+custom_styles/focus = SubResource( 22 )
+custom_styles/disabled = SubResource( 22 )
+custom_styles/normal = SubResource( 22 )
+text = "jazz"
+
+[node name="roman_btn" type="Button" parent="SongViewContainer"]
+margin_left = -119.0
+margin_top = 9.0
+margin_right = -67.0
+margin_bottom = 34.0
+hint_tooltip = "Set the timelinedisplay
+to roman numeral notation.."
+custom_fonts/font = SubResource( 21 )
+custom_styles/hover = SubResource( 22 )
+custom_styles/pressed = SubResource( 22 )
+custom_styles/focus = SubResource( 22 )
+custom_styles/disabled = SubResource( 22 )
+custom_styles/normal = SubResource( 22 )
+text = "Roman"
+
+[node name="voicingContainer" type="CenterContainer" parent="."]
+margin_left = 350.0
+margin_top = 40.0
+margin_right = 630.0
+margin_bottom = 320.0
+rect_min_size = Vector2( 280, 280 )
+
+[node name="Panel" type="Panel" parent="voicingContainer"]
 margin_left = 10.0
 margin_right = 270.0
 margin_bottom = 280.0
 rect_min_size = Vector2( 260, 280 )
+custom_styles/panel = SubResource( 55 )
+
+[node name="ColorRect" type="ColorRect" parent="voicingContainer"]
+visible = false
+margin_right = 280.0
+margin_bottom = 280.0
+rect_min_size = Vector2( 280, 280 )
 
 [node name="voicing_view" type="Control" parent="voicingContainer"]
-margin_left = 140.0
-margin_top = 140.0
-margin_right = 140.0
-margin_bottom = 140.0
+margin_left = 10.0
+margin_right = 270.0
+margin_bottom = 280.0
+rect_min_size = Vector2( 260, 280 )
 hint_tooltip = "Use arrows on the tab  to change the chord voicing"
 script = ExtResource( 8 )
 font_title = SubResource( 40 )
 font_nut = SubResource( 44 )
 font_arrows = SubResource( 42 )
 
-[node name="octave" type="VBoxContainer" parent="."]
-margin_left = 340.0
-margin_top = 362.0
-margin_right = 385.0
-margin_bottom = 513.0
-custom_constants/separation = 5
-alignment = 1
-
-[node name="Octave_label" type="Label" parent="octave"]
-margin_top = 1.0
-margin_right = 45.0
-margin_bottom = 64.0
-rect_min_size = Vector2( 45, 26 )
-theme = ExtResource( 7 )
-custom_colors/font_color = Color( 0.521569, 0.521569, 0.521569, 1 )
-custom_fonts/font = SubResource( 12 )
-text = "Guitar
-octave
-offset"
-align = 1
-
-[node name="HBoxContainer" type="HBoxContainer" parent="octave"]
-margin_top = 69.0
-margin_right = 45.0
-margin_bottom = 149.0
-alignment = 1
-
-[node name="octave_offset_vs" type="VSlider" parent="octave/HBoxContainer"]
-margin_left = 12.0
-margin_right = 32.0
-margin_bottom = 80.0
-rect_min_size = Vector2( 20, 80 )
-min_value = -2.0
-max_value = 3.0
-
 [node name="Volume" type="VBoxContainer" parent="."]
-margin_left = 244.0
+margin_left = 228.0
 margin_top = 362.0
-margin_right = 344.0
+margin_right = 328.0
 margin_bottom = 514.0
 rect_min_size = Vector2( 80, 0 )
 alignment = 1
@@ -821,7 +1108,7 @@ margin_bottom = 118.0
 rect_min_size = Vector2( 20, 80 )
 hint_tooltip = "Guitar volume"
 max_value = 120.0
-value = 100.0
+value = 110.0
 
 [node name="bass_volume" type="VBoxContainer" parent="Volume/Volumes"]
 margin_left = 40.0
@@ -849,7 +1136,7 @@ margin_bottom = 118.0
 rect_min_size = Vector2( 20, 80 )
 hint_tooltip = "Bass Volume"
 max_value = 120.0
-value = 100.0
+value = 40.0
 
 [node name="Chords_volume" type="VBoxContainer" parent="Volume/Volumes"]
 margin_left = 64.0
@@ -875,15 +1162,51 @@ margin_top = 38.0
 margin_right = 20.0
 margin_bottom = 118.0
 rect_min_size = Vector2( 20, 80 )
-hint_tooltip = "SATB Chords volume"
+hint_tooltip = "Chords volume"
 max_value = 120.0
-value = 40.0
+value = 20.0
+
+[node name="octave" type="VBoxContainer" parent="."]
+margin_left = 328.0
+margin_top = 363.0
+margin_right = 385.0
+margin_bottom = 513.0
+custom_constants/separation = 5
+alignment = 1
+
+[node name="Octave_label" type="Label" parent="octave"]
+margin_top = 1.0
+margin_right = 57.0
+margin_bottom = 64.0
+rect_min_size = Vector2( 45, 26 )
+theme = ExtResource( 7 )
+custom_colors/font_color = Color( 0.521569, 0.521569, 0.521569, 1 )
+custom_fonts/font = SubResource( 12 )
+text = "Guitar
+octave
+offset"
+align = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="octave"]
+margin_top = 69.0
+margin_right = 57.0
+margin_bottom = 149.0
+alignment = 1
+
+[node name="octave_offset_vs" type="VSlider" parent="octave/HBoxContainer"]
+margin_left = 18.0
+margin_right = 38.0
+margin_bottom = 80.0
+rect_min_size = Vector2( 20, 80 )
+hint_tooltip = "Guitar octave offset"
+min_value = -2.0
+max_value = 3.0
 
 [node name="instruments" type="VBoxContainer" parent="."]
-margin_left = 56.0
+margin_left = 40.0
 margin_top = 360.0
-margin_right = 206.0
-margin_bottom = 512.0
+margin_right = 190.0
+margin_bottom = 515.0
 custom_constants/separation = 4
 
 [node name="guitar_label" type="Label" parent="instruments"]
@@ -900,6 +1223,7 @@ valign = 2
 margin_top = 24.0
 margin_right = 150.0
 margin_bottom = 49.0
+hint_tooltip = "Guitar Sound Selector"
 theme = ExtResource( 7 )
 align = 1
 script = ExtResource( 9 )
@@ -919,6 +1243,7 @@ valign = 2
 margin_top = 77.0
 margin_right = 150.0
 margin_bottom = 102.0
+hint_tooltip = "Bass Sound Selector"
 theme = ExtResource( 7 )
 align = 1
 script = ExtResource( 9 )
@@ -938,21 +1263,35 @@ valign = 2
 margin_top = 130.0
 margin_right = 150.0
 margin_bottom = 155.0
+hint_tooltip = "Chords Sound Selector"
 theme = ExtResource( 7 )
 align = 1
 script = ExtResource( 9 )
 
 [node name="Transport" type="Control" parent="."]
-margin_left = 1120.0
-margin_top = 232.0
-margin_right = 1248.0
-margin_bottom = 450.0
+margin_left = 1088.0
+margin_top = 464.0
+margin_right = 1231.0
+margin_bottom = 682.0
 rect_min_size = Vector2( 100, 150 )
+
+[node name="computing_lbl" type="Label" parent="Transport"]
+margin_left = 8.0
+margin_top = -60.0
+margin_right = 136.0
+rect_min_size = Vector2( 80, 26 )
+theme = ExtResource( 7 )
+custom_colors/font_color = Color( 0.321569, 0.333333, 1, 1 )
+custom_fonts/font = SubResource( 67 )
+text = "Computing..."
+align = 1
+valign = 1
 
 [node name="playStop_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_right = 128.0
-margin_bottom = 40.0
+margin_top = -60.0
+margin_right = 136.0
+margin_bottom = 2.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Press [SPACE] bar to
 play / stop the progression"
@@ -965,10 +1304,10 @@ custom_styles/normal = SubResource( 45 )
 text = "Play"
 
 [node name="rewind_btn" type="Button" parent="Transport"]
+visible = false
 margin_left = 8.0
-margin_top = 56.0
-margin_right = 128.0
-margin_bottom = 96.0
+margin_top = -32.0
+margin_right = 136.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Rewind to the start of
 the chord progression.
@@ -983,12 +1322,12 @@ text = "<<"
 
 [node name="Export midi_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 112.0
-margin_right = 128.0
-margin_bottom = 152.0
+margin_top = 72.0
+margin_right = 136.0
+margin_bottom = 112.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Export the midifile of 
-the current chord progression"
+the current song"
 custom_fonts/font = SubResource( 19 )
 custom_styles/hover = SubResource( 20 )
 custom_styles/pressed = SubResource( 20 )
@@ -999,12 +1338,12 @@ text = "Export Midi"
 
 [node name="Export tabs" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 168.0
-margin_right = 128.0
-margin_bottom = 208.0
+margin_top = 121.0
+margin_right = 136.0
+margin_bottom = 161.0
 rect_min_size = Vector2( 120, 0 )
-hint_tooltip = "Export the midifile of 
-the current chord progression"
+hint_tooltip = "Export the TABS of
+the Guitar Sequence."
 custom_fonts/font = SubResource( 19 )
 custom_styles/hover = SubResource( 46 )
 custom_styles/pressed = SubResource( 46 )
@@ -1015,11 +1354,13 @@ text = "Export Tabs"
 
 [node name="Menu_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 224.0
-margin_right = 128.0
-margin_bottom = 264.0
+margin_top = 170.0
+margin_right = 136.0
+margin_bottom = 210.0
 rect_min_size = Vector2( 120, 0 )
-hint_tooltip = "Back to menu"
+hint_tooltip = "Back to Menu
+
+Your song will be autosaved."
 custom_fonts/font = SubResource( 19 )
 custom_styles/hover = SubResource( 24 )
 custom_styles/pressed = SubResource( 24 )
@@ -1028,24 +1369,44 @@ custom_styles/disabled = SubResource( 24 )
 custom_styles/normal = SubResource( 24 )
 text = "Menu"
 
+[node name="tempo_SB" type="SpinBox" parent="Transport"]
+margin_left = 8.0
+margin_top = 11.0
+margin_right = 136.0
+margin_bottom = 64.0
+hint_tooltip = "Song tempo.
+
+You can click and 
+type a BPM value 
+or use the mouse-wheel 
+to set the desired tempo."
+theme = ExtResource( 14 )
+min_value = 40.0
+max_value = 280.0
+value = 100.0
+align = 1
+suffix = "bpm"
+script = SubResource( 51 )
+
 [node name="console" type="Control" parent="."]
 margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="console_RTL" type="RichTextLabel" parent="console"]
-margin_left = 394.0
-margin_top = 336.0
-margin_right = 654.0
-margin_bottom = 476.0
+margin_left = 385.0
+margin_top = 344.0
+margin_right = 646.0
+margin_bottom = 486.0
 theme = ExtResource( 7 )
-custom_colors/default_color = Color( 0.792157, 0.792157, 0.792157, 1 )
+custom_colors/default_color = Color( 0, 0.321569, 1, 1 )
 custom_fonts/normal_font = SubResource( 4 )
+scroll_following = true
 
 [node name="Export console_btn" type="Button" parent="console"]
-margin_left = 400.0
-margin_top = 487.0
-margin_right = 470.0
-margin_bottom = 507.0
+margin_left = 383.0
+margin_top = 495.0
+margin_right = 503.0
+margin_bottom = 515.0
 rect_min_size = Vector2( 120, 20 )
 hint_tooltip = "Export the midifile of 
 the current chord progression"
@@ -1058,10 +1419,10 @@ custom_styles/normal = SubResource( 22 )
 text = "Export console"
 
 [node name="clear_console_btn" type="Button" parent="console"]
-margin_left = 537.0
-margin_top = 487.0
-margin_right = 657.0
-margin_bottom = 507.0
+margin_left = 520.0
+margin_top = 495.0
+margin_right = 640.0
+margin_bottom = 515.0
 rect_min_size = Vector2( 120, 20 )
 hint_tooltip = "Export the midifile of 
 the current chord progression"
@@ -1074,20 +1435,38 @@ custom_styles/normal = SubResource( 23 )
 text = "Clear console"
 
 [node name="Pattern" type="Control" parent="."]
-margin_right = 40.0
+margin_left = -10.0
+margin_right = 30.0
 margin_bottom = 40.0
 script = SubResource( 28 )
 
-[node name="Pattern Index" type="Label" parent="Pattern"]
-margin_left = 636.0
-margin_top = 32.0
-margin_right = 716.0
-margin_bottom = 62.0
-rect_min_size = Vector2( 80, 26 )
+[node name="total_label" type="Label" parent="Pattern"]
+margin_left = 1004.0
+margin_top = 242.0
+margin_right = 1060.0
+margin_bottom = 273.0
 theme = ExtResource( 7 )
 custom_colors/font_color = Color( 0.521569, 0.521569, 0.521569, 1 )
+custom_constants/line_spacing = -3
 custom_fonts/font = SubResource( 39 )
-text = "Pattern :"
+custom_styles/normal = SubResource( 56 )
+text = "Selected
+Pattern ->"
+align = 1
+valign = 1
+
+[node name="total_label2" type="Label" parent="Pattern"]
+margin_left = 1058.0
+margin_top = 276.0
+margin_right = 1154.0
+margin_bottom = 316.0
+theme = ExtResource( 7 )
+custom_colors/font_color = Color( 0.521569, 0.521569, 0.521569, 1 )
+custom_constants/line_spacing = -3
+custom_fonts/font = SubResource( 39 )
+custom_styles/normal = SubResource( 56 )
+text = "Total  number 
+of patterns ->"
 align = 2
 valign = 1
 
@@ -1121,10 +1500,14 @@ color = Color( 0, 0.0784314, 0.929412, 1 )
 
 [node name="pattern_lineEdit" type="LineEdit" parent="Pattern"]
 margin_left = 752.0
-margin_top = 95.0
+margin_top = 39.0
 margin_right = 1238.0
-margin_bottom = 191.0
-hint_tooltip = "D : Down Strum Chord
+margin_bottom = 135.0
+hint_tooltip = "GUITAR PATTERN EDIT FIELD
+
+You can set a pattern of 16 steps using:
+
+D : Down Strum Chord
 d : Down Strum Chord Light
 U : Up Strum Chord
 u : Up Strum Chord Light
@@ -1146,7 +1529,7 @@ b : Main Bass note Light
 ->  4 is the 1st not muted string (the highest pitch)
 
 if the chord has less than 5 notes,
-0 and 1 play the same lowest pitch string
+0 and 1 will play the same lowest pitch string
 
 "
 theme = ExtResource( 7 )
@@ -1163,11 +1546,13 @@ script = SubResource( 31 )
 
 [node name="step_beat_length_btn" type="Button" parent="Pattern"]
 margin_left = 656.0
-margin_top = 88.0
+margin_top = 32.0
 margin_right = 727.0
-margin_bottom = 200.0
+margin_bottom = 144.0
 rect_min_size = Vector2( 55, 46 )
-hint_tooltip = "Pattern step length.
+hint_tooltip = "Song Guitar Pattern 
+step length (global).
+
 Click to change
  the step value
 "
@@ -1181,11 +1566,11 @@ text = "."
 script = SubResource( 29 )
 
 [node name="duplicate_btn" type="Button" parent="Pattern"]
-margin_left = 942.0
-margin_top = 24.0
-margin_right = 1046.0
-margin_bottom = 70.0
-rect_min_size = Vector2( 55, 46 )
+margin_left = 743.0
+margin_top = 152.0
+margin_right = 890.0
+margin_bottom = 198.0
+rect_min_size = Vector2( 150, 46 )
 hint_tooltip = "Duplicate the current
 Strum Pattern
 "
@@ -1197,15 +1582,110 @@ custom_styles/disabled = SubResource( 34 )
 custom_styles/normal = SubResource( 34 )
 text = "Duplicate"
 
-[node name="generate_btn" type="Button" parent="Pattern"]
-margin_left = 648.0
-margin_top = 240.0
-margin_right = 752.0
-margin_bottom = 286.0
-rect_min_size = Vector2( 55, 46 )
-hint_tooltip = "Duplicate the current
-Strum Pattern
+[node name="duplicate_all_btn" type="Button" parent="Pattern"]
+margin_left = 899.0
+margin_top = 152.0
+margin_right = 1049.0
+margin_bottom = 198.0
+rect_min_size = Vector2( 150, 46 )
+hint_tooltip = "Duplicate the whole
+sequence of guitar patterns
 "
+custom_fonts/font = SubResource( 32 )
+custom_styles/hover = SubResource( 34 )
+custom_styles/pressed = SubResource( 34 )
+custom_styles/focus = SubResource( 34 )
+custom_styles/disabled = SubResource( 34 )
+custom_styles/normal = SubResource( 34 )
+text = "Repeat all"
+
+[node name="variation_btn" type="Button" parent="Pattern"]
+margin_left = 746.0
+margin_top = 261.0
+margin_right = 844.0
+margin_bottom = 307.0
+rect_min_size = Vector2( 55, 46 )
+hint_tooltip = "Apply a random variation 
+on the current pattern"
+custom_fonts/font = SubResource( 32 )
+custom_styles/hover = SubResource( 65 )
+custom_styles/pressed = SubResource( 65 )
+custom_styles/focus = SubResource( 65 )
+custom_styles/disabled = SubResource( 65 )
+custom_styles/normal = SubResource( 65 )
+text = "Variation"
+
+[node name="preview_btn" type="Button" parent="Pattern"]
+margin_left = 855.0
+margin_top = 261.0
+margin_right = 956.0
+margin_bottom = 307.0
+rect_min_size = Vector2( 55, 40 )
+hint_tooltip = "Preview the current 
+Guitar pattern
+"
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 32 )
+custom_styles/hover = SubResource( 64 )
+custom_styles/pressed = SubResource( 64 )
+custom_styles/focus = SubResource( 64 )
+custom_styles/disabled = SubResource( 64 )
+custom_styles/normal = SubResource( 64 )
+text = "Preview"
+
+[node name="copy_btn" type="Button" parent="Pattern"]
+margin_left = 1070.0
+margin_top = 152.0
+margin_right = 1140.0
+margin_bottom = 198.0
+rect_min_size = Vector2( 75, 46 )
+hint_tooltip = "Copy the current guitar 
+pattern to the clipboard
+"
+custom_fonts/font = SubResource( 32 )
+custom_styles/hover = SubResource( 52 )
+custom_styles/pressed = SubResource( 52 )
+custom_styles/focus = SubResource( 52 )
+custom_styles/disabled = SubResource( 52 )
+custom_styles/normal = SubResource( 52 )
+text = "Copy"
+
+[node name="paste_btn" type="Button" parent="Pattern"]
+margin_left = 1152.0
+margin_top = 152.0
+margin_right = 1227.0
+margin_bottom = 198.0
+rect_min_size = Vector2( 75, 46 )
+hint_tooltip = "Paste the clipboard pattern
+to the current guitar pattern
+"
+custom_fonts/font = SubResource( 32 )
+custom_styles/hover = SubResource( 52 )
+custom_styles/pressed = SubResource( 52 )
+custom_styles/focus = SubResource( 52 )
+custom_styles/disabled = SubResource( 52 )
+custom_styles/normal = SubResource( 52 )
+text = "Paste"
+
+[node name="generate_btn" type="Button" parent="Pattern"]
+margin_left = 946.0
+margin_top = 320.0
+margin_right = 1044.0
+margin_bottom = 366.0
+rect_min_size = Vector2( 55, 46 )
+hint_tooltip = "Generates a Guitar pattern
+in the selected style.
+
+For better results, y
+ou may adjust the Guitar
+player settings to match 
+the parameters with the
+tempo and selected style."
 custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
 custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
 custom_colors/font_color_hover_pressed = Color( 0, 0, 0, 1 )
@@ -1220,12 +1700,12 @@ custom_styles/normal = SubResource( 50 )
 text = "Generate"
 
 [node name="next_btn" type="Button" parent="Pattern"]
-margin_left = 890.0
-margin_top = 24.0
-margin_right = 930.0
-margin_bottom = 70.0
-hint_tooltip = "Display next
-Strum Pattern
+margin_left = 1116.0
+margin_top = 320.0
+margin_right = 1156.0
+margin_bottom = 366.0
+hint_tooltip = "Display the next
+guitar pattern
 "
 custom_fonts/font = SubResource( 36 )
 custom_styles/hover = SubResource( 37 )
@@ -1237,12 +1717,12 @@ text = "b"
 icon_align = 1
 
 [node name="previous_btn" type="Button" parent="Pattern"]
-margin_left = 840.0
-margin_top = 24.0
-margin_right = 880.0
-margin_bottom = 70.0
-hint_tooltip = "Display previous
-Strum Pattern
+margin_left = 1069.0
+margin_top = 320.0
+margin_right = 1109.0
+margin_bottom = 366.0
+hint_tooltip = "Display the previous
+guitar pattern
 "
 custom_fonts/font = SubResource( 36 )
 custom_styles/hover = SubResource( 37 )
@@ -1254,16 +1734,15 @@ text = "B"
 icon_align = 1
 
 [node name="delete_btn" type="Button" parent="Pattern"]
-margin_left = 1160.0
-margin_top = 24.0
-margin_right = 1248.0
-margin_bottom = 70.0
+margin_left = 1163.0
+margin_top = 320.0
+margin_right = 1246.0
+margin_bottom = 366.0
 rect_min_size = Vector2( 55, 46 )
-hint_tooltip = "Pattern step length.
-Click to change
- the step value
+hint_tooltip = "Delete the current 
+selected guitar pattern
 "
-custom_fonts/font = SubResource( 32 )
+custom_fonts/font = SubResource( 57 )
 custom_styles/hover = SubResource( 35 )
 custom_styles/pressed = SubResource( 35 )
 custom_styles/focus = SubResource( 35 )
@@ -1272,78 +1751,120 @@ custom_styles/normal = SubResource( 35 )
 text = "Delete"
 
 [node name="pattern_number_sb" type="SpinBox" parent="Pattern"]
-margin_left = 718.0
-margin_top = 24.0
-margin_right = 828.0
-margin_bottom = 70.0
-hint_tooltip = "Strum Pattern Display Index
-Use the mouse-wheel or 
-the arrows to display the
-previous / next  Strum Pattern"
+margin_left = 1069.0
+margin_top = 206.0
+margin_right = 1247.0
+margin_bottom = 269.0
+hint_tooltip = "Current  Guitar Pattern 
+index in patterns sequence
+
+Click and enter a Pattern
+index in the sequence or
+use the mouse-wheel
+to navigate.
+"
 theme = ExtResource( 12 )
 min_value = 1.0
-max_value = 10000.0
+max_value = 1000.0
 value = 1.0
 align = 1
 script = SubResource( 33 )
 
 [node name="info_pattern_label" type="Label" parent="Pattern"]
-margin_left = 744.0
-margin_top = 207.0
-margin_right = 1080.0
-margin_bottom = 228.0
+margin_left = 1163.0
+margin_top = 276.0
+margin_right = 1247.0
+margin_bottom = 314.0
+hint_tooltip = "The number of patterns 
+of the guitar pattern sequence"
 custom_colors/font_color = Color( 0.47451, 0.47451, 0.47451, 1 )
 custom_fonts/font = SubResource( 48 )
-text = "info pattern"
+text = "25"
 
 [node name="pattern_style_ob" type="OptionButton" parent="Pattern"]
-margin_left = 768.0
-margin_top = 240.0
-margin_right = 864.0
-margin_bottom = 286.0
+margin_left = 743.0
+margin_top = 320.0
+margin_right = 929.0
+margin_bottom = 366.0
+hint_tooltip = "Style of the guitar
+pattern generator
+
+Styles with * are
+algorithmic : Each generation 
+will be different
+
+Selecting a style generates 
+a guitar pattern
+
+"
 custom_fonts/font = SubResource( 49 )
-text = "Folk"
+custom_styles/hover = SubResource( 72 )
+custom_styles/pressed = SubResource( 72 )
+custom_styles/focus = SubResource( 72 )
+custom_styles/disabled = SubResource( 72 )
+custom_styles/normal = SubResource( 72 )
+text = "Folk*"
 align = 1
-items = [ "Folk", null, false, 0, null, "Funky", null, false, 1, null, "R'n B", null, false, 2, null, "Bossa", null, false, 3, null ]
+items = [ "Folk*", null, false, 0, null, "Funky*", null, false, 1, null, "R'n B*", null, false, 2, null, "Bossa*", null, false, 3, null, "Random*", null, false, 4, null, "Random (no gap)*", null, false, 5, null, "Random Melody*", null, false, 6, null, "Brassens", null, false, 7, null, "Arpeggio #1", null, false, 8, null, "Arpeggio #2", null, false, 9, null, "Ska", null, false, 10, null, "Reggae", null, false, 11, null, "Shame Shame", null, false, 12, null, "Torn", null, false, 13, null, "London Callin'", null, false, 14, null, "Playa", null, false, 15, null ]
 selected = 0
 
 [node name="playerConfig" type="Control" parent="."]
-margin_left = -8.0
-margin_top = -1.0
-margin_right = 92.0
-margin_bottom = 99.0
+margin_left = -56.0
+margin_top = 50.0
+margin_right = 44.0
+margin_bottom = 150.0
 rect_min_size = Vector2( 100, 100 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="playerConfig"]
-margin_left = 680.0
+margin_left = 736.0
 margin_top = 328.0
-margin_right = 1080.0
-margin_bottom = 518.0
-rect_min_size = Vector2( 400, 100 )
-custom_constants/separation = 20
+margin_right = 1088.0
+margin_bottom = 489.0
+rect_min_size = Vector2( 350, 100 )
+custom_constants/separation = 10
 
 [node name="player_config" type="Label" parent="playerConfig/VBoxContainer"]
-margin_right = 400.0
-margin_bottom = 70.0
-rect_min_size = Vector2( 350, 70 )
+margin_right = 407.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 350, 30 )
+hint_tooltip = "Guitar player arameters are set for the current guitar pattern. 
+
+You can set different parameters for each guitar pattern.
+
+Use \"Apply to all\" to apply the current parameters to all the patterns of the pattern sequence."
+mouse_filter = 0
 custom_colors/font_color = Color( 0.352941, 0.352941, 0.352941, 1 )
 custom_fonts/font = SubResource( 26 )
-text = "player config"
+text = "Guitar player settings"
 align = 1
 valign = 1
 
 [node name="config_sliders" type="HBoxContainer" parent="playerConfig/VBoxContainer"]
-margin_top = 90.0
-margin_right = 400.0
-margin_bottom = 190.0
+margin_top = 40.0
+margin_right = 407.0
+margin_bottom = 140.0
 rect_min_size = Vector2( 100, 100 )
-custom_constants/separation = 6
+custom_constants/separation = 7
 alignment = 1
 script = SubResource( 30 )
 
+[node name="apply_to_all_btn" type="Button" parent="playerConfig/VBoxContainer/config_sliders"]
+margin_right = 32.0
+margin_bottom = 100.0
+hint_tooltip = "Apply the current Guitar Player 
+settings to all the pattern sequence"
+custom_fonts/font = SubResource( 62 )
+custom_styles/hover = SubResource( 63 )
+custom_styles/pressed = SubResource( 63 )
+custom_styles/focus = SubResource( 63 )
+custom_styles/disabled = SubResource( 63 )
+custom_styles/normal = SubResource( 63 )
+text = "apply
+to all"
+
 [node name="max_chords_strings" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 24.0
-margin_right = 40.0
+margin_left = 39.0
+margin_right = 55.0
 margin_bottom = 100.0
 hint_tooltip = "Max Chords Strings number : 
 limit the number of Chords
@@ -1357,8 +1878,8 @@ max_value = 6.0
 value = 4.0
 
 [node name="swing_amount" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 46.0
-margin_right = 62.0
+margin_left = 62.0
+margin_right = 78.0
 margin_bottom = 100.0
 hint_tooltip = "swing amount"
 max_value = 1.0
@@ -1366,8 +1887,8 @@ step = 0.0
 value = 0.2
 
 [node name="strum_duration_min" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 68.0
-margin_right = 84.0
+margin_left = 85.0
+margin_right = 101.0
 margin_bottom = 100.0
 hint_tooltip = "Minimum Strum Duration in beats"
 min_value = 0.01
@@ -1376,8 +1897,8 @@ step = 0.0
 value = 0.01
 
 [node name="strum_duration_max" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 90.0
-margin_right = 106.0
+margin_left = 108.0
+margin_right = 124.0
 margin_bottom = 100.0
 hint_tooltip = "Maximum Strum
 Duration in beats"
@@ -1387,8 +1908,8 @@ step = 0.0
 value = 0.1
 
 [node name="mute_duration" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 112.0
-margin_right = 128.0
+margin_left = 131.0
+margin_right = 147.0
 margin_bottom = 100.0
 hint_tooltip = "Mute duration
 in beats"
@@ -1398,8 +1919,8 @@ step = 0.0
 value = 0.05
 
 [node name="velocity_randomization" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 134.0
-margin_right = 150.0
+margin_left = 154.0
+margin_right = 170.0
 margin_bottom = 100.0
 hint_tooltip = "velocity random"
 max_value = 0.2
@@ -1407,8 +1928,8 @@ step = 0.0
 value = 0.05
 
 [node name="accent_downbeat_factor" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 156.0
-margin_right = 172.0
+margin_left = 177.0
+margin_right = 193.0
 margin_bottom = 100.0
 hint_tooltip = "accent_downbeat_factor"
 min_value = 1.0
@@ -1417,8 +1938,8 @@ step = 0.0
 value = 1.3
 
 [node name="timing_variance" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 178.0
-margin_right = 194.0
+margin_left = 200.0
+margin_right = 216.0
 margin_bottom = 100.0
 hint_tooltip = "timing variance"
 max_value = 0.1
@@ -1426,8 +1947,8 @@ step = 0.0
 value = 0.005
 
 [node name="down_velocity_base" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 200.0
-margin_right = 216.0
+margin_left = 223.0
+margin_right = 239.0
 margin_bottom = 100.0
 hint_tooltip = "down base
 Strum velocity"
@@ -1436,8 +1957,8 @@ max_value = 127.0
 value = 100.0
 
 [node name="down_velocity_light" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 222.0
-margin_right = 238.0
+margin_left = 246.0
+margin_right = 262.0
 margin_bottom = 100.0
 hint_tooltip = "down light
 Strum velocity"
@@ -1446,8 +1967,8 @@ max_value = 115.0
 value = 50.0
 
 [node name="up_velocity_base" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 244.0
-margin_right = 260.0
+margin_left = 269.0
+margin_right = 285.0
 margin_bottom = 100.0
 hint_tooltip = "Up base
 Strum velocity"
@@ -1456,8 +1977,8 @@ max_value = 127.0
 value = 100.0
 
 [node name="up_velocity_light" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 266.0
-margin_right = 282.0
+margin_left = 292.0
+margin_right = 308.0
 margin_bottom = 100.0
 hint_tooltip = "Up light
 Strum velocity"
@@ -1466,8 +1987,8 @@ max_value = 115.0
 value = 50.0
 
 [node name="pick_position" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 288.0
-margin_right = 304.0
+margin_left = 315.0
+margin_right = 331.0
 margin_bottom = 100.0
 hint_tooltip = "Pick position
 minimum -> lowest pitch strings
@@ -1479,8 +2000,8 @@ step = 0.0
 value = 0.75
 
 [node name="pick_influence" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 310.0
-margin_right = 326.0
+margin_left = 338.0
+margin_right = 354.0
 margin_bottom = 100.0
 hint_tooltip = "Pick position influence"
 max_value = 1.0
@@ -1488,22 +2009,21 @@ step = 0.0
 value = 0.9
 
 [node name="chord_transition_gap" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 332.0
-margin_right = 348.0
+margin_left = 361.0
+margin_right = 377.0
 margin_bottom = 100.0
 hint_tooltip = "Chord transition gap:
 create a silence
 before change 
 of chord
 "
-min_value = 0.7
 max_value = 1.0
 step = 0.0
-value = 0.95
+value = 0.9
 
 [node name="single_note_velocity" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 354.0
-margin_right = 370.0
+margin_left = 384.0
+margin_right = 400.0
 margin_bottom = 100.0
 hint_tooltip = "Single note
 Velocity"
@@ -1513,26 +2033,178 @@ step = 0.0
 value = 90.0
 
 [node name="buttons" type="VBoxContainer" parent="playerConfig/VBoxContainer/config_sliders"]
-margin_left = 376.0
-margin_right = 376.0
+margin_left = 407.0
+margin_right = 407.0
 margin_bottom = 100.0
+
+[node name="voicings_offset_container" type="VBoxContainer" parent="."]
+margin_left = 640.0
+margin_top = 152.0
+margin_right = 726.0
+margin_bottom = 408.0
+custom_constants/separation = 11
+script = ExtResource( 16 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="up_voicings" type="Button" parent="voicings_offset_container"]
+margin_right = 86.0
+margin_bottom = 38.0
+hint_tooltip = "Shift all guitar
+Voicings Up"
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_pressed = Color( 0, 0.64, 0.0426666, 1 )
+custom_fonts/font = SubResource( 53 )
+custom_styles/hover = SubResource( 54 )
+custom_styles/pressed = SubResource( 54 )
+custom_styles/focus = SubResource( 54 )
+custom_styles/disabled = SubResource( 54 )
+custom_styles/normal = SubResource( 54 )
+text = "A"
+
+[node name="down_voicings" type="Button" parent="voicings_offset_container"]
+margin_top = 49.0
+margin_right = 86.0
+margin_bottom = 87.0
+hint_tooltip = "Shift all guitar
+Voicings Down"
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_pressed = Color( 0, 0.64, 0.0426666, 1 )
+custom_fonts/font = SubResource( 53 )
+custom_styles/hover = SubResource( 54 )
+custom_styles/pressed = SubResource( 54 )
+custom_styles/focus = SubResource( 54 )
+custom_styles/disabled = SubResource( 54 )
+custom_styles/normal = SubResource( 54 )
+text = "C"
+
+[node name="random_single_btn" type="Button" parent="voicings_offset_container"]
+margin_top = 98.0
+margin_right = 86.0
+margin_bottom = 146.0
+hint_tooltip = "Randomize the selected 
+guitar chord voicing."
+custom_colors/icon_color_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_disabled = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_focus = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_pressed = Color( 0, 0.64, 0.0426666, 1 )
+custom_fonts/font = SubResource( 69 )
+custom_styles/hover = SubResource( 54 )
+custom_styles/pressed = SubResource( 54 )
+custom_styles/focus = SubResource( 54 )
+custom_styles/disabled = SubResource( 54 )
+custom_styles/normal = SubResource( 54 )
+text = "Q"
+
+[node name="random_all_btn" type="Button" parent="voicings_offset_container"]
+margin_top = 157.0
+margin_right = 86.0
+margin_bottom = 205.0
+hint_tooltip = "Randomize  the  chord voicings
+of all the chord progression."
+custom_colors/icon_color_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_disabled = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_focus = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_pressed = Color( 0, 0.64, 0.0426666, 1 )
+custom_fonts/font = SubResource( 69 )
+custom_styles/hover = SubResource( 54 )
+custom_styles/pressed = SubResource( 54 )
+custom_styles/focus = SubResource( 54 )
+custom_styles/disabled = SubResource( 54 )
+custom_styles/normal = SubResource( 54 )
+text = "F"
+
+[node name="Reset_voicing_btn" type="Button" parent="voicings_offset_container"]
+margin_top = 216.0
+margin_right = 86.0
+margin_bottom = 245.0
+hint_tooltip = "Reset the guitar voicings 
+of all the chords progression"
+custom_colors/icon_color_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_disabled = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_focus = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_hover = Color( 0, 0.486275, 0.0313726, 1 )
+custom_colors/font_color_pressed = Color( 0, 0.64, 0.0426666, 1 )
+custom_fonts/font = SubResource( 71 )
+custom_styles/hover = SubResource( 54 )
+custom_styles/pressed = SubResource( 54 )
+custom_styles/focus = SubResource( 54 )
+custom_styles/disabled = SubResource( 54 )
+custom_styles/normal = SubResource( 54 )
+text = "reset"
+
+[node name="playing_step_lbl" type="Label" parent="."]
+margin_left = 735.0
+margin_top = 207.0
+margin_right = 1048.0
+margin_bottom = 252.0
+custom_colors/font_color = Color( 0, 0.321569, 1, 1 )
+custom_fonts/font = SubResource( 61 )
+text = "Playing pattern #"
+
+[node name="Debug_btn" type="Button" parent="."]
+margin_left = 1096.0
+margin_top = 376.0
+margin_right = 1221.0
+margin_bottom = 396.0
+text = "DEBUG"
 
 [connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
 [connection signal="item_selected" from="SongViewContainer/trackDisplayMode" to="." method="_on_trackDisplayMode_item_selected"]
 [connection signal="value_changed" from="SongViewContainer/trackViewScale_sl" to="." method="_on_trackViewScale_sl_value_changed"]
+[connection signal="pressed" from="SongViewContainer/view_midi_btn" to="." method="_on_view_midi_btn_pressed"]
+[connection signal="pressed" from="SongViewContainer/view_chords" to="." method="_on_view_degrees_pressed"]
+[connection signal="pressed" from="SongViewContainer/roman_btn" to="." method="_on_view_roman_btn_pressed"]
 [connection signal="voicing_index_changed" from="voicingContainer/voicing_view" to="." method="_on_voicing_view_voicing_index_changed"]
+[connection signal="drag_ended" from="Volume/Volumes/guitar_volume/Guitar_volume_VS" to="." method="slider_updated"]
+[connection signal="drag_ended" from="Volume/Volumes/bass_volume/Bass_volume_VS" to="." method="slider_updated"]
+[connection signal="drag_ended" from="Volume/Volumes/Chords_volume/Chords_volume_VS" to="." method="slider_updated"]
+[connection signal="drag_ended" from="octave/HBoxContainer/octave_offset_vs" to="." method="slider_updated"]
+[connection signal="program_changed" from="instruments/guitar_program_ob" to="." method="slider_updated"]
+[connection signal="program_changed" from="instruments/bass_program_ob" to="." method="slider_updated"]
+[connection signal="program_changed" from="instruments/satb_program_ob" to="." method="slider_updated"]
 [connection signal="pressed" from="Transport/playStop_btn" to="." method="_on_playStop_btn_pressed"]
 [connection signal="pressed" from="Transport/rewind_btn" to="." method="_on_rewind_btn_pressed"]
 [connection signal="pressed" from="Transport/Export midi_btn" to="." method="_on_Export_midi_btn_pressed"]
 [connection signal="pressed" from="Transport/Export tabs" to="." method="_on_Export_tabs_pressed"]
 [connection signal="pressed" from="Transport/Menu_btn" to="." method="_on_Menu_btn_pressed"]
+[connection signal="value_changed" from="Transport/tempo_SB" to="Transport/tempo_SB" method="_on_tempo_SB_value_changed"]
 [connection signal="pressed" from="console/Export console_btn" to="." method="_on_Export_console_btn_pressed"]
 [connection signal="pressed" from="console/clear_console_btn" to="." method="_on_clear_console_btn_pressed"]
 [connection signal="pressed" from="Pattern/step_beat_length_btn" to="Pattern/step_beat_length_btn" method="_on_step_beat_length_btn_pressed"]
 [connection signal="pressed" from="Pattern/duplicate_btn" to="." method="_on_duplicate_btn_pressed"]
+[connection signal="pressed" from="Pattern/duplicate_all_btn" to="." method="_on_duplicate_all_btn_pressed"]
+[connection signal="pressed" from="Pattern/variation_btn" to="Pattern" method="_on_variation_btn_pressed"]
+[connection signal="pressed" from="Pattern/preview_btn" to="Pattern" method="_on_preview_btn_pressed"]
+[connection signal="pressed" from="Pattern/copy_btn" to="." method="_on_copy_btn_pressed"]
+[connection signal="pressed" from="Pattern/paste_btn" to="." method="_on_paste_btn_pressed"]
 [connection signal="pressed" from="Pattern/generate_btn" to="Pattern" method="_on_generate_btn_pressed"]
 [connection signal="pressed" from="Pattern/next_btn" to="Pattern/pattern_number_sb" method="_on_next_btn_pressed"]
 [connection signal="pressed" from="Pattern/previous_btn" to="Pattern/pattern_number_sb" method="_on_previous_btn_pressed"]
 [connection signal="pressed" from="Pattern/delete_btn" to="Pattern" method="_on_delete_btn_pressed"]
 [connection signal="value_changed" from="Pattern/pattern_number_sb" to="Pattern/pattern_number_sb" method="_on_pattern_number_sb_value_changed"]
 [connection signal="item_selected" from="Pattern/pattern_style_ob" to="Pattern" method="_on_pattern_style_ob_item_selected"]
+[connection signal="pressed" from="playerConfig/VBoxContainer/config_sliders/apply_to_all_btn" to="playerConfig/VBoxContainer/config_sliders" method="_on_apply_to_all_btn_pressed"]
+[connection signal="pressed" from="voicings_offset_container/up_voicings" to="voicings_offset_container" method="_on_up_voicings_pressed"]
+[connection signal="pressed" from="voicings_offset_container/down_voicings" to="voicings_offset_container" method="_on_down_voicings_pressed"]
+[connection signal="pressed" from="voicings_offset_container/random_single_btn" to="voicings_offset_container" method="_on_random_single_btn_pressed"]
+[connection signal="pressed" from="voicings_offset_container/random_all_btn" to="voicings_offset_container" method="_on_random_all_btn_pressed"]
+[connection signal="pressed" from="voicings_offset_container/Reset_voicing_btn" to="voicings_offset_container" method="_on_Reset_voicing_btn_pressed"]
+[connection signal="pressed" from="Debug_btn" to="." method="_on_Debug_btn_pressed"]

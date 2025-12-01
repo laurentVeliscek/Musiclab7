@@ -7,7 +7,7 @@ const TONAL_KEYS:Array = ["major","minor","harmonic_minor", "melodic_minor"  ]
 
 
 #const mySoundFontPath = "res://soundfonts/Aspirin-Stereo.sf2"
-onready var midi_player:MidiPlayer
+onready var midi_player:MidiPlayer 
 onready var songTrackView:SongTrackView = $SongViewContainer/SongTrackView
 onready var playStopBtn:Button = $Transport/playStop_btn
 onready var menu_btn:Button = $Transport/menu_btn
@@ -17,7 +17,7 @@ onready var console:RichTextLabel = $console_panel_pn/logBusConsole_rtl
 onready var export_midi_btn:Button = $"Transport/Export midi_btn"
 onready var songTrackView_view_display_mode_option = $SongViewContainer/trackDisplayMode
 onready var songTrackView_scale_option = $SongViewContainer/trackViewScale_sl
-onready var song_title_lbl:Label = $Song_panel/song_title_lbl
+onready var song_title_lbl:LineEdit = $Song_panel/title_line_edit
 onready var time_signature_ob:OptionButton = $Song_panel/time_signature_optButton
 onready var scale_select_ob:OptionButton = $Song_panel/scale_select_ob
 onready var key_root_select_ob = $Song_panel/key_root_select_ob
@@ -27,11 +27,13 @@ onready var satb_client = $SATB/SATBClient
 onready var web_api_mode_btn:CheckButton = $CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton
 onready var legato_midi_cb:CheckButton = $CenterTabContainer/SATB/interface_switch/legato_midi_file_cb
 onready var separate_satb_cb:CheckButton = $CenterTabContainer/SATB/interface_switch/separate_cb
-onready var satb_solution_selector_knob:Numeric_Knob = $SATB_Listen_panel/satb_solution_selector_knob
+
+#onready var satb_solution_selector_knob:Numeric_Knob = $SATB_Listen_panel/satb_solution_selector_knob
+onready var satb_solution_Slider:HSlider = $CenterTabContainer/SATB/SATB_Listen_panel/satb_solution_Slider
 onready var free_inversion_cb = $CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox/free_inversion_cb
 onready var allow_repetition_cb = $CenterTabContainer/SATB/VBoxContainer/manettes/SATB_checkbox/allow_repetition_cb
 
-onready var generate_btn = $Song_panel/Generate_btn
+onready var generate_btn = $Transport/Generate_btn
 onready var compute_satb_btn = $Transport/compute_SATB_btn
 onready var edit_progression_btn = $Transport/Edit_Progression_Btn
 
@@ -112,16 +114,21 @@ var RP:RockProgressionGenerator = RockProgressionGenerator.new()
 var MDB:ModulationDatabase = MusicLabGlobals.modulationDatabase
 var modManager:ModulationManager
 
-
+var debug_mode = true
 
 
 func _ready():
+	
+	
+	if debug_mode ==  false:
+		$debug_btn.hide()
 	# Connection LogBus à la console 
 	LogBus.connect("log_entry", self, "_on_log_entry")
 	LogBus._verbose = true
 	LogBus.info(TAG,"\nWelcome to MusicLab© by Laurent Veliscek\n")
-	
-	
+
+	MusicLabGlobals.setup_midi_player()
+	midi_player= MusicLabGlobals.midi_player
 #	key_command = 16777239
 #	else :
 #		os_keyboard_BTN.text = "Windows Keyboard"
@@ -152,8 +159,9 @@ func _ready():
 	rng.randomize()
 
 	# midi_player
-	musiclibMidiPlayer.setupMidiPlayer()
-	midi_player = musiclibMidiPlayer.midiPlayer
+	#musiclibMidiPlayer.setupMidiPlayer()
+	#midi_player = musiclibMidiPlayer.midiPlayer
+	MusicLabGlobals.setup_midi_player()
 	
 	#guitar_base
 	var nb_chords = MusicLabGlobals.GuitarBase._all_chords.size()
@@ -165,17 +173,31 @@ func _ready():
 	
 	LogBus.info(TAG,"\nSATB Server set to "+satb_client.api_url)
 	
-	var myGlobalSong= MusicLabGlobals.get_song()
-	#on initialise myMasterSong
-	if  myGlobalSong != null and myGlobalSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME) != null:
-		myMasterSong = MusicLabGlobals.get_song()
-		myPlayingSong = Song.new()
-		myPlayingSong.add_track(myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME))
+	myMasterSong =  MusicLabGlobals.get_song()
+	
+	#on détruit les pistes SATB
+	# elles seront forcément régénérées
+	if myMasterSong:
 		
-	else :
-		var my_empty_progression_track = Track.new()
-		my_empty_progression_track.name = Song.PROGRESSION_TRACK_NAME
-		myMasterSong.add_track(my_empty_progression_track)
+		myMasterSong.remove_track_by_name(Song.SATB_TRACK_NAME)
+		myMasterSong.remove_track_by_name(Song.SATB_SOPRANO)
+		myMasterSong.remove_track_by_name(Song.SATB_ALTO)	
+		myMasterSong.remove_track_by_name(Song.SATB_TENOR)
+		myMasterSong.remove_track_by_name(Song.SATB_BASS)
+		
+	if myMasterSong == null or myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME) == null:
+		myMasterSong = Song.new()
+		myMasterSong.title = "Untitled Song"
+		var new_progression_track:Track = Track.new()
+		new_progression_track.name = Song.PROGRESSION_TRACK_NAME
+		myMasterSong.add_track(new_progression_track)
+		
+	
+	myPlayingSong = myMasterSong.clone()
+	#myPlayingSong.title = myMasterSong.title
+	#myPlayingSong.add_track(myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME))	
+		
+
 	
 	songTrackView.song = myMasterSong
 	songTrackView.trackName = Song.PROGRESSION_TRACK_NAME
@@ -194,7 +216,8 @@ func _ready():
 		rewindBtn.hide()
 		playHead.hide()
 		export_midi_btn.hide()
-		satb_solution_selector_knob.hide()
+		#satb_solution_selector_knob.hide()
+		satb_solution_Slider.hide()
 		menu_btn.hide()
 	else:
 		compute_satb_btn.show()
@@ -203,7 +226,8 @@ func _ready():
 		rewindBtn.hide()
 		playHead.hide()
 		export_midi_btn.show()
-		satb_solution_selector_knob.hide()
+		#satb_solution_selector_knob.hide()
+		satb_solution_Slider.hide()
 		menu_btn.hide()
 	
 	#myScene.grab_focus()
@@ -222,23 +246,24 @@ func set_song_display():
 	song_title_lbl.text = myMasterSong.title
 	
 func run_debug_test():
-	pass
-#	
-#	var k1:HarmonicKey = HarmonicKey.new()
-#	k1.scale_name = "major"
-#	k1.root = 0
-#	var d1:Degree = Degree.new()
-#	d1.key = k1
+	var d:Degree = Degree.new()
+	d.set_realization([1,3,5])
+#	var hk:HarmonicKey = HarmonicKey.new()
+#	hk.scale_name = "major"
+#	hk.root_midi = 0
+#	var clone = hk.clone()
 #
-#	var k2:HarmonicKey = HarmonicKey.new()
-#	k2.scale_name = "major"
-#	k2.root = 4
-#	var d2:Degree = Degree.new()
-#	d2.key = k2
-#	var r = get_modulation_degrees(d1,d2)
-#	LogBus.debug(TAG,"MODULATION "+ str(r.size()))
-#	for d in r:
-#		LogBus.debug(TAG,d.to_string())
+#	var tr:Track = Track.new()
+#	for i in range(0,4):
+#
+#		var d:Degree = Degree.new()
+#		d.key  = hk
+#		d.degree_number = i
+#		d.length_beats = 1
+#		tr.add_degree(i,d)
+
+	
+
 		
 func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 	var progressions = []
@@ -254,15 +279,12 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 	
 	
 	if d_from.degree_number != 1 or d_to.degree_number != 1 or ["minor","major"].has(d_from.key.scale_name) == false or ["minor","major"].has(d_to.key.scale_name) == false or d_from.kind != "diatonic" or d_to.kind != "diatonic" :
-		LogBus.info(TAG,"modulation can only be applied to diatonic major or minor chords")
+		#LogBus.info(TAG,"modulation can only be applied to diatonic major or minor chords")
 		return []
 	
 	# on récupère toutres les modulations possibles
 	#get_all_modulations(from_key:int,from_mode:String, to_key: int, to_mode:String) -> Array:
 	var modulations = modManager.get_all_modulations(d_from.key.root_midi % 12,d_from.key.scale_name, d_to.key.root_midi % 12,d_to.key.scale_name)
-	
-	LogBus.debug(TAG,"modulations.size(): " + str(modulations.size()))
-	
 	
 	if modulations.size() == 0:
 		LogBus.debug(TAG,"No path found")
@@ -277,7 +299,6 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 			filtered.append(p)
 		elif other_technique_cb.pressed :
 			filtered.append(p)
-	LogBus.debug(TAG,"after technique: " + str(filtered.size()))	
 	
 	# filtre style
 	modulations = filtered
@@ -292,13 +313,15 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 		elif classical_cb.pressed and  p["style"].has("classical") :
 			filtered.append(p)
 	
-	#LogBus.debug(TAG,"after style: " + str(filtered.size()))		
 	
 	if filtered.size() == 0:
-		LogBus.info(TAG,"No modulation Path found")
+		#LogBus.info(TAG,"No modulation Path found")
+		return []
 	
 	LogBus.info(TAG,"modulation -> found " + str(filtered.size()) + " paths\n")
 	var selected = null
+	
+	
 	if random_modulation_cb.pressed and filtered.size() > 1:
 		var solution_number = rng.randi()%filtered.size()
 		LogBus.info(TAG,"choosed solution #" + str(solution_number + 1))
@@ -334,7 +357,7 @@ func get_modulation_degrees(d1:Degree,d2:Degree)-> Array:
 			d.realization = [1,3,5,7]
 		d.inversion = c["inversion"]
 		var tech = selected["modulation_technique"].replace("_"," ")
-		d.comment = tech + " modulation explained from key C: " +  c["comment"]
+		d.comment = tech + "\nmodulation: " +  c["comment"]
 		degrees.append(d)
 		
 	return degrees
@@ -368,24 +391,24 @@ func _on_trackDisplayMode_item_selected(index):
 
 
 func _on_trackViewScale_sl_value_changed(value):
-	LogBus.debug(TAG,"zoom changes")
 	songTrackView.set_scale(value)
 
 func _process(_delta):
-	if midi_player.playing :
-		playStopBtn.text = "Stop"
-		var pos = midi_player.position
-		if anim_songTrack_view :
-			songTrackView.set_playing_pos_ticks(pos)
-			playHead.modulate.a = .5 + .5 *(sin(pos * 2*PI / 480))
-			playHead.show()
-		#$tracePos_label.text = str(pos)
-	else :
-		if song_playing_ended == false :
-			song_playing_ended = true
-			playStopBtn.text = "Play"	
-			playHead.hide()
-			rewind()
+	if midi_player:
+		if midi_player.playing :
+			playStopBtn.text = "Stop"
+			var pos = midi_player.position
+			if anim_songTrack_view :
+				songTrackView.set_playing_pos_ticks(pos)
+				playHead.modulate.a = .5 + .5 *(sin(pos * 2*PI / 480))
+				playHead.show()
+			#$tracePos_label.text = str(pos)
+		else :
+			if song_playing_ended == false :
+				song_playing_ended = true
+				playStopBtn.text = "Play"	
+				playHead.hide()
+				rewind()
 
 
 func _on_playStop_btn_pressed():
@@ -406,10 +429,8 @@ func _on_playStop_btn_pressed():
 		if marker_starting_pos_in_ticks > -1 :
 			posInTicks = marker_starting_pos_in_ticks
 		else:
-			#posInTicks = 960 * (songTrackView.get_scroll_beats() * 60 /  myPlayingSong.tempo_bpm)
 			posInTicks = 480 * (songTrackView.get_scroll_beats())
-			#LogBus.debug(TAG,"songTrackView.get_scroll_beats(): " + str(songTrackView.get_scroll_beats()))
-			#LogBus.debug(TAG,"posInTicks: " + str(posInTicks))
+
 		anim_songTrack_view = true
 		playStopBtn.text = "Stop"
 		midi_player.play(posInTicks)	
@@ -448,7 +469,7 @@ func get_params_from_dashboard(_seed:int = 1) -> Dictionary:
 
 func _on_Generate_btn_pressed():
 	add_current_progression_track_to_undo()
-
+	clear_console()
 	midi_player.stop()
 	playStopBtn.text = "Play"
 	
@@ -477,9 +498,7 @@ func _on_Generate_btn_pressed():
 	
 
 #
-#	#LogBus.debug(TAG,"NOMBRE D'ACCORDS: "+ str(nb_chords_per_bar) + " x " + str(nb_chords_per_bar) + " = " + str(nb_bars * nb_chords_per_bar))
 #
-
 	
 	
 	#var rng = RandomNumberGenerator.new()
@@ -488,6 +507,8 @@ func _on_Generate_btn_pressed():
 
 	tr = Track.new()
 	tr.name = Song.PROGRESSION_TRACK_NAME
+	
+
 	
 	var myPreviousTrack = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
 	if myPreviousTrack == null:
@@ -554,16 +575,12 @@ func _on_Generate_btn_pressed():
 			tr.add_degree(pos,d)
 			pos += duration2
 
-	#myMasterSong = Song.new()
 
-	#myMasterSong.remove_track_by_name(Song.PROGRESSION_TRACK_NAME)
-
+	
 	myPreviousTrack.merge_track(tr,previous_length)
 	myMasterSong.remove_track_by_name(Song.PROGRESSION_TRACK_NAME)
 	myMasterSong.add_track(myPreviousTrack)
-	
-	#LogBus.debug(TAG,"tr -> " + tr.to_string())  
-	#LogBus.debug(TAG,"myMasterSong -> " + myMasterSong.to_string())  
+	  
 	myPlayingSong.remove_track_by_name(Song.PROGRESSION_TRACK_NAME)
 	myPlayingSong.add_track(myPreviousTrack)
 	myPlayingSong.title = myMasterSong.title
@@ -625,11 +642,14 @@ func _randomize_seed():
 
 
 func _on_tempo_sb_value_changed(value):
+	MusicLabGlobals.yield(self)
 	myPlayingSong.tempo_bpm = value
 	myMasterSong.tempo_bpm = value
-	midi_player.stop()
-	rewind()
-	playStopBtn.text = "Play"
+	if midi_player :
+		midi_player.stop()
+		rewind()
+		playStopBtn.text = "Play"
+	
 	
 	
 	
@@ -644,7 +664,7 @@ func _on_Export_midi_btn_pressed():
 		filename += " [SATB]"
 	else:	
 		bytes = myPlayingSong.get_midi_bytes_type1()
-		filename += " "
+		#filename += " "
 		
 	if bytes.size() <= 0:
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
@@ -654,8 +674,10 @@ func _on_Export_midi_btn_pressed():
 		var MFT:MidiFileTools = MidiFileTools.new()
 		bytes = MFT.same_pitch_legato(bytes,1)	
 		filename += "[Legato]" 
-	filename += ".mid"
+	#filename += ".mid"
 	LogBus.info(TAG,MusicLabGlobals.save_midi_bytes_to_midi_file(bytes,filename))
+	
+	
 #	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
 #		_html5_download_bytes(bytes, filename, mime_type)
 #	else:
@@ -729,7 +751,7 @@ func _on_Export_midi_btn_pressed():
 #	f.close()
 
 func _input(event):
-	if event is InputEventKey :
+	if event is InputEventKey and song_title_lbl.has_focus() == false:
 		#accept_event()
 		if  event.is_released():
 			return
@@ -738,13 +760,14 @@ func _input(event):
 		var wrappers = songTrackView.get_wrappers()
 
 		# PRINT event.scancode
-		LogBus.debug(TAG,"event.scancode: "+ str(event.scancode))
+		#LogBus.debug(TAG,"event.scancode: "+ str(event.scancode))
 		
 		# 61 -> =  egalize octaves
 		if event.scancode == 61:
 			var track:Track= songTrackView.get_track()
 			if track == null or track.get_degrees_array().size() < 2 :
 				return
+			clear_console()
 			LogBus.info(TAG,"Chords octave adjusted")
 			track.adjust_track_degree_octaves()
 			update_songTrackView_withSelection()
@@ -892,7 +915,6 @@ func _input(event):
 					var from:float = selected_wrappers[0].get_meta("start_time")
 					var to:float = selected_wrappers[-1].get_meta("start_time")  + last_selected_degree.length_beats
 					track_clip_board = prog_track.extract(from,to,true)
-					#LogBus.debug(TAG, "clipboard: " + track_clip_board.to_string())
 					var nb_chords = selected_wrappers.size()
 					if nb_chords == 1:
 						LogBus.info(TAG,"One chord pasted to the clipboard")
@@ -932,7 +954,6 @@ func _input(event):
 						LogBus.info(TAG,"One chord cut and pasted to the clipboard")
 					else :
 						LogBus.info(TAG,str(nb_chords) + " chords cut and pasted to the clipboard")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					wrappers = songTrackView.get_wrappers()
 					if wrappers.size() == 0:
 						generate_btn.show()
@@ -976,7 +997,6 @@ func _input(event):
 						LogBus.info(TAG,"One chord pasted to the progression")
 					else :
 						LogBus.info(TAG,str(nb_chords) + " chords pasted to the progression")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					return
 				
 				# COMMAND- M - MODULATION
@@ -1000,6 +1020,7 @@ func _input(event):
 					
 					if degrees.size() == 0:
 						LogBus.info(TAG, "No modulation path found")
+						LogBus.info(TAG, "\nCheck the filters settings on the Modulation panel")
 						return
 					
 					############ !!!!!!!!!!!!!!!!!!! ##############
@@ -1068,7 +1089,6 @@ func _input(event):
 					var nb_chords = modulation_track.get_degrees_array().size()
 					LogBus.info(TAG,"\n" +str(nb_chords - 2) + " modulation chords added to the progression\n")
 					LogBus.info(TAG,"Click on the modulation chords to display modulation report.")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					return
 			
 			
@@ -1083,7 +1103,6 @@ func _input(event):
 					var from:float = selected_wrappers[0].get_meta("start_time")
 					var to:float = selected_wrappers[-1].get_meta("start_time")  + last_selected_degree.length_beats
 					#track_clip_board = prog_track.extract(from,to,true)
-					#LogBus.debug(TAG, "clipboard: " + track_clip_board.to_string())
 					# On copie le début de la track
 					var new_track:Track = prog_track.extract(0,from)
 					var end_pos:float = prog_track.length_beats
@@ -1104,7 +1123,6 @@ func _input(event):
 						LogBus.info(TAG,"One chord deleted")
 					else :
 						LogBus.info(TAG,str(nb_chords) + " chords deleted")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					wrappers = songTrackView.get_wrappers()
 					if wrappers.size() == 0:
 						generate_btn.show()
@@ -1191,21 +1209,17 @@ func _input(event):
 						LogBus.info(TAG,"One chord has been duplicated")
 					else :
 						LogBus.info(TAG,str(nb_chords) + " chords have been duplicated")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					return
 			
 
 
 				# DOMINANTES SECONDAIRES
 				elif [53,16777355,55,16777357,50,16777352,39,16777354].has(event.scancode) :
-					
-					LogBus.debug(TAG,"BLOC DOMINANTE SECONDAIRE event -> " + str(event.scancode) )
-					
+										
 					if selected_wrappers.size() != 1:
 						LogBus.error(TAG,"You must select ONE chord to set a secondary")
 						return					
 					var current_wrapper = selected_wrappers[0]
-					#LogBus.debug(TAG,"indice current wrapper -> " + str(current_wrapper.get_meta("index")))
 					var next_wrapper = get_next_wrapper(current_wrapper)
 					if current_wrapper.has_meta("degree") == false:
 						LogBus.error(TAG,"current_wrapper is not a Degree in _input() / secondary")
@@ -1231,7 +1245,6 @@ func _input(event):
 						current_degree._is_secondary = true
 					
 					
-					#LogBus.debug(TAG,"current_degree.to_string" + current_degree.to_string())
 					var idx = current_wrapper.get_meta("index")
 					
 					# si 5 -> dominante V
@@ -1254,9 +1267,7 @@ func _input(event):
 						# si déjà viiø/ on change en vii°7
 						if current_degree.degree_number == 7 and current_degree._is_secondary == true:
 							if current_degree.key.scale_name == "major":
-								LogBus.debug(TAG,"already 7/")
 								current_degree.key.set_scale_name("harmonic_minor")
-								LogBus.debug(TAG,"-> set_scale_name(harmonic_minor -> "+current_degree.key.scale_name)
 								current_degree.realization = [1,3,5,7]
 								current_degree._is_secondary = true
 								LogBus.info(TAG,"Chord #"+str(idx)+" set to secondary vii°/"+  next_degree.get_roman_numeral())
@@ -1265,9 +1276,7 @@ func _input(event):
 								update_songTrackView_withSelection()
 								return
 							elif current_degree.key.scale_name == "harmonic_minor" and current_degree._is_secondary == true:
-								LogBus.debug(TAG,"already 7°/")
 								current_degree.key.set_scale_name("major")
-								LogBus.debug(TAG,"-> set_scale_name(major) -> "+current_degree.key.scale_name)
 								current_degree.realization = [1,3,5,7]
 								current_degree._is_secondary = true
 								LogBus.info(TAG,"Chord #"+str(idx)+" set to secondary viiø/"+  next_degree.get_roman_numeral())
@@ -1277,7 +1286,6 @@ func _input(event):
 								return
 								
 						else:
-							LogBus.debug(TAG,"else !-> secondary set viiø/"+  next_degree.get_roman_numeral())						
 							current_degree.degree_number = 7
 							current_degree._octave += -1
 							current_degree.realization = [1,3,5,7]
@@ -1363,8 +1371,6 @@ func _input(event):
 					d.chromatizeDown()
 
 					if d.comment ==  "chromatized chord":
-						#LogBus.debug(TAG,"chromatized !!!")
-						#LogBus.debug(TAG,"d -> " + d.to_string())
 						update_songTrackView_withSelection()		
 						play_wrapper(selected_wrappers[0])
 					return
@@ -1383,8 +1389,6 @@ func _input(event):
 					d.chromatizeUp()
 
 					if d.comment ==  "chromatized chord":
-						#LogBus.debug(TAG,"chromatized !!!")
-						#LogBus.debug(TAG,"d -> " + d.to_string())
 						update_songTrackView_withSelection()		
 						play_wrapper(selected_wrappers[0])
 					return					
@@ -1406,8 +1410,6 @@ func _input(event):
 					d.chromatize()
 
 					if d.comment ==  "chromatized chord":
-						LogBus.debug(TAG,"chromatized !!!")
-						LogBus.debug(TAG,"d -> " + d.to_string())
 						update_songTrackView_withSelection()		
 						play_wrapper(selected_wrappers[0])
 					return
@@ -1429,7 +1431,6 @@ func _input(event):
 					var from:float = selected_wrappers[0].get_meta("start_time")
 					var to:float = selected_wrappers[-1].get_meta("start_time")  + last_selected_degree.length_beats
 					#track_clip_board = prog_track.extract(from,to,true)
-					#LogBus.debug(TAG, "clipboard: " + track_clip_board.to_string())
 					# On copie le début de la track
 					var new_track:Track = prog_track.extract(0,from)
 					var mid_track:Track =  prog_track.extract(from,to)
@@ -1452,7 +1453,6 @@ func _input(event):
 					songTrackView.update_ui()
 					var nb_chords = selected_wrappers.size()
 					LogBus.info(TAG,"Selection duration divided by 2")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					wrappers = songTrackView.get_wrappers()
 					update_songTrackView_withSelection()
 					return
@@ -1474,7 +1474,6 @@ func _input(event):
 					var from:float = selected_wrappers[0].get_meta("start_time")
 					var to:float = selected_wrappers[-1].get_meta("start_time")  + last_selected_degree.length_beats
 					#track_clip_board = prog_track.extract(from,to,true)
-					#LogBus.debug(TAG, "clipboard: " + track_clip_board.to_string())
 					# On copie le début de la track
 					var new_track:Track = prog_track.extract(0,from)
 					var mid_track:Track =  prog_track.extract(from,to)
@@ -1497,7 +1496,6 @@ func _input(event):
 					songTrackView.update_ui()
 					var nb_chords = selected_wrappers.size()
 					LogBus.info(TAG,"Selection duration multiplied by 2")
-					#LogBus.debug(TAG, "clipboard: " + new_track.to_string())
 					wrappers = songTrackView.get_wrappers()
 
 
@@ -1531,7 +1529,6 @@ func _input(event):
 						return
 				
 				if event.scancode == 69 :
-					#LogBus.debug(TAG,"Enharmonic")
 					if selected_wrappers.size() != 1:
 						LogBus.info(TAG,"Enharmony can only be set to ONE selected chord")
 						return
@@ -1541,7 +1538,7 @@ func _input(event):
 					var selected_degree:Degree = selected_wrapper.get_meta("degree")
 					# on gere enharmonize dans Degree !
 					selected_degree.enharmonize()
-					#LogBus.debug(TAG,"enhamo string: " + selected_degree.enharmonic_string)
+
 					
 					update_songTrackView_withSelection()		
 					play_wrapper(selected_wrapper)
@@ -1550,10 +1547,7 @@ func _input(event):
 			
 				# / -> SPLIT
 				elif event.scancode == 58 or  event.scancode == 16777346 :	
-					#LogBus.debug(TAG,"Pressed /")
-					
-					#var prog_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
-					
+
 					if wrappers.size() == 0 :
 						LogBus.info(TAG,"The chord progression is empty !")
 						return
@@ -1624,9 +1618,7 @@ func _input(event):
 
 				# J -> JOIN
 				elif event.scancode == 74 :	
-					LogBus.debug(TAG,"Pressed J")
 					
-					#var prog_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
 					
 					if wrappers.size() == 0 :
 						LogBus.info(TAG,"The chord progression is empty !")
@@ -1814,9 +1806,7 @@ func _input(event):
 					
 				#  1 2 3 4 5 6 7 -> change le numéro de degré du/des degrés selectionnés
 				elif event.scancode == 16777351 or event.scancode == 49:
-					#LogBus.debug(TAG,"TOUCHE 1")
-					#Touche 1
-					#accept_event() # Empêche l'événement de se propager à d'autres nœuds
+
 					if selected_wrappers.size() == 0 :
 						LogBus.info(TAG,"No selected Degree !")
 						return
@@ -2267,7 +2257,6 @@ func _input(event):
 								LogBus.info(TAG,"chord#" + str(idx+1) + " reversed down")
 							
 							
-								#LogBus.debug(TAG,"après: " + str(el.inversion))
 					play_wrapper(last_selected_wrapper)
 					update_songTrackView_withSelection()
 					return
@@ -2333,7 +2322,6 @@ func _input(event):
 								el.set_cad64()
 								var idx = w.get_meta("index")
 								LogBus.info(TAG,"Chord #"+ str(idx)+ "set to Cad64 -> Cadential 64")
-								#LogBus.debug(TAG,"w.element ? ->"+w.get_meta("degree").to_string())	
 								clean_secondaries(w)
 								play_wrapper(last_selected_wrapper)
 					
@@ -2358,29 +2346,10 @@ func _input(event):
 						stringInversed = "inversed "
 					else:
 						current_degree.set_aug6_It()
-					# on ajuste key par rapport à ce qui suit
-					var next_wrapper = get_next_wrapper(w)
-					var next_degree:Degree = next_wrapper.get_meta("degree")
-					if next_degree.kind == "cad64" or next_degree.degree_number == 5:
-						current_degree.key = next_degree.key
-					else :  # on vise un accord quelconque
-						var target_degree_key = next_degree.key
-						var next_degree_midi_note = target_degree_key.degree_midi(next_degree.degree_number) 
-						#LogBus.debug(TAG,"next_degree_midi_note: "+ str(next_degree_midi_note))
-						var next_degree_triade = next_degree.triad_quality()
-						var aug6key = HarmonicKey.new()
-						if next_degree_triade == "maj":
-							aug6key.scale_name = "major"
-						else :
-							aug6key.scale_name = "major"
-						aug6key.root_midi = (next_degree_midi_note + 5 ) % 12
-						current_degree.key = aug6key
+
 						
 					LogBus.info(TAG,"Chord #"+ str(idx) +  " set to "+ current_degree.kind +" -> Italian "+ stringInversed +"Augmented Sixth")
-					LogBus.info(TAG,"Target: "+ next_degree.get_roman_numeral() +  " of "+ next_degree.key.to_string() +" ("+ next_degree.get_jazz_chord() +")")
-					
-					#clean_secondaries(w)
-					current_degree._is_secondary = true
+
 					play_wrapper(w)
 					update_songTrackView_withSelection()
 					return
@@ -2400,28 +2369,9 @@ func _input(event):
 						stringInversed = "inversed "
 					else:
 						current_degree.set_aug6_Fr()
-					# on ajuste key par rapport à ce qui suit
-					var next_wrapper = get_next_wrapper(w)
-					var next_degree:Degree = next_wrapper.get_meta("degree")
-					if next_degree.kind == "cad64" or next_degree.degree_number == 5:
-						current_degree.key = next_degree.key
-					else :  # on vise un accord quelconque
-						var target_degree_key = next_degree.key
-						var next_degree_midi_note = target_degree_key.degree_midi(next_degree.degree_number) 
-						#LogBus.debug(TAG,"next_degree_midi_note: "+ str(next_degree_midi_note))
-						var next_degree_triade = next_degree.triad_quality()
-						var aug6key = HarmonicKey.new()
-						if next_degree_triade == "maj":
-							aug6key.scale_name = "major"
-						else :
-							aug6key.scale_name = "major"
-						aug6key.root_midi = (next_degree_midi_note + 5 ) % 12
-						current_degree.key = aug6key
-						
+#
 					LogBus.info(TAG,"Chord #"+ str(idx) +  " set to "+ current_degree.kind +" -> French "+ stringInversed +"Augmented Sixth")
-					LogBus.info(TAG,"Target: "+ next_degree.get_roman_numeral() +  " of "+ next_degree.key.to_string() +" ("+ next_degree.get_jazz_chord() +")")
-					#clean_secondaries(w)
-					current_degree._is_secondary = true
+
 					play_wrapper(w)
 					update_songTrackView_withSelection()
 					return
@@ -2430,7 +2380,6 @@ func _input(event):
 					
 				# G -> Ger+6
 				elif event.scancode == 71 :
-					#accept_event() # Empêche l'événement de se propager à d'autres nœuds
 					if selected_wrappers.size() != 1 :
 						LogBus.info(TAG,"you must select ONE chord to apply an augmented Sixth ")
 						return
@@ -2444,28 +2393,12 @@ func _input(event):
 						stringInversed = "inversed "
 					else:
 						current_degree.set_aug6_Ger()
-					# on ajuste key par rapport à ce qui suit
-					var next_wrapper = get_next_wrapper(w)
-					var next_degree:Degree = next_wrapper.get_meta("degree")
-					if next_degree.kind == "cad64" or next_degree.degree_number == 5:
-						current_degree.key = next_degree.key
-					else :  # on vise un accord quelconque
-						var target_degree_key = next_degree.key
-						var next_degree_midi_note = target_degree_key.degree_midi(next_degree.degree_number) 
-						#LogBus.debug(TAG,"next_degree_midi_note: "+ str(next_degree_midi_note))
-						var next_degree_triade = next_degree.triad_quality()
-						var aug6key = HarmonicKey.new()
-						if next_degree_triade == "maj":
-							aug6key.scale_name = "major"
-						else :
-							aug6key.scale_name = "major"
-						aug6key.root_midi = (next_degree_midi_note + 5 ) % 12
-						current_degree.key = aug6key
+
 						
 					LogBus.info(TAG,"Chord #"+ str(idx) +  " set to "+ current_degree.kind +" -> German "+ stringInversed +"Augmented Sixth")
-					LogBus.info(TAG,"Target: "+ next_degree.get_roman_numeral() +  " of "+ next_degree.key.to_string() +" ("+ next_degree.get_jazz_chord() +")")
+					#LogBus.info(TAG,"Target: "+ next_degree.get_roman_numeral() +  " of "+ next_degree.key.to_string() +" ("+ next_degree.get_jazz_chord() +")")
 					#clean_secondaries(w)
-					current_degree._is_secondary = true
+					#current_degree._is_secondary = true
 					play_wrapper(w)
 					update_songTrackView_withSelection()
 					return
@@ -2513,11 +2446,9 @@ func _input(event):
 								var scale = null
 								var sc = ScaleHelper.new()
 								var scales = sc.list_scales()
-								#LogBus.debug(TAG,"sc.list_scales()" + str(sc.list_scales()))
 								var found = scales.find(d.key.get_scale_name())
 								if found > -1 :
 									scale = scales[(found + 1)%scales.size()]
-									#LogBus.debug(TAG,"scales[(found + 1)%scales.size()] -> " + scale)
 								var k:HarmonicKey = HarmonicKey.new()
 								var old_root = d.key.get_root_string()
 								var old_rn = d.get_roman_numeral()
@@ -2650,19 +2581,16 @@ func _input(event):
 								var old_key = el.key
 								var new_key:HarmonicKey =  old_key.clone()
 								
-								#LogBus.debug(TAG,"debug oldkey -> newkey" + old_key.to_string() + "-> " + new_key.to_string())
 								
 								if event.scancode == 85 :
 									#upper key
 									new_key.root_midi = 60 + (old_key.root_midi + 7) % 12
 									if Input.is_key_pressed(KEY_SHIFT):
-										LogBus.debug(TAG,"ALT PRESSED")
 										el.degree_number = 1 + (el.degree_number + 2) % 7
 								else:
 									#lower key
 									new_key.root_midi = 48 + (old_key.root_midi +5 ) % 12
 									if Input.is_key_pressed(KEY_SHIFT):
-										LogBus.debug(TAG,"ALT PRESSED")
 										el.degree_number = 1 + (el.degree_number + 3) % 7
 								el.key = new_key
 								if event.scancode == 85 :
@@ -2725,7 +2653,6 @@ func _input(event):
 				if event.scancode == 16777231 or event.scancode == 16777233:
 					#accept_event() # Empêche l'événement de se propager à d'autres nœuds
 					# on cherche les wrappers sélectionnés
-					LogBus.debug(TAG,"on y est -> "+ str(wrappers.size()))
 					if wrappers.size() > 0:
 						songTrackView.select_only_wrapper(wrappers[0])
 						songTrackView.update()
@@ -2759,7 +2686,8 @@ func _on_help_btn_pressed():
 	txt += "[Control] X / C / V to cut / copy / paste the selected chords\n"
 	txt += "Clipboard chords will be inserted after your selection.\n"
 	txt += "[Control][Backspace]: Delete the selected chords\n"
-	txt += "[Control] R : Repeat the selected chords\n"
+	txt += "[Control] R or D: Repeat the selected chords\n"
+	txt += "[D] / [H]: double / half length applied to the selected chords\n"
 	txt += "[Control] Z : Undo\n"
 	txt += "[Control] Y : Redo\n"
 	
@@ -2782,12 +2710,14 @@ func _on_help_btn_pressed():
 	txt += "[M] : Mixture, change the selected chords key to their parallel key:\n" 
 	txt += "major -> minor or harmonic_minor -> major..."
 	txt += "[Shift][M] : Extended Mixture, major, minor and modes...:\n" 
+	txt += "[Control][M] : Compute a random modulation path between 2 chords tonality:\n" 
+	txt += '(Use the "Modulation" panel to set the modulation techniques applied)'
 	txt += "[Alt][3] : set a third alteration to the selected chord\n"
 	txt += "[Alt][5] : set a fifth alteration to the selected chord\n"
 	txt += "[Backspace]: Reset the chord to the first diatonic degree of key C Major\n" 
 	txt += "[T]: Tonalize the current chord -> set the key so the chord is the tonic of the new key\n" 
 	txt += "[E] : Enharmonize the selected chord: The magic door of the harmonic trans-dimensional modulation*\n" 
-	txt += "(*under construction)\n" 
+	
 	
 	
 	
@@ -2813,9 +2743,6 @@ func add_current_progression_track_to_undo():
 	var song:Song = songTrackView.song
 	var track:Track = song.get_track_by_name(track_name).clone()
 	_undo_tracks.append(track)
-	#LogBus.debug(TAG,">>>>> RESTORED AFTER _redo_tracks.size():" + str(_redo_tracks.size()))
-	#LogBus.debug(TAG,">>>>> RESTORED AFTER _undo_tracks.size():" + str(_undo_tracks.size()))
-	#LogBus.debug(TAG, "track stored un undo: "+track.to_string())
 	if _undo_tracks.size() > _max_undo_levels:
 		var trash = _undo_tracks.pop_front()
 		
@@ -2823,7 +2750,7 @@ func add_current_progression_track_to_undo():
 
 func restore_redo_track():
 	if _redo_tracks.size() > 0:
-		#LogBus.debug(TAG,"restore redo !")
+
 		midi_player.stop()
 		playStopBtn.text = "Play"
 		var current_song = songTrackView.song
@@ -2831,8 +2758,8 @@ func restore_redo_track():
 		var current_track = current_song.get_track_by_name(current_track_name)
 		_undo_tracks.append(current_track.clone())
 		var restored_track:Track = _redo_tracks.pop_back().clone()
-		#LogBus.debug(TAG,">>>>> REDO AFTER _redo_tracks.size():" + str(_redo_tracks.size()))
-		#LogBus.debug(TAG,">>>>> REDO AFTER _undo_tracks.size():" + str(_undo_tracks.size()))
+
+
 		restored_track.name = Song.PROGRESSION_TRACK_NAME
 		myMasterSong.remove_track_by_name(Song.PROGRESSION_TRACK_NAME)
 		myMasterSong.add_track(restored_track)
@@ -2852,13 +2779,10 @@ func restore_redo_track():
 func restore_undo_track():
 	if _undo_tracks.size() > 0:
 		
-#		
-		#LogBus.debug(TAG,"Track to restore" + _undo_tracks[-1].to_string())
-		
-		#LogBus.debug(TAG,"restore undo !")
+
 		midi_player.stop()
 		playStopBtn.text = "Play"
-		#LogBus.debug(TAG,">>>>> RESTORED BEFORE _undo_tracks.size():" + str(_undo_tracks.size()))
+
 		
 		var current_song = songTrackView.song
 		var current_track_name = songTrackView.trackName
@@ -2866,9 +2790,7 @@ func restore_undo_track():
 		_redo_tracks.append(current_track.clone())
 		
 		var restored_track:Track = _undo_tracks.pop_back()
-		#_redo_tracks.append(restored_track.clone())
-		#LogBus.debug(TAG,">>>>> UNDO AFTER _redo_tracks.size():" + str(_redo_tracks.size()))
-		#LogBus.debug(TAG,">>>>> UNDO AFTER _undo_tracks.size():" + str(_undo_tracks.size()))
+
 		restored_track.name = Song.PROGRESSION_TRACK_NAME
 		myMasterSong.remove_track_by_name(Song.PROGRESSION_TRACK_NAME)
 		myMasterSong.add_track(restored_track)
@@ -2898,50 +2820,14 @@ func update_songTrackView_withSelection():
 func _on_SongTrackView_element_right_clicked(_element,wrapper):
 	# on joue l'accord cliqué
 	var d:Degree = wrapper.get_meta("degree")
-	#var satbs = d.satbs
-#
-#	if d.satb_objects.size() > 0:
-#		var index = d.satb_index
-#		# on récupère les datas
-#		var satb_object = d.satb_objects[index]
-#		var check:bool = satb_object["check_notes"]
-#		var inversion =  satb_object["inversion"]
-#		var satb_chord_degrees = satb_object["satb_chord_degrees"]
-#		var note_names:Array = satb_object["satb_notes_name"]
-#		var satb_notes_midi:Array = satb_object["satb_notes_midi"]
-#		var score:int = satb_object["score"]
-#		var tension:float = satb_object["tension"]
-#		d.satb_index = (d.satb_index + 1) % d.satb_objects.size()
-#		# on affiche
-#
-#		var txt = "index: " + str(index) +"/"+str(d.satb_objects.size())+" -> "+ str(note_names) + "  check:" + str(check)
-#		var txt2 = "score: "+str(score) + " tension: "+ str(tension) + " inversion: "+ str(inversion)
-#		clear_console()
-#		LogBus.info(TAG,txt)
-#		LogBus.info(TAG,txt2)
-#
-#		# on increment index
-#
-#		play_notes(satb_notes_midi)
-#
-#	else :
-#		LogBus.debug(TAG,"You must click debug SATB before !")
-#
-#	var k = d.key
-#	var key_array = k.get_scale_array()
-#	var key_array_base_60 = []
-#	for i in range(0,7):
-#		key_array_base_60.append(60 + key_array[i])
-#
-#	var ggb = MusicLabGlobals.GuitarBase
-#	var midi_notes =  PoolIntArray(d.get_chord_midi())
+	
+	
 	var g_chords = d.guitar_chords()
 	if g_chords == null or g_chords.size() == 0:
 		LogBus.info(TAG,"No guitar Chord found")
 		return
 	clear_console()
 	LogBus.info(TAG, str(g_chords.size()) + " voicings found\n")
-	#LogBus.debug(TAG,"g_chords: " + str(g_chords.size()))
 	var idx = rng.randi() % g_chords.size()
 	var c = g_chords[idx]
 	
@@ -2978,10 +2864,9 @@ func _on_SongTrackView_element_clicked(element,index,wrapper):
 	if songTrackView._selected.keys().size() == 0 :
 		LogBus.info(TAG,"no selection")
 	elif songTrackView._selected.keys().size() == 1 :
-		#LogBus.info("TPF_demo","Index clicked = " + str(index))
 		if element is Degree :
-			LogBus.info(TAG,get_info_degree_txt(element))
-			#marker_starting_pos_in_ticks = wrapper.get_meta("start_time")
+			#LogBus.debug(TAG, JSON.print(element.to_dict(),"\t"))
+			LogBus.info(TAG, element.to_string())
 			play_wrapper(wrapper)			
 		else :
 			LogBus.error(TAG,"_on_SongTrackView_element_clicked() -> element is not a Degree !")
@@ -2992,11 +2877,9 @@ func _on_SongTrackView_element_clicked(element,index,wrapper):
 			if w.get_meta("selected") :
 				wsel.append(w.get_meta("index"))
 		var selected = songTrackView.get_selected_wrappers()
-		LogBus.info(TAG,str(selected.size())+ " chords selected")
+		LogBus.info(TAG,str(selected.size())+ " chord(s) selected")
 				
-		#LogBus.info("TPF_demo","selected region: " + str(wsel))
-		#LogBus.info("TPF_demo","_stv._selected " + str(_stv._selected))
-	#play_wrapper(wrapper)
+
 
 
 	
@@ -3182,22 +3065,16 @@ func _ask_progression_satbs():
 	var progression:Array = []
 	
 	var tr = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
-#	var tr_doubled:Track  = Track.new()
-#	tr_doubled.merge_track(tr,0,true)
-#
-#	if tr.get_degrees_array().size() < 9 :
-#		tr_doubled.merge_track(tr,tr.length_beats,true)
-#
-	
-	#LogBus.debug(TAG, "myMasterSong: "+str(myMasterSong.to_string()  ))
-	#LogBus.debug(TAG, "track: "+str(tr.to_string()  ))
+
+
+
 	var events = tr.events
 	var degrees_events:Array = []
 	for e in events:
 		if e.has("degree"):
 			degrees_events.append(e)
 			
-	#LogBus.debug(TAG,"degrees_events size: " + str(degrees_events.size())  )
+
 	
 	for i in range(0,degrees_events.size()):
 		var request:Dictionary = {}
@@ -3228,12 +3105,10 @@ func _ask_progression_satbs():
 			request["inversion"] = d.inversion
 		progression.append(request)
 		
-	
-	#LogBus.debug(TAG,"temperature: "+ str(temperature_SL.value))
-	#LogBus.debug(TAG,"temperature_proba: "+ str(temperature_proba_SL.value))
+
 
 	var request_data = {
-	"n_solutions": 300,
+	"n_solutions": 100,
 	"temperature": int(temperature_SL.value),
 	"temperature_apply_probability": temperature_proba_SL.value,
 	"seed" : -1,
@@ -3259,9 +3134,8 @@ func _ask_progression_satbs():
 	"allow_voicing_repetition":  (allow_repetition_cb.pressed == true)
 }
 
-	#request_data["temperature_apply_probability"] = 0.0  
 	
-	#LogBus.debug(TAG,">>>> request_data = "+ str(request_data["weights"]))
+
 	clear_console()
 	LogBus.info(TAG,"Computing SATB transitions\n")
 	LogBus.info(TAG,"Waiting for SATB solutions...\n")
@@ -3326,77 +3200,19 @@ func _on_debug_SATB_pressed():
 		request["distance_scoring_factor"] = -1 * distance_scoring_SL.value
 		request["center_scoring_factor"] = -1 * center_scoring_SL.value
 		
-		#request["best_distance"] = best_distance
-		
+
 		progression.append(request)
 
 
-		
-	
-#	var request_data = {
-#	"chords": progression,
-#	"stochasticity": stochasticity,
-#	"weights": {
-#		"bass_conjunct_bonus": 50,  # Privilégier basses conjointes
-#		"soprano_conjunct_bonus": 5  # Moins important
-#	},
-#	"anti_bach": false
-#}
+
 
 	# Solve progression renvoie les positions SATB  des degrés de la progressin en cours
 	clear_console()
-	#LogBus.debug(TAG,"progression = "+ str(progression))
 	satb_client.call_api("/solve-progression", progression, {"method":"solve-progression"})
 	LogBus.info(TAG,"SATB positions request sent...\n" )
 	LogBus.info(TAG, "request[center_target] = " + str(center_target_SL.value))
 	LogBus.info(TAG, "request[best_distance] = " + str(best_distance_SL.value))	
 
-# Callback unique pour toutes les réponses
-# OBSOLETE (On utilise func 
-# _on_SATBClient_api_response(response:Dictionary, context:Dictionary):)
-#func _on_satb_received(_response, _context):
-#	pass
-	#LogBus.debug(TAG,"response: " + str(response))
-	#LogBus.debug(TAG,"context: " + str(context))
-	
-	
-	
-"""	
-	if response.has("satb_arrays"):
-		# on a rcvu les satb
-		LogBus.info(TAG,"Compute SATB Response received !")
-		compute_satb_btn.visible = false
-		compute_satb_btn.disabled = false
-		
-		var wrappers = songTrackView.get_wrappers()
-		for satb_array in response["satb_arrays"]:
-			#LogBus.debug(TAG,"++++++++++++++++++++++++++++++++++++++++++++++++")
-			var index = satb_array["request"]["index"]
-			#LogBus.debug(TAG,"Index: "+ str(index))
-			var w = wrappers[index]
-			var d = w.get_meta("degree")
-			d.satb_dictionary = satb_array
-			
-			#LogBus.debug(TAG,"chords :" + str(chords))
-			#LogBus.debug(TAG,"nombre soluces: "+ str(satb_array.size()))
-			var satb_objects = satb_array["satb_objects"]
-		#	LogBus.debug(TAG,"satb_objects.size(): "+ str(satb_objects.size()))
-			var satbs = []
-			for satb in satb_objects :
-				satbs.append(satb["satb_notes_midi"])	
-		#	LogBus.debug(TAG,"satbs: " + str(satbs))
-			if satbs.size()>0 :
-				d.satbs = satbs
-				d.satb = satbs[0]
-				d.play_satb = true
-			else:
-				LogBus.error(TAG,"_on_satb_received() -> no satbs found")
-				LogBus.error(TAG,"request: " + str(satb_array["request"]))
-				
-				
-"""			
-		
-			
 
 
 func _on_web_api_mode_checkButton_toggled(button_pressed):
@@ -3444,7 +3260,6 @@ func _on_SATBClient_api_response(response:Dictionary, context:Dictionary):
 
 	# SATB TRANSITIONS		
 	elif context.has("method") and context["method"] =="solve-satb-transitions":
-		LogBus.debug(TAG,"solve-satb-transitions :" + str(response))
 		_on_export_console_btn_pressed()
 		store_SATBS(response)
 		
@@ -3452,8 +3267,8 @@ func _on_SATBClient_api_response(response:Dictionary, context:Dictionary):
 	# STAB POSITIONS -> TOUS LES SATB DE LA PROGRESSION pour chaque Degré de la progression
 	elif context.has("method") and context["method"] == "solve-progression" :
 		
-		#LogBus.debug(TAG,"received solve-progression !")
-		#LogBus.debug(TAG,"response: " + str(response))
+
+
 		LogBus.info(TAG,"\nSATB positions reveived.")
 		LogBus.info(TAG,"Right click on chords to sweep positions...")
 		_process_debug_SATB(response,context)
@@ -3462,7 +3277,6 @@ func _on_SATBClient_api_response(response:Dictionary, context:Dictionary):
 		LogBus.error(TAG,"context: " + str(context))
 
 func _on_SATBClient_api_error(error_code, context):
-	#LogBus.debug(TAG,"_on_SATBClient_api_error() Error !")
 	LogBus.error(TAG,"_on_SATBClient_api_response: error_code: " + str(error_code))
 	LogBus.error(TAG,"context: " + str(context))
 
@@ -3471,29 +3285,37 @@ func _process_debug_SATB(response,context):
 	var r = response
 	var satb_arrays = r["satb_arrays"]
 	var nb_satb_arrays = satb_arrays.size()
-	#LogBus.debug(TAG,"nb_satb_arrays: " + str(nb_satb_arrays))
 	for i in range(0,nb_satb_arrays):
 		
 		var d:Degree = wrappers[i].get_meta("degree")		
 		
-		#LogBus.debug(TAG,"===============================================")
 		var satb_objects_array = satb_arrays[i]["satb_objects"]
-		#LogBus.debug(TAG,"index chord: " + str(i) + "->" + str(satb_objects_array.size()) + " positions")
+
 		
 		d.satb_dictionary = satb_arrays[i]
 		d.satb_objects = satb_objects_array
 		d.satb_index = 0
 	
-		#for satb_object in satb_objects_array:
-			#LogBus.debug(TAG,"satb_object:" + str(satb_object))
-			#LogBus.debug(TAG,"...............................")
+
 	
 
 func _on_Edit_Progression_Btn_pressed():
+	
+	
 	clear_console()
 	LogBus.info(TAG,"Edit mode")
 	midi_player.stop()
 	playStopBtn.text = "Play"
+	
+	# on detruit les pistes SATB
+	myMasterSong.remove_track_by_name(Song.SATB_TRACK_NAME)
+	myMasterSong.remove_track_by_name(Song.SATB_SOPRANO)
+	myMasterSong.remove_track_by_name(Song.SATB_ALTO)	
+	myMasterSong.remove_track_by_name(Song.SATB_TENOR)
+	myMasterSong.remove_track_by_name(Song.SATB_BASS)
+	myMasterSong.satb_solutions_array = []
+	myMasterSong.satb_solutions_index = 0
+	
 	myPlayingSong = Song.new()
 	myPlayingSong.tempo_bpm = myMasterSong.tempo_bpm
 	myPlayingSong.time_num = myMasterSong.time_num
@@ -3505,7 +3327,8 @@ func _on_Edit_Progression_Btn_pressed():
 	songTrackView._update_all()
 	midi_player.load_from_bytes(myPlayingSong.get_midi_bytes_type1())
 	compute_satb_btn.text = "Compute SATB"
-	satb_solution_selector_knob.hide()
+	#satb_solution_selector_knob.hide()
+	satb_solution_Slider.hide()
 	is_displaying_SATB = false
 	is_computing_satb = false
 	songTrackView_view_display_mode_option.show()
@@ -3513,8 +3336,7 @@ func _on_Edit_Progression_Btn_pressed():
 	edit_progression_btn.hide()
 	menu_btn.hide()
 	rewind()# Replace with function body.
-	#LogBus.debug(TAG,"self: "+str(self))
-	#self.grab_focus()
+
 	
 
 
@@ -3572,7 +3394,6 @@ func display_SATB(satb_index:int):
 	var best_progression = satb_line["best_progression"]
 	#for chords in r["best_progression"]:
 	for chords in best_progression:
-		#LogBus.debug(TAG,"chords -> " + str(chords))
 		var index:int = chords["index"]
 		var pos:float = chords["pos"]
 		var length_beats:float = chords["length_beats"]
@@ -3645,7 +3466,6 @@ func display_SATB(satb_index:int):
 	myMasterSong.remove_track_by_name(Song.SATB_BASS)
 	
 	
-	LogBus.debug(TAG,"mySATBTrack.name: " + mySatbTrack.name)
 	myMasterSong.add_track(mySatbTrack)
 	myMasterSong.add_track(mySopranoTrack)
 	myMasterSong.add_track(myAltoTrack)
@@ -3683,7 +3503,8 @@ func display_SATB(satb_index:int):
 	#midi_player.load_from_bytes(myPlayingSong.get_midi_bytes_type1())
 	
 	
-	satb_solution_selector_knob.show()
+	#satb_solution_selector_knob.show()
+	satb_solution_Slider.show()
 	edit_progression_btn.show()
 	compute_satb_btn.show()
 	playStopBtn.show()
@@ -3700,10 +3521,13 @@ func store_SATBS(r):
 	LogBus.info(TAG,"Number of SATB solutions: "+ str(number_of_solutions))
 	if number_of_solutions > 0 :
 
-		satb_solution_selector_knob.max_value = number_of_solutions
-		satb_solution_selector_knob.min_value = 1
-		satb_solution_selector_knob.value = 0
+#		satb_solution_selector_knob.max_value = number_of_solutions
+#		satb_solution_selector_knob.min_value = 1
+#		satb_solution_selector_knob.value = 0
 		
+		satb_solution_Slider.max_value = number_of_solutions
+		satb_solution_Slider.min_value = 1
+		satb_solution_Slider.value = 1
 
 	else:
 		LogBus.error(TAG, "SATB number_of_solutions = 0 !")
@@ -3733,11 +3557,12 @@ func store_SATBS(r):
 
 
 
-func _on_satb_solution_selector_knob_value_changed(value):
-	if satb_solution_selector_knob != null:
-		myMasterSong.satb_solutions_index = value
-		display_SATB(satb_solution_selector_knob.get_value()-1)
-	
+#func _on_satb_solution_selector_knob_value_changed(value):
+#	if satb_solution_selector_knob != null:
+#		myMasterSong.satb_solutions_index = value
+#		display_SATB(satb_solution_selector_knob.get_value()-1)
+#
+#
 
 
 func _on_SATB_request_value_changed(_value):
@@ -3771,24 +3596,24 @@ func _on_SATB_Position_tab_value_changed(value):
 
 
 
-
-static func save_midi_file_from_bytes(filename: String = "", bytes:PoolByteArray = []) -> bool:
-	
-	# Gestion du nom du fichier
-	# si filename est "", on utilise Song.title
-	var path:String = ""
-
-	path = "user://"+filename+".mid"
-		
-	#var bytes = bytes
-	var f = File.new()
-	var err = f.open(path, File.WRITE)
-	if err != OK:
-		push_error("Song.save_midi_type1: can't open " + path + " (err " + String(err) + ")")
-		return false
-	f.store_buffer(bytes)
-	f.close()
-	return true
+#
+#static func save_midi_file_from_bytes(filename: String = "", bytes:PoolByteArray = []) -> bool:
+#
+#	# Gestion du nom du fichier
+#	# si filename est "", on utilise Song.title
+#	var path:String = ""
+#
+#	path = "user://"+filename+".mid"
+#
+#	#var bytes = bytes
+#	var f = File.new()
+#	var err = f.open(path, File.WRITE)
+#	if err != OK:
+#		push_error("Song.save_midi_type1: can't open " + path + " (err " + String(err) + ")")
+#		return false
+#	f.store_buffer(bytes)
+#	f.close()
+#	return true
 
 func scale_preview_string(key:HarmonicKey) -> String:
 	var d:Degree = Degree.new()
@@ -3801,7 +3626,32 @@ func scale_preview_string(key:HarmonicKey) -> String:
 
 
 func _on_menu_btn_pressed():
+	
+	# progression vide
+	if myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).get_degrees_array().size() == 0:
+		MusicLabGlobals.set_song(MusicLabGlobals.get_init_song())
+		get_tree().get_root().get_node("Main").change_scene_preloaded("menu")
+	# on nettoie satb_array
+	var satb_array = myMasterSong.satb_solutions_array
+	var saved_satb = satb_array[myMasterSong.satb_solutions_index]
+	var One_satb_array:Array = [saved_satb.duplicate(true)]
+	myMasterSong.satb_solutions_array = One_satb_array
+	myMasterSong.satb_solutions_index = 0
+	
 	MusicLabGlobals.set_song(myMasterSong)
+	MusicLabGlobals.save_current_song_autosave()
 	midi_player.stop()
 	#get_tree().get_root().get_node("Main").change_scene_preloaded("guitar_player_scene")
 	get_tree().get_root().get_node("Main").change_scene_preloaded("menu")
+
+
+
+
+func _on_debug_btn_pressed():
+	
+	var patternGen = GuitarPatternGenerator.new()
+	var pat:Dictionary = patternGen.generate("bossa")
+	LogBus.debug(TAG,"pattern: "+ JSON.print(pat,"\t"))
+	
+	
+

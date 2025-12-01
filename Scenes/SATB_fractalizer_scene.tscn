@@ -1,13 +1,13 @@
-[gd_scene load_steps=23 format=2]
+[gd_scene load_steps=45 format=2]
 
 [ext_resource path="res://assets/Blue_SATB_Fractalizer.PNG" type="Texture" id=1]
+[ext_resource path="res://Themes/script_minimal.tres" type="Theme" id=2]
 [ext_resource path="res://Scenes/SATB_fractalizer_scene.gd" type="Script" id=3]
 [ext_resource path="res://UI/vintage_knobs/Wedge85Knob.tscn" type="PackedScene" id=4]
 [ext_resource path="res://addons/musiclib/LegoBox/SongTrackView.tscn" type="PackedScene" id=5]
 [ext_resource path="res://Themes/musicLab_theme.tres" type="Theme" id=6]
-[ext_resource path="res://Fonts/uwch.ttf" type="DynamicFontData" id=7]
 [ext_resource path="res://Fonts/Hymnus212.ttf" type="DynamicFontData" id=8]
-[ext_resource path="res://them_popup_window_fractal.tres" type="Theme" id=9]
+[ext_resource path="res://Themes/them_popup_window_fractal.tres" type="Theme" id=9]
 [ext_resource path="res://Fonts/ShadowsIntoLight-Regular.ttf" type="DynamicFontData" id=10]
 
 [sub_resource type="GDScript" id=2]
@@ -53,11 +53,7 @@ size = 20
 font_data = SubResource( 3 )
 
 [sub_resource type="StyleBoxFlat" id=4]
-bg_color = Color( 1, 1, 1, 1 )
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
+bg_color = Color( 0.878431, 0.878431, 0.878431, 1 )
 border_color = Color( 0, 0, 0, 1 )
 border_blend = true
 corner_radius_top_left = 5
@@ -187,6 +183,39 @@ use_mipmaps = true
 use_filter = true
 font_data = ExtResource( 10 )
 
+[sub_resource type="GDScript" id=16]
+script/source = "extends VSlider
+
+
+onready var songTrackView = $\"../SongTrackView\"
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+
+
+func _on_zoom_slider_value_changed(value):
+	songTrackView.set_scale(value)
+"
+
+[sub_resource type="DynamicFontData" id=17]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=18]
+size = 21
+use_mipmaps = true
+use_filter = true
+extra_spacing_top = -13
+font_data = SubResource( 17 )
+
+[sub_resource type="StyleBoxFlat" id=19]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+
 [sub_resource type="DynamicFont" id=10]
 size = 50
 use_mipmaps = true
@@ -205,6 +234,22 @@ script/source = "extends OptionButton
 # var a = 2
 # var b = \"text\"
 
+var value:float = 8.0 setget set_value , get_value 
+
+
+func get_value()->float:
+	match selected:
+		0: return 16.0
+		1: return 12.0
+		2: return 8.0
+		3: return 4.0
+		4: return 2.0
+		5: return 1.0
+		_: return 8.0
+		
+func set_value(v):
+	pass
+		
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -215,25 +260,524 @@ func _ready():
 
 	# Applique la police au PopupMenu interne
 	get_popup().add_font_override(\"font\", font)
+
 "
 
-[sub_resource type="DynamicFont" id=9]
-size = 23
+[sub_resource type="GDScript" id=20]
+script/source = "extends OptionButton
+
+
+var value:float = .25 setget set_value,get_value
+
+func set_value(v:float):
+	pass
+
+func get_value()->float :	
+	match selected:
+		0: return 0.125
+		1: return 0.25
+		2: return 0.5
+		3: return 1.0
+		4: return 2.0
+		5: return 3.0
+		_: return 4.0
+
+
+func _ready():
+
+# Charge une police personnalisée (remplace \"res://path/to/font.ttf\")
+	var font = DynamicFont.new()
+	font.font_data = load(\"res://Fonts/Hymnus212.ttf\")
+	font.size = 30  # Taille de la police
+
+	# Applique la police au PopupMenu interne
+	get_popup().add_font_override(\"font\", font)
+
+
+"
+
+[sub_resource type="DynamicFontData" id=14]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=15]
+size = 40
+font_data = SubResource( 14 )
+
+[sub_resource type="GDScript" id=31]
+script/source = "extends LineEdit
+
+const TAG =\"lineEdit\"
+var ALLOWED = \"SATB\"
+onready var scene =  $\"../..\"
+
+# drapeau pour éviter la boucle quand on modifie .text dans text_changed
+var _ignore = false
+
+func _ready():
+	connect(\"text_changed\", self, \"_on_text_changed\")
+
+
+func _on_text_changed(new_text):
+	#
+	#guitar_player_scene.rewind()
+	if _ignore:
+		return
+	
+	# mémoriser caret
+	var old_caret = caret_position
+
+	# filtrer texte
+	var filtered = \"\"
+	var removed_before_caret = 0
+	#new_text = new_text.to_upper()
+	var i = 0
+	while i < new_text.length():
+		var c = new_text[i]
+		if c in ALLOWED:
+			filtered += c
+		else:
+			scene.clear_console()
+			LogBus.info(TAG,'Only \"S\" for Soprano, \"A\" for Alto, \"T\" for Tenor and \"B\" for Bass are allowed.')
+			# si le caractère supprimé était avant le caret, on décale
+			if i < old_caret:
+				removed_before_caret += 1
+		i += 1
+
+
+	#LogBus.debug(TAG,\"\\n>\"+  currentStrumPattern.pattern + \"<\")
+	filtered = filtered.to_upper()
+
+	# si rien à corriger, ne touche pas au caret
+	if filtered == new_text:
+		return
+	
+	# appliquer texte filtré
+	_ignore = true
+	text = filtered
+	_ignore = false
+	
+
+	
+	# ajuster caret
+	var new_caret = old_caret - removed_before_caret
+	if new_caret < 0:
+		new_caret = 0
+	if new_caret > filtered.length():
+		new_caret = filtered.length()
+
+	caret_position = new_caret
+
+
+#
+#func _gui_input(event):
+#
+#
+#
+#	if event is InputEventKey and event.pressed:
+#		# --- Détection de Enter / Return ---
+#		if event.scancode == KEY_ENTER :
+#			# Ici tu mets ce que tu veux faire quand Enter est pressé
+#			print(\"ENTER / RETURN détecté :\", text)
+#			LogBus.debug(TAG,\"ENTER DETECTED -> PREVIEW !\")
+#			# Tu peux remplacer par emit_signal(), callback parent, etc.
+#			accept_event()
+#			return
+#
+#
+#		var _char = OS.get_scancode_string(event.scancode)
+#		#_char = _char.to_lower()
+#
+#		if not (_char in ALLOWED):
+#			accept_event()
+"
+
+[sub_resource type="DynamicFont" id=21]
+size = 30
 use_mipmaps = true
 use_filter = true
-font_data = ExtResource( 7 )
+extra_spacing_space = -13
+font_data = ExtResource( 10 )
+
+[sub_resource type="StyleBoxFlat" id=22]
+bg_color = Color( 1, 1, 1, 1 )
+
+[sub_resource type="StyleBoxFlat" id=23]
+bg_color = Color( 1, 1, 1, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="GDScript" id=24]
+script/source = "extends Button
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+var value:bool = false 
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+
+
+func _on_Triolet_pressed():
+	value = not(value)
+	if value:
+		text = \"Triolet\"
+	else:
+		text = \"No Triolet\"
+	
+"
+
+[sub_resource type="GDScript" id=25]
+script/source = "extends Button
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+var value:bool = false 
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+
+
+func _on_Triolet_pressed():
+	value = not(value)
+	if value:
+		text = \"Earliest\"
+	else:
+		text = \"Longest\"
+
+	
+		
+"
+
+[sub_resource type="DynamicFontData" id=27]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=28]
+size = 17
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 27 )
+
+[sub_resource type="GDScript" id=29]
+script/source = "extends Label
+
+onready var scene = $\"../..\"
+onready var songTrackView = $\"../../SongViewContainer/SongTrackView\"
+
+export var selection_start:float = 0 
+export var selection_end:float = 0
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	yield(get_tree(), \"idle_frame\") 
+	update_text()
+	
+func update_text():
+	var selected_wrappers = songTrackView.get_selected_wrappers()
+	if selected_wrappers.size() == 0:
+		text = \"All the chord progression\\n\"
+		var all_wrappers = songTrackView._wrappers
+		var begin = all_wrappers[0].get_meta(\"start_time\")
+		var end = all_wrappers[-1].get_meta(\"start_time\")
+		end += all_wrappers[-1].get_meta(\"degree\").length_beats
+		#text += \"from beat \"+ str(begin) + \" to beat \" + str(end)
+		selection_start = begin
+		selection_end = end
+	else :
+		text = \"\"
+		var begin = selected_wrappers[0].get_meta(\"start_time\")
+		var end = selected_wrappers[-1].get_meta(\"start_time\")
+		end += selected_wrappers[-1].get_meta(\"degree\").length_beats
+		text += \"from beat \"+ str(begin) + \" to beat \" + str(end)
+		selection_start = begin
+		selection_end = end
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+"
+
+[sub_resource type="DynamicFontData" id=30]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=9]
+size = 32
+use_mipmaps = true
+use_filter = true
+extra_spacing_char = 1
+font_data = SubResource( 30 )
+
+[sub_resource type="GDScript" id=26]
+script/source = "extends Button
+
+const TAG = \"fractalize_button\"
+
+
+const ALLOWED_TECHNIQUES = [\"passing_tone\", \"neighbor_tone\", \"neighbor_tone_forced\",\"appoggiatura\", \"chromatic_passing_tone\", \"chromatic_neighbor_tone\",\"double_neighbor\",\"escape_tone\",\"anticipation\",\"retardation\",\"extended_passing_tones\",\"pedal\"]
+onready var songTrackView = $\"../../SongViewContainer/SongTrackView\"
+onready var scene = $\"../..\"
+
+var passe_number = 0
+
+var results_array : Array = []
+
+
+var rng:RandomNumberGenerator = RandomNumberGenerator.new()
+var planner:Planner
+
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	
+	LogBus.debug(TAG,\" _Planner new _\")
+	planner = Planner.new()
+	
+
+
+func _on_fractalize_btn_pressed():
+	passe_number += 1
+	var txt_pass = \"round_\" + str(passe_number) +\"_\"
+	
+	scene.midi_player.stop()
+	scene.rewind()
+	rng.randomize()
+	var _seed = rng.randi() % 1500000
+	rng.seed = _seed
+	scene.clear_console()
+	
+	var technique_weights:Dictionary = $\"../../techniques\".technique_weights()
+	
+	var params = {
+		\"time_num\":scene.myMasterSong.time_num,
+		\"time_den\":scene.myMasterSong.time_den,
+		\"grid_unit\": $\"../../params/minimum_duration\".value
+	}
+	#LogBus.debug(TAG,str(params))
+	
+	var begin = $\"../selection_label\".selection_start
+	var end = $\"../selection_label\".selection_end
+	
+	var region_size = end - begin
+	
+	if region_size <= 0:
+		LogBus.info(TAG,'Click / Shift-Click the chords on the timeline to select a region to fractalize, or click \"select all\" to select the whole chord progression')
+	
+	var window_length = $\"../../params/Window_length\".value
+	var nb_Windows = floor(region_size / $\"../../params/Window_length\".value) + 1
+	#LogBus.debug(TAG, \" -> \" +str(nb_Windows))
+	var time_windows = []
+	var last_window = null
+	for w in range(0,nb_Windows):
+		var window = {\"start\": begin + (w * window_length), \"end\": begin + ((w+1) * window_length), \"iteration\":1}
+		time_windows.append( window )
+		last_window = window
+	#LogBus.debug(TAG, str(time_windows))
+	
+	# on vire la derniere fenetre si elle son start > end
+
+	time_windows[-1][\"end\"] = min(end,time_windows[-1][\"end\"])
+	#LogBus.debug(TAG, str(time_windows))	
+	if time_windows[-1][\"start\"] == end :
+		var poubelle = 	time_windows.pop_back()
+	#LogBus.debug(TAG, str(time_windows))	
+	
+	params[\"time_windows\"] = time_windows
+	params[\"allowed_techniques\"] = ALLOWED_TECHNIQUES
+	params[\"technique_weights\" ] = technique_weights
+	
+	params[\"voice_window_pattern\"] = $\"../../params/voice_pattern\".text
+	params[\"pair_selection_strategy\"] = $\"../../params/strategy\".text.to_lower()
+	params[\"triplet_allowed\"] = $\"../../params/Triolet\".value
+	params[\"rng_seed\"] = rng.randi() % 150000
+	#scene.clear_console()
+	
+	_save_text_to_disk(JSON.print(params),txt_pass + \"params.txt\")
+	var chords = scene.results_history_array[scene.results_history_array.size() - 1].chords
+	_save_text_to_disk(JSON.print(chords),txt_pass + \"chords.txt\")
+	  
+	scene.clear_console()
+	
+	var result = planner.apply(chords, params)	
+	var debug_txt = scene.console.text
+	_save_text_to_disk(JSON.print(result),txt_pass + \"debug.txt\")
+	_save_text_to_disk(JSON.print(result),txt_pass + \"result.txt\")
+	
+	scene.results_history_array.append(result)
+#	var new_track = 
+	var last_end = 0
+	var txt  = \"\"
+	for c in result.chords:
+		txt += \"gap: \" + str(last_end - c[\"pos\"])+  \" |  pos: \" + str(c[\"pos\"]) + \"  | length: \" + str(c[\"length_beats\"]) + \"\\n\"
+		
+		
+		last_end = c[\"pos\"] + c[\"length_beats\"]
+		
+	_save_text_to_disk(txt,txt_pass + \"pos.txt\")
+	
+	
+	scene.myMasterSong.remove_track_by_name(Song.FRACTAL_TRACK)
+	scene.myMasterSong.add_track(scene.result_to_track(result))
+	scene.myPlayingSong.remove_track_by_name(Song.FRACTAL_TRACK)
+	scene.myPlayingSong.add_track(scene.myMasterSong.get_track_by_name(Song.FRACTAL_TRACK))
+	
+	songTrackView._update_all()
+	
+	#LogBus.debug(TAG,scene.myPlayingSong.get_track_by_name(Song.FRACTAL_TRACK).to_string())
+	
+	
+#	scene.clear_console()
+#	LogBus.debug(TAG,JSON.print(result,\"\\t\"))
+#	# on ajoute result à results_history_array
+#	scene.results_history_array.append(result)
+#	# on dépiote results...
+#	LogBus.info(TAG, \"\\n===== Bilan =====\")
+#	LogBus.info(TAG, \"\\n===== PASS 1 =====\")
+#	LogBus.info(TAG, \"Total chords: \" + str(result.chords.size()))
+#
+##
+##	# AFFICHAGE NEW SATB
+#	LogBus.info(TAG,\"\\n\\n********** SUCCESS ************\")
+#	for c in result.chords:
+#		if c[\"kind\"] == \"decorative\":
+#			#LogBus.info(TAG, JSON.print(c, \"\\t\"))
+#			var comment = c[\"chord_metadata\"][\"comments\"]
+#
+#			LogBus.info(TAG,comment)
+#			var pos = c[\"pos\"]
+#			LogBus.info(TAG,str(pos))
+	# AFFICHAGE CHORDS PASS 2
+#	LogBus.info(TAG, \"\\n\\nResult (full): \" + JSON.print(result.chords, \"\\t\"))
+
+#
+#	# AFFICHAGE ECHECS
+#	LogBus.info(TAG,\"\\n====== HISTORY FAILED ========\")
+#	var meta = result[\"metadata\"]
+#	var history = meta[\"history\"]
+#	for h in history:
+#		if h[\"status\"] == \"skipped\":
+#			LogBus.info(TAG,str(h))
+#
+	#func result_to_track(r:Dictionary)->Track:
+	
+	
+#	LogBus.debug(TAG, \"============ PARAMS ============\")
+#	LogBus.debug(TAG,JSON.print(params,\"\\t\"))
+#	LogBus.debug(TAG, \"============ CHORDS ============\")
+#	var chords = setup_SATB(chords_generations[-1])
+#	LogBus.debug(TAG,JSON.print(chords,\"\\t\"))
+	
+
+	
+	#LogBus.debug(TAG,\"chords_generations.size(): \" + str(chords_generations.size()))
+	
+#	var result = planner.apply(chords_generations[0], params)	
+#	scene.clear_console()
+#	LogBus.debug(TAG,JSON.print(result,\"\\t\"))
+#	return
+#
+#	chords_generations.append(result)
+#	var track:Track = result_to_track(result)
+#	track.name = Song.FRACTAL_TRACK
+#	scene.myMasterSong.remove_track_by_name(Song.FRACTAL_TRACK)
+#	scene.myMasterSong.add_track(track)
+#
+#	scene.songTrackView.trackName = Song.FRACTAL_TRACK
+#	scene.songTrackView._update_all()
+	
+	#scene.clear_console()	
+	#LogBus.debug(TAG,JSON.print(result,\"\\t\"))
+		
+		
+		
+	
+
+
+func _save_text_to_disk(content: String, filename: String) -> void:
+	# Écrit dans user:// (persistance locale; en HTML5 = IndexedDB)
+	var path = \"user://\" + filename
+	var f = File.new()
+	var err = f.open(path, File.WRITE)
+	if err == OK:
+		f.store_string(content)
+		f.close()
+	
+"
+
+[sub_resource type="StyleBoxFlat" id=32]
+bg_color = Color( 1, 1, 1, 0 )
+
+[sub_resource type="DynamicFontData" id=33]
+font_path = "res://Fonts/ShadowsIntoLight-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=34]
+size = 28
+use_mipmaps = true
+use_filter = true
+extra_spacing_top = -10
+extra_spacing_bottom = -10
+font_data = SubResource( 33 )
+
+[sub_resource type="GDScript" id=35]
+script/source = "extends OptionButton
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+
+func _ready():
+	# Charge une police personnalisée (remplace \"res://path/to/font.ttf\")
+	var font = DynamicFont.new()
+	font.font_data = load(\"res://Fonts/ShadowsIntoLight-Regular.ttf\")
+	font.size = 20  # Taille de la police
+
+	# Applique la police au PopupMenu interne
+	get_popup().add_font_override(\"font\", font)
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+"
 
 [node name="SATB_fractalizer_scene" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+rect_pivot_offset = Vector2( -192, -56 )
 script = ExtResource( 3 )
+__meta__ = {
+"_edit_horizontal_guides_": [ -88.0 ],
+"_edit_vertical_guides_": [ 1231.0 ]
+}
 
 [node name="ColorRect" type="ColorRect" parent="."]
+margin_top = -8.0
 margin_right = 1280.0
-margin_bottom = 720.0
+margin_bottom = 712.0
 
 [node name="BlueSatbFractalizer" type="Sprite" parent="."]
-position = Vector2( 216, 216 )
+position = Vector2( 208, 176 )
 scale = Vector2( 0.304688, 0.304688 )
 texture = ExtResource( 1 )
 
@@ -243,50 +787,53 @@ margin_bottom = 40.0
 script = SubResource( 2 )
 
 [node name="Console" type="RichTextLabel" parent="Console_Node"]
-margin_left = 400.0
-margin_top = 60.0
-margin_right = 904.0
-margin_bottom = 344.0
+margin_left = 384.0
+margin_top = 20.0
+margin_right = 752.0
+margin_bottom = 296.0
 custom_colors/default_color = Color( 0, 0, 0, 1 )
 custom_fonts/normal_font = SubResource( 1 )
 custom_styles/normal = SubResource( 4 )
-text = "test texte"
 scroll_following = true
 
 [node name="export_console_btn" type="Button" parent="Console_Node"]
-margin_left = 401.0
-margin_top = 356.0
-margin_right = 507.0
-margin_bottom = 376.0
+margin_left = 386.0
+margin_top = 313.0
+margin_right = 492.0
+margin_bottom = 333.0
 text = "Export console"
 
 [node name="clear_console_btn" type="Button" parent="Console_Node"]
-margin_left = 537.0
-margin_top = 356.0
-margin_right = 635.0
-margin_bottom = 376.0
+margin_left = 513.0
+margin_top = 313.0
+margin_right = 611.0
+margin_bottom = 333.0
 text = "Clear console"
 
 [node name="techniques" type="VBoxContainer" parent="."]
-margin_left = 48.0
-margin_top = 460.0
-margin_right = 618.0
-margin_bottom = 616.0
-custom_constants/separation = 156
+margin_left = 16.0
+margin_top = 424.0
+margin_right = 676.0
+margin_bottom = 674.0
+theme = ExtResource( 2 )
+custom_constants/separation = 74
 script = SubResource( 5 )
 __meta__ = {
 "_edit_group_": true
 }
 
 [node name="upper" type="HBoxContainer" parent="techniques"]
-margin_right = 570.0
-custom_constants/separation = 90
+margin_right = 660.0
+margin_bottom = 90.0
+custom_constants/separation = 3
 alignment = 1
 
 [node name="passing_tone" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 60.0
-margin_right = 60.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 52.0
+margin_right = 142.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/passing_tone"]
 margin_left = -16.0
@@ -303,9 +850,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="neighbor_tone" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 150.0
-margin_right = 150.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 145.0
+margin_right = 235.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/neighbor_tone"]
 margin_left = -16.0
@@ -322,9 +871,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="neighbor_tone_forced" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 240.0
-margin_right = 240.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 238.0
+margin_right = 328.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/neighbor_tone_forced"]
 margin_left = -16.0
@@ -341,9 +892,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="appoggiatura" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 330.0
-margin_right = 330.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 331.0
+margin_right = 421.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/appoggiatura"]
 margin_left = -16.0
@@ -360,9 +913,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="chromatic_passing_tone" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 420.0
-margin_right = 420.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 424.0
+margin_right = 514.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/chromatic_passing_tone"]
 margin_left = -16.0
@@ -379,9 +934,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="chromatic_neighbor_tone" parent="techniques/upper" instance=ExtResource( 4 )]
-margin_left = 510.0
-margin_right = 510.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 517.0
+margin_right = 607.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/upper/chromatic_neighbor_tone"]
 margin_left = -16.0
@@ -398,16 +955,18 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="lower" type="HBoxContainer" parent="techniques"]
-margin_top = 156.0
-margin_right = 570.0
-margin_bottom = 156.0
-custom_constants/separation = 90
+margin_top = 164.0
+margin_right = 660.0
+margin_bottom = 254.0
+custom_constants/separation = 3
 alignment = 1
 
 [node name="double_neighbor" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 15.0
-margin_right = 15.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 6.0
+margin_right = 96.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/double_neighbor"]
 margin_left = -16.0
@@ -424,9 +983,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="escape_tone" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 105.0
-margin_right = 105.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 99.0
+margin_right = 189.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/escape_tone"]
 margin_left = -16.0
@@ -443,9 +1004,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="anticipation" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 195.0
-margin_right = 195.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 192.0
+margin_right = 282.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/anticipation"]
 margin_left = -16.0
@@ -462,9 +1025,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="suspension" parent="techniques/lower" instance=ExtResource( 4 )]
+anchor_right = 0.0
+anchor_bottom = 0.0
 margin_left = 285.0
-margin_right = 285.0
-margin_bottom = 0.0
+margin_right = 375.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/suspension"]
 margin_left = -16.0
@@ -481,9 +1046,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="retardation" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 375.0
-margin_right = 375.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 378.0
+margin_right = 468.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/retardation"]
 margin_left = -16.0
@@ -500,9 +1067,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="pedal" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 465.0
-margin_right = 465.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 471.0
+margin_right = 561.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/pedal"]
 margin_left = -16.0
@@ -519,9 +1088,11 @@ valign = 1
 script = SubResource( 8 )
 
 [node name="extended_passing_tone" parent="techniques/lower" instance=ExtResource( 4 )]
-margin_left = 555.0
-margin_right = 555.0
-margin_bottom = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+margin_left = 564.0
+margin_right = 654.0
+margin_bottom = 90.0
 
 [node name="Label" type="Label" parent="techniques/lower/extended_passing_tone"]
 margin_left = -16.0
@@ -580,36 +1151,55 @@ rect_min_size = Vector2( 4, 130 )
 color = Color( 0.239216, 0.321569, 1, 1 )
 
 [node name="zoom" type="Label" parent="SongViewContainer"]
-margin_left = 20.0
-margin_top = -54.0
-margin_right = 181.0
-margin_bottom = -21.0
+margin_left = -38.0
+margin_top = -4.0
+margin_right = 5.0
+margin_bottom = 29.0
 hint_tooltip = "Zoom setting of the time line.
 [F5] / [F6] to increase / decrease the display zoom  factor"
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 13 )
-text = "Zoom setting"
+text = "Zoom"
 align = 1
 
-[node name="trackViewScale_sl" type="HSlider" parent="SongViewContainer"]
-margin_left = 13.0
-margin_top = -26.0
-margin_right = 183.0
-margin_bottom = -10.0
-rect_min_size = Vector2( 70, 0 )
+[node name="zoom_slider" type="VSlider" parent="SongViewContainer"]
+margin_left = -23.0
+margin_top = 29.0
+margin_right = -7.0
+margin_bottom = 140.0
+hint_tooltip = "Song display zoom 
+(use the wheel-mouse)"
 min_value = 1.0
-max_value = 30.0
-value = 1.0
+max_value = 15.0
+value = 2.0
+script = SubResource( 16 )
 
 [node name="params" type="Control" parent="."]
+margin_top = 24.0
 margin_right = 40.0
-margin_bottom = 40.0
+margin_bottom = 64.0
+
+[node name="minimum_duration_lbl" type="Label" parent="params"]
+margin_left = 689.0
+margin_top = 336.0
+margin_right = 839.0
+margin_bottom = 395.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 18 )
+custom_styles/normal = SubResource( 19 )
+text = "minimum duration :"
+align = 2
+valign = 1
 
 [node name="Window_length" type="OptionButton" parent="params"]
 margin_left = 724.0
-margin_top = 408.0
+margin_top = 428.0
 margin_right = 912.0
-margin_bottom = 486.0
+margin_bottom = 506.0
+hint_tooltip = "Window length sets the time segment 
+length where a NTN technique may be applied
+Each window will try to apply a technique only once per window
+on the voice defined by voice window pattern."
 theme = ExtResource( 9 )
 custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
 custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
@@ -622,34 +1212,199 @@ custom_styles/pressed = SubResource( 11 )
 custom_styles/focus = SubResource( 11 )
 custom_styles/disabled = SubResource( 11 )
 custom_styles/normal = SubResource( 11 )
-text = "=!=====s===s====="
+text = "=!=======a========="
 items = [ "=!=s=s=s=s==", null, false, 0, null, "=!===s==s==s==", null, false, 1, null, "=!=====s===s=====", null, false, 2, null, "=!=======s=========", null, false, 3, null, "=!=======A=========", null, false, 4, null, "=!=======a=========", null, false, 5, null ]
-selected = 2
+selected = 5
 script = SubResource( 12 )
+
+[node name="minimum_duration" type="OptionButton" parent="params"]
+margin_left = 840.0
+margin_top = 308.0
+margin_right = 884.0
+margin_bottom = 386.0
+hint_tooltip = "Window length sets the time segment 
+length where a NTN technique may be applied
+Each window will try to apply a technique only once per window
+on the voice defined by voice window pattern."
+theme = ExtResource( 9 )
+custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 10 )
+custom_styles/hover = SubResource( 11 )
+custom_styles/pressed = SubResource( 11 )
+custom_styles/focus = SubResource( 11 )
+custom_styles/disabled = SubResource( 11 )
+custom_styles/normal = SubResource( 11 )
+text = "."
+align = 1
+items = [ "$", null, false, 0, null, ".", null, false, 1, null, ")", null, false, 2, null, "(", null, false, 3, null, "&", null, false, 4, null ]
+selected = 1
+script = SubResource( 20 )
 
 [node name="Window_length_lbl" type="Label" parent="params"]
 margin_left = 720.0
-margin_top = 384.0
+margin_top = 400.0
 margin_right = 904.0
-margin_bottom = 424.0
+margin_bottom = 440.0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 custom_fonts/font = SubResource( 13 )
 text = "Window length"
 align = 1
 valign = 1
 
+[node name="window_pattern_label" type="Label" parent="params"]
+margin_left = 920.0
+margin_top = 392.0
+margin_right = 1224.0
+margin_bottom = 432.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 13 )
+text = "Window Pattern"
+align = 1
+valign = 1
+
+[node name="voice_pattern" type="LineEdit" parent="params"]
+margin_left = 925.0
+margin_top = 427.0
+margin_right = 1229.0
+margin_bottom = 502.0
+custom_fonts/font = SubResource( 15 )
+text = "SA"
+context_menu_enabled = false
+virtual_keyboard_enabled = false
+shortcut_keys_enabled = false
+middle_mouse_paste_enabled = false
+selecting_enabled = false
+deselect_on_focus_loss_enabled = false
+script = SubResource( 31 )
+
+[node name="Triolet" type="Button" parent="params"]
+margin_left = 944.0
+margin_top = 324.0
+margin_right = 1040.0
+margin_bottom = 380.0
+hint_tooltip = "Click to allow / disallow Triolets"
+theme = ExtResource( 2 )
+custom_fonts/font = SubResource( 21 )
+custom_styles/hover = SubResource( 22 )
+custom_styles/pressed = SubResource( 23 )
+custom_styles/focus = SubResource( 22 )
+custom_styles/disabled = SubResource( 22 )
+custom_styles/normal = SubResource( 22 )
+text = "No Triolet"
+script = SubResource( 24 )
+
+[node name="strategy" type="Button" parent="params"]
+margin_left = 1064.0
+margin_top = 324.0
+margin_right = 1232.0
+margin_bottom = 380.0
+hint_tooltip = "Click to choose the pair selection strategy
+Earliest: chooses the first valid chord pair
+Longest: chooses the pair with the longest duration"
+theme = ExtResource( 2 )
+custom_fonts/font = SubResource( 21 )
+custom_styles/hover = SubResource( 22 )
+custom_styles/pressed = SubResource( 23 )
+custom_styles/focus = SubResource( 22 )
+custom_styles/disabled = SubResource( 22 )
+custom_styles/normal = SubResource( 22 )
+text = "Longest"
+script = SubResource( 25 )
+
 [node name="Commands" type="Control" parent="."]
-margin_right = 40.0
-margin_bottom = 40.0
+margin_left = -184.0
+margin_top = 176.0
+margin_right = -144.0
+margin_bottom = 216.0
+
+[node name="selection_label" type="Label" parent="Commands"]
+margin_left = 1104.0
+margin_top = 66.0
+margin_right = 1295.0
+margin_bottom = 98.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 28 )
+text = "\"from beat \"+ str(begin) +"
+align = 1
+script = SubResource( 29 )
 
 [node name="fractalize_btn" type="Button" parent="Commands"]
-margin_left = 1080.0
-margin_top = 491.0
-margin_right = 1228.0
-margin_bottom = 523.0
+margin_left = 1104.0
+margin_top = 96.0
+margin_right = 1296.0
+margin_bottom = 154.0
+rect_pivot_offset = Vector2( -80, -140 )
 custom_fonts/font = SubResource( 9 )
 text = "Fractalize"
+script = SubResource( 26 )
+
+[node name="Transport" type="Panel" parent="."]
+margin_left = 1072.0
+margin_top = 24.0
+margin_right = 1248.0
+margin_bottom = 280.0
+custom_styles/panel = SubResource( 32 )
+
+[node name="menu_btn" type="Button" parent="Transport"]
+margin_left = 56.0
+margin_top = 56.0
+margin_right = 160.0
+margin_bottom = 114.0
+rect_pivot_offset = Vector2( -80, -140 )
+custom_fonts/font = SubResource( 9 )
+text = "menu"
+
+[node name="Export_midi_btn" type="Button" parent="Transport"]
+margin_left = 56.0
+margin_top = 248.0
+margin_right = 160.0
+margin_bottom = 306.0
+rect_pivot_offset = Vector2( -80, -140 )
+custom_fonts/font = SubResource( 9 )
+text = "export"
+
+[node name="playStop_btn" type="Button" parent="Transport"]
+margin_left = 56.0
+margin_top = 184.0
+margin_right = 160.0
+margin_bottom = 242.0
+rect_pivot_offset = Vector2( -80, -140 )
+custom_fonts/font = SubResource( 9 )
+text = "Play"
+
+[node name="Preset_ob" type="OptionButton" parent="."]
+margin_left = 768.0
+margin_top = 272.0
+margin_right = 910.0
+margin_bottom = 329.0
+custom_fonts/font = SubResource( 34 )
+text = "default"
+align = 1
+icon_align = 1
+items = [ "default", null, false, 0, null, "classical", null, false, 1, null, "chromatic", null, false, 2, null, "baroque", null, false, 3, null, "random", null, false, 4, null, "equality", null, false, 5, null ]
+selected = 0
+script = SubResource( 35 )
+
+[node name="Preset_lbl" type="Label" parent="Preset_ob"]
+margin_top = -33.0
+margin_right = 142.0
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 13 )
+text = "Preset"
+align = 1
+valign = 1
 
 [connection signal="pressed" from="Console_Node/export_console_btn" to="Console_Node" method="_on_export_console_btn_pressed"]
 [connection signal="pressed" from="Console_Node/clear_console_btn" to="Console_Node" method="_on_clear_console_btn_pressed"]
-[connection signal="pressed" from="Commands/fractalize_btn" to="." method="_on_fractalize_btn_pressed"]
+[connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
+[connection signal="value_changed" from="SongViewContainer/zoom_slider" to="SongViewContainer/zoom_slider" method="_on_zoom_slider_value_changed"]
+[connection signal="pressed" from="params/Triolet" to="params/Triolet" method="_on_Triolet_pressed"]
+[connection signal="pressed" from="params/strategy" to="params/strategy" method="_on_Triolet_pressed"]
+[connection signal="pressed" from="Commands/fractalize_btn" to="Commands/fractalize_btn" method="_on_fractalize_btn_pressed"]
+[connection signal="pressed" from="Transport/menu_btn" to="." method="_on_menu_btn_pressed"]
+[connection signal="pressed" from="Transport/Export_midi_btn" to="." method="_on_Export_midi_btn_pressed"]
+[connection signal="pressed" from="Transport/playStop_btn" to="." method="_on_playStop_btn_pressed"]

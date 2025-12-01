@@ -11,7 +11,9 @@ size = 80
 font_data = ExtResource( 5 )
 
 [sub_resource type="DynamicFont" id=2]
-size = 14
+size = 12
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 6 )
 
 [sub_resource type="DynamicFont" id=3]
@@ -48,19 +50,19 @@ rect_scale = Vector2( 0.5, 0.5 )
 texture = ExtResource( 7 )
 
 [node name="Titre" type="Label" parent="Welcome"]
-margin_left = 680.0
+margin_left = 704.0
 margin_top = 82.0
-margin_right = 1072.0
+margin_right = 1096.0
 margin_bottom = 181.0
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_fonts/font = SubResource( 1 )
 text = "MusicLab"
 
 [node name="Credits" type="Label" parent="Welcome"]
-margin_left = 688.0
+margin_left = 712.0
 margin_top = 192.0
-margin_right = 1152.0
-margin_bottom = 449.0
+margin_right = 1176.0
+margin_bottom = 423.0
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_fonts/font = SubResource( 2 )
 text = "Version 7.1
@@ -75,13 +77,17 @@ Credits:
 	https://bitbucket.org/arlez80/godot-midi-player/src/master/
 - Guitar Chords database by tombatossals :
 	((https://tombatossals.github.io/react-chords)
+- AI code helpers
+	https://chat.mistral.ai/chat
+	https://chatgpt.com/
+	https://claude.ai/
 "
 
 [node name="Enter_btn" type="Button" parent="Welcome"]
-margin_left = 691.0
-margin_top = 496.0
-margin_right = 915.0
-margin_bottom = 560.0
+margin_left = 704.0
+margin_top = 544.0
+margin_right = 928.0
+margin_bottom = 608.0
 theme = ExtResource( 4 )
 custom_fonts/font = SubResource( 3 )
 custom_styles/hover = SubResource( 4 )
