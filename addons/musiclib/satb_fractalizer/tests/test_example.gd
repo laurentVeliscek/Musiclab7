@@ -7,30 +7,10 @@ const TAG = "TestExample"
 
 var Planner = load("res://addons/musiclib/satb_fractalizer/planner/Planner.gd")
 
-var rng:RandomNumberGenerator = RandomNumberGenerator.new()
-
-var allowed_techniques = ["passing_tone", "neighbor_tone", "neighbor_tone_forced","appoggiatura", "chromatic_passing_tone", "chromatic_neighbor_tone","double_neighbor","escape_tone","anticipation","retardation","extended_passing_tones","pedal"]
-
-
 func run():
-	
-	# limit ALLOWED
-	allowed_techniques = ["chromatic_neighbor_tone","extended_passing_tones"]
-	#allowed_techniques = ["neighbor_tone"]
-	var random_total = true
-			
-	var _seed = 150
-	
-	if random_total:
-		rng.randomize()
-		_seed = rng.randi() % 1500000
-		
-	
-	
 	LogBus.info(TAG, "===== SATB Fractalizer Test =====")
 	LogBus.set_verbose(true)
-	
-	LogBus.info(TAG,"Seed: "+str(_seed))
+
 	# Load test chords from chords.json
 	var test_chords = _load_chords_from_file()
 	
@@ -54,10 +34,10 @@ func run():
 		"time_den": 4,
 		"grid_unit": 0.25,
 		"time_windows": generated_time_windows,
-		"allowed_techniques": allowed_techniques,
+		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
-		"rng_seed": rng.randi() % 1500000
+		"rng_seed": 42
 	}
 ## ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"]
 	# Apply fractalizer - First pass
@@ -83,10 +63,10 @@ func run():
 		"time_den": 4,
 		"grid_unit": 0.125,
 		"time_windows": generated_time_windows,
-		"allowed_techniques": allowed_techniques,
+		"allowed_techniques": ["passing_tone", "neighbor_tone", "appoggiatura", "chromatic_passing_tone", "double_neighbor"],
 		"voice_window_pattern": "SATB",
 		"triplet_allowed": false,
-		"rng_seed": rng.randi() % 1500000
+		"rng_seed": 55
 	}
 
 	var result2 = planner2.apply(result.chords, params2)
@@ -113,33 +93,18 @@ func run():
 	LogBus.info(TAG, "Total chords: " + str(result.chords.size()))
 	LogBus.info(TAG, "\n===== PASS 2 =====")
 	LogBus.info(TAG, "Total chords: " + str(result2.chords.size()))
+	LogBus.info(TAG, "\n\n*******************************************")
+	LogBus.info(TAG, "\n\n===== Result (full) =====")
+	LogBus.info(TAG, "\nResult (full): " + JSON.print(result, "\t"))
+	LogBus.info(TAG, "\n\n===== Result2 (full) =====")
+	LogBus.info(TAG, "Result2 (full): " + JSON.print(result2, "\t"))
 	
-	# AFFICHAGE FULL
-#	LogBus.info(TAG, "\n\n*******************************************")
-#	LogBus.info(TAG, "\n\n===== Result (full) =====")
-#	LogBus.info(TAG, "\nResult (full): " + JSON.print(result, "\t"))
-#	LogBus.info(TAG, "\n\n===== Result2 (full) =====")
-#	LogBus.info(TAG, "Result2 (full): " + JSON.print(result2, "\t"))
-	
-	# AFFICHAGE NEW SATB
-	LogBus.info(TAG,"\n\n********** SUCCESS ************")
-	for c in result2.chords:
-		if c["kind"] == "decorative":
-			#LogBus.info(TAG, JSON.print(c, "\t"))
-			var comment = c["chord_metadata"]["comments"]
-			LogBus.info(TAG,comment)
+#	for c in result2.chords:
+#		if c["kind"] == "decorative":
+#			LogBus.info(TAG, JSON.print(c, "\t"))
 		
-	# AFFICHAGE CHORDS PASS 2
 	#LogBus.info(TAG, "\n\nResult2 (full): " + JSON.print(result2.chords, "\t"))
 	
-	
-	# AFFICHAGE ECHECS
-	LogBus.info(TAG,"\n====== HISTORY FAILED ========")
-	var meta = result2["metadata"]
-	var history = meta["history"]
-	for h in history:
-		if h["status"] == "skipped":
-			LogBus.info(TAG,str(h))
 
 func _load_chords_from_file():
 	# Load chords from chords.json file

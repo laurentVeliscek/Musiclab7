@@ -2,6 +2,7 @@
 extends Control
 class_name SongTrackView
 
+const TAG = "SongTrackView"
 #signal element_clicked(element)
 signal element_right_clicked(element,wrapper)
 signal element_hovered(element)
@@ -13,7 +14,7 @@ signal element_clicked(element,index,wrapper)
 # --- Données / options ---
 var song: Song = null setget set_song, get_song
 export(String) var trackName = ""
-export(int) var scale = 2 setget set_scale, get_scale
+export(float) var scale = 2 setget set_scale, get_scale
 
 # Police pour certaines vues Degree (passe au Degree.get_*_view)
 export(String) var font_path = ""
@@ -114,7 +115,7 @@ func get_song():
 	return song
 
 func set_scale(s):
-	scale = max(1, int(s))
+	scale = max(1,s)
 	update_ui()
 
 func get_scale():
@@ -875,5 +876,5 @@ func _select_region_to(wrapper) -> void:
 	_emit_selection()
 
 func get_track()->Track:
-	return song.get_track_by_name(trackName)
+	return _track
 	

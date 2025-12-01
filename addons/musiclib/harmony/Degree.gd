@@ -4,7 +4,7 @@ class_name Degree
 # Objet Degree 
 
 const DEFAULT_MIDI_CHANNEL = 0	# canal 0
-const DEFAULT_MIDI_VELOCITY = 100	# vélocité 100
+const DEFAULT_MIDI_VELOCITY = 120	# vélocité 100
 const TAG = "Degree"
 
 
@@ -66,7 +66,7 @@ var length_beats:float = 4 setget set_length_beats, get_length_beats
 # func -> fonction harmonique "T" "PD" "D" "?"
 var harmonic_function:String ="T" setget set_harmonic_function, get_harmonic_function
 # plan_data pour stocker les infos du générateur
-var plan_data:Dictionary  = {} setget set_plan_data, get_plan_data
+#var plan_data:Dictionary  = {} setget set_plan_data, get_plan_data
 
 # adaptateur progressionGenerators
 #jazz_chord
@@ -102,6 +102,8 @@ var satb_dictionary:Dictionary = {}
 
 var comment:String = ""
 
+var chord_voicing_index:int = 0
+
 ########### CLONE ET TO STRING ##############
 
 func clone()-> Degree:
@@ -115,7 +117,7 @@ func clone()-> Degree:
 	d.inversion = inversion
 	d.length_beats = length_beats
 	d.harmonic_function = harmonic_function
-	d.plan_data = plan_data
+	#d.plan_data = plan_data
 	d._secondary_roman_spelling = _secondary_roman_spelling
 	d.override_jazz_chord = override_jazz_chord
 	d.override_chord_midi = override_chord_midi
@@ -131,11 +133,167 @@ func clone()-> Degree:
 	
 	# String comment
 	d.comment = comment
+	d.chord_voicing_index = chord_voicing_index
 	
+	return d
+	
+	
+func to_dict() -> Dictionary:
+	var d:Dictionary = {}
+	
+	# --- Key (HarmonicKey) ---
+	var key_dict:Dictionary = {}
+	if key != null and typeof(key) == TYPE_OBJECT:
+		if key.has_method("to_dict"):
+			# on laisse HarmonicKey décider de sa propre sérialisation
+			key_dict = key.to_dict()
+		else:
+			key_dict["scale_name"] = key.scale_name
+			key_dict["root_midi"] = key.root_midi
+	d["key"] = key_dict
+	
+	# --- Propriétés de base du Degree ---
+	d["degree_number"] = degree_number
+	d["realization"] = realization.duplicate()
+	d["kind"] = kind
+	d["enharmonic_string"] = enharmonic_string
+	# Altérations accord
+	d["alterations"] = _alterations.duplicate()
+	d["inversion"] = inversion
+	
+	# Durée + fonction harmonique
+	d["length_beats"] = length_beats
+	d["harmonic_function"] = harmonic_function
+	
+	# Données du générateur / plan
+	# Si tu es sûr que plan_data ne contient que des types simples,
+	# tu peux décommenter la ligne suivante.
+	# d["plan_data"] = plan_data.duplicate()
+	
+	# Overrides éventuels
+	d["override_jazz_chord"] = override_jazz_chord
+	d["override_chord_midi"] = override_chord_midi.duplicate()
+	
+	# Contexte de hauteur / secondaire
+	d["octave"] = _octave
+	d["is_secondary"] = _is_secondary
+	d["secondary_roman_spelling"] = _secondary_roman_spelling
+	
+	# SATB + structures associées
+	d["satb"] = satb.duplicate(true)
+	d["satb_index"] = satb_index
+	d["satb_objects"] = satb_objects.duplicate(true)
+	d["satb_dictionary"] = satb_dictionary.duplicate(true)
+	
+	# Commentaire texte
+	d["comment"] = comment
+	d["chord_voicing_index"] = chord_voicing_index
 	
 	return d
 
 
+func from_dict(data:Dictionary) -> Degree:
+	var d:Degree = get_script().new()
+	
+	# --- Key (HarmonicKey) ---
+	if data.has("key"):
+		var kdata = data["key"]
+		if typeof(kdata) == TYPE_DICTIONARY:
+			var hk:HarmonicKey = HarmonicKey.new()
+			if hk.has_method("from_dict"):
+				hk = hk.from_dict(kdata)
+			else:
+				hk.scale_name = str(kdata.get("scale_name", hk.scale_name))
+				hk.root_midi = int(kdata.get("root_midi", hk.root_midi))
+			d.set_key(hk)
+	
+	# --- Propriétés de base du Degree ---
+	if data.has("degree_number"):
+		d.set_degree_number(int(data["degree_number"]))
+	
+	if data.has("realization"):
+		var r = data["realization"]
+		if typeof(r) == TYPE_ARRAY:
+			var arr = []
+			for i in r:
+				arr.append(int(i))
+			d.realization = arr
+	
+	if data.has("kind"):
+		d.set_kind(str(data["kind"]))
+	
+	# Altérations accord
+	if data.has("alterations"):
+		var alt = data["alterations"]
+		if typeof(alt) == TYPE_DICTIONARY:
+			d._set_alterations(alt.duplicate())
+	
+	if data.has("inversion"):
+		d.set_inversion(int(data["inversion"]))
+	
+	# Durée + fonction harmonique
+	if data.has("length_beats"):
+		d.set_length_beats(float(data["length_beats"]))
+	
+	if data.has("harmonic_function"):
+		d.set_harmonic_function(str(data["harmonic_function"]))
+
+	if data.has("enharmonic_string"):
+		d.enharmonic_string = str(data["enharmonic_string"])
+	
+	# Données du générateur / plan (optionnel)
+	if data.has("plan_data"):
+		var pd = data["plan_data"]
+		if typeof(pd) == TYPE_DICTIONARY:
+			d.set_plan_data(pd.duplicate())
+	
+	# Overrides éventuels
+	if data.has("override_jazz_chord"):
+		d.set_override_jazz_chord(str(data["override_jazz_chord"]))
+	
+	if data.has("override_chord_midi"):
+		var ocm = data["override_chord_midi"]
+		if typeof(ocm) == TYPE_ARRAY:
+			d.set_override_chord_midi(ocm.duplicate())
+	
+	# Contexte de hauteur / secondaire
+	if data.has("octave"):
+		d.set_octave(int(data["octave"]))
+	
+	if data.has("is_secondary"):
+		d._is_secondary = bool(data["is_secondary"])
+	
+	if data.has("secondary_roman_spelling"):
+		d._secondary_roman_spelling = str(data["secondary_roman_spelling"])
+	
+	# SATB + structures associées
+	if data.has("satb"):
+		var s = data["satb"]
+		if typeof(s) == TYPE_ARRAY:
+			d.satb = s.duplicate(true)
+	
+	if data.has("satb_index"):
+		d.satb_index = int(data["satb_index"])
+	
+	if data.has("satb_objects"):
+		var so = data["satb_objects"]
+		if typeof(so) == TYPE_ARRAY:
+			d.satb_objects = so.duplicate(true)
+	
+	if data.has("satb_dictionary"):
+		var sd = data["satb_dictionary"]
+		if typeof(sd) == TYPE_DICTIONARY:
+			d.satb_dictionary = sd.duplicate(true)
+	
+	# Commentaire texte
+	if data.has("comment"):
+		d.comment = str(data["comment"])
+		
+	# Commentaire texte
+	if data.has("chord_voicing_index"):
+		d.chord_voicing_index = int(data["chord_voicing_index"])
+	
+	return d
 
 func _set_alterations(d:Dictionary = {}):
 	_alterations = d
@@ -170,7 +328,7 @@ func to_string() -> String:
 	
 	if enharmonic_string != "":
 		txt += ", enharmonic: "+ enharmonic_string
-	
+
 	txt += ", inversion: "+ str(_inversion)
 	if _octave != 0:
 		txt += ", octave: "+ str(_octave)
@@ -254,8 +412,10 @@ func get_degree_number():
 func set_realization(arr:Array):
 	if arr.empty() or arr == null:
 		LogBus.error("Degree","set_realization with an empty or null array !")
-	elif arr.has(1) == false :
+	elif (1 in arr) == false :
 		LogBus.error("Degree","set_realization is missing 1 !")
+		print(str(arr))
+		
 	else :
 		if arr.size() == 3 or arr.size() == 4:
 			realization = arr
@@ -268,9 +428,18 @@ func get_realization():
 
 func set_kind(k:String):
 	# bérifie que le kind existe bien
-	var kinds = ["diatonic","secondary","It+6","Fr+6","Ger+6", "It+6inv","Fr+6inv","Ger+6inv", "N6","chrom.","cad64","sus2","sus4","add9","add11"]
+	var kinds = ["melodic","diatonic","secondary","It+6","Fr+6","Ger+6", "It+6inv","Fr+6inv","Ger+6inv", "N6","chrom.","cad64","sus2","sus4","add9","add11"]
 	if kinds.has(k):
 		kind = k
+		match kind:
+			"it+6": set_aug6_It()
+			"Fr+6": set_aug6_Fr()
+			"Ger+6": set_aug6_Ger()			
+			"it+6Inv": set_aug6_It_inv()
+			"Fr+6Inv": set_aug6_Fr_inv()
+			"Ger+6Inv": set_aug6_Ger_inv()
+			
+			
 	else:
 		LogBus.error("Degree","set_kind of unknown kind ! -> "+ k)
 	
@@ -332,16 +501,16 @@ func set_harmonic_function(f:String = "?"):
 func get_harmonic_function() -> String:
 	return harmonic_function
 	
-func set_plan_data(pd:Dictionary) :
-	plan_data = pd
-	
-func get_plan_data():
-	return plan_data
-
-# Convertit plan_data en texte
-func get_plan_data_JSON() -> String:
-	var PDText = JSON.print(plan_data, "\t")
-	return PDText
+#func set_plan_data(pd:Dictionary) :
+#	plan_data = pd
+#
+#func get_plan_data():
+#	return plan_data
+#
+## Convertit plan_data en texte
+#func get_plan_data_JSON() -> String:
+#	var PDText = JSON.print(plan_data, "\t")
+#	return PDText
 	
 ####################### Methodes #################
 
@@ -392,6 +561,9 @@ func set_add11():
 	realization = [1,5,7,11]
 	degree_number = n
 
+func set_melodic():
+	realization = [1]
+	kind = "melodic"
 
 # C'est le premier degré de la tonalité majeure un 1/2 ton au dessus	
 func set_cad64():
@@ -411,62 +583,137 @@ func set_aug6_It():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "It+6"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
-	
-	
+	degree_number = 4
+	realization = [1,3,5]
+	inversion = 1
+	var scale_name = key.scale_name
+	set_key_alteration(4,1)
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
+
+
 func set_aug6_Fr():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "Fr+6"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
+	degree_number = 4
+	realization = [1,3,5,6]
+	inversion = 1
+	var scale_name = key.scale_name
+	set_key_alteration(4,1)
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
 
 func set_aug6_Ger():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "Ger+6"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
+	degree_number = 4
+	realization = [1,3,5,7]
+	inversion = 1
+	var scale_name = key.scale_name
+	# Dans tous le cas
+	set_key_alteration(4,1)
+	if scale_name == "major":
+		set_key_alteration(3,-1)
+
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
 
 
 func set_aug6_It_inv():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "It+6inv"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
-	
-	
+	degree_number = 4
+	realization = [1,3,5]
+	inversion = 0
+	var scale_name = key.scale_name
+	set_key_alteration(4,1)
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
+
+
 func set_aug6_Fr_inv():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "Fr+6inv"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
+	degree_number = 4
+	realization = [1,3,5,6]
+	inversion = 0
+	var scale_name = key.scale_name
+	# Dans tous le cas
+	set_key_alteration(4,1)
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
 
 func set_aug6_Ger_inv():
 #	if ["minor", "harmonic_minor","melodic_minor","major"].has( key.get_scale_name()) == false:
 #		LogBus.error(TAG,"It+6 is only available in minor/major")
 #		return
+	var oct = _octave
+	var old_key = key
+	reset()
+	_octave = oct
+	key = old_key
 	kind = "Ger+6inv"
-	# Le reste se fait dans get_chord_midi !
-	# on force le passage
-	var c = get_chord_midi()
+	degree_number = 4
+	realization = [1,3,5,7]
+	inversion = 0
+	var scale_name = key.scale_name
+	# Dans tous le cas
+	set_key_alteration(4,1)
+	if scale_name == "major":
+		set_key_alteration(3,-1)
 
+	# si minor on ne touche pas à la sixte de la tonalité
+	if scale_name == "major" or scale_name == "melodic_minor" :
+		set_key_alteration(6,-1)
+	harmonic_function = "PD"
 
 
 func set_sus2():
+
 	var n = degree_number
 	reset()
 	kind = "sus2"
@@ -714,115 +961,10 @@ func get_chord_midi() -> Array:
 			
 		return midi_pitches
 	
-	# Commun à toutes les sixtes italiennes
-	elif kind == "It+6":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5]
-		inversion = 1
-		kind = "It+6"
-		var scale_name = key.scale_name
-		set_key_alteration(4,1)
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"
-		# Commun à toutes les sixtes italiennes
-	elif kind == "It+6inv":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5]
-		inversion = 0
-		kind = "It+6inv"
-		var scale_name = key.scale_name
-		set_key_alteration(4,1)
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"
-	
-		
-	elif kind == "Fr+6":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5,6]
-		inversion = 1
-		kind = "Fr+6"
-		var scale_name = key.scale_name
-		set_key_alteration(4,1)
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"	
-	
-	elif kind == "Fr+6inv":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5,6]
-		inversion = 0
-		kind = "Fr+6inv"
-		var scale_name = key.scale_name
-		#_octave = -1
-		# Dans tous le cas
-		set_key_alteration(4,1)
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"	
-				
-	elif kind == "Ger+6":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5,7]
-		inversion = 1
-		kind = "Ger+6"
-		var scale_name = key.scale_name
-		#_octave = -1
-		# Dans tous le cas
-		set_key_alteration(4,1)
-		if scale_name == "major":
-			set_key_alteration(3,-1)
-		
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"	
-			
-	elif kind == "Ger+6inv":
-		var oct = _octave
-		reset()
-		_octave = oct
-		degree_number = 4
-		realization = [1,3,5,7]
-		inversion = 0
-		kind = "Ger+6inv"
-		var scale_name = key.scale_name
-		#_octave = -1
-		# Dans tous le cas
-		set_key_alteration(4,1)
-		if scale_name == "major":
-			set_key_alteration(3,-1)
-		
-		# si minor on ne touche pas à la sixte de la tonalité
-		if scale_name == "major" or scale_name == "melodic_minor" :
-			set_key_alteration(6,-1)
-		harmonic_function = "PD"	
-			
-	
-		
-	if realization.size() == 0 :
-		LogBus.warn("Degree","get_chord_midi: empty realization")
-		return [] 
+
+		if realization.size() == 0 :
+				LogBus.warn("Degree","get_chord_midi: empty realization")
+				return []
 	var midi_pitches = []
 	
 	for n in realization:
@@ -837,16 +979,9 @@ func get_chord_midi() -> Array:
 
 	# on gere les inversions
 	var _inversion # <= pour effecturer les inversions sans perdre inversopn = -1  -> aléatoire
-	 
-	if inversion == -1:			# INVERSION ALEATOIRE
-		if realization.size() == 3:
-			_inversion = randi() % 2
-			
-		elif realization.size() == 4:
-			_inversion = randi() % 4
-		else:
-			LogBus.error(TAG,"chord_midi -> inversion -> realization.size() not 3 or 4")
-			return []
+	
+	if inversion == -1:
+		_inversion = 0
 	else :
 		_inversion = inversion
 	
@@ -888,7 +1023,6 @@ func _renverse_midi_chord_array(arr:Array, times:int) -> Array:
 
 
 func renverse_up():
-	#LogBus.debug(TAG,"renverse_up -> kind: " + kind)
 	if kind == "diatonic":
 		# par de second renversement pour les traides diatoniques
 		if realization.size() == 3  and inversion == 1:
@@ -1318,7 +1452,7 @@ func get_roman_view(
 
 	# Label centré plein cadre
 	var label = Label.new()
-	label.text = get_roman_numeral() # utilise plan_data
+	label.text = get_roman_numeral() 
 	label.add_color_override("font_color", fontColor)
 
 	# Police optionnelle (si tu donnes un .ttf/.otf)
@@ -1601,7 +1735,7 @@ func quality_with_alter() -> String:
 	var midi_fifth = key.degree_midi(degree_number + 4) + get_chord_alteration(5)
 	var midi_seventh = key.degree_midi(degree_number + 6) + get_chord_alteration(7) 
 	
-	#LogBus.debug(TAG,"midi altered: " + str([midi_root,midi_third,midi_fifth,midi_seventh]))
+
 	
 	
 	if midi_third - midi_root == 3 and midi_fifth - midi_root == 6:
@@ -1617,7 +1751,6 @@ func quality_with_alter() -> String:
 	else : 
 		#LogBus.error(TAG,"quality_with_alter() -> Unknown quality" )
 		return "?"
-	#LogBus.debug(TAG,"quality_with_alter() -> " + q)
 	return q
 
 func triad_string_with_alter() -> String:
@@ -1660,7 +1793,7 @@ func seventh_string_with_alter() -> String:
 	var midi_chord_seventh = key.degree_midi(degree_number + 6) + get_chord_alteration(7) 
 	var midi_chord_root = key.degree_midi(degree_number ) + get_chord_alteration(1) 
 	var distance = midi_chord_seventh - midi_chord_root
-	#LogBus.debug(TAG,"7 distance: " + str(distance))
+
 	
 	if distance == 10 or distance == 9:
 		roman_seven_string = "7"
@@ -1673,12 +1806,69 @@ func seventh_string_with_alter() -> String:
 
 func enharmonize():
 	#
-	var from_key = key.clone()
+	var from_key:HarmonicKey = key.clone()
 	var old_key_root = from_key.get_root_midi() % 12
 	var from_jazzchord = get_jazz_chord()
 	var from_rn = get_roman_numeral()
 	var midi_notes = get_chord_midi()
 	
+	#LogBus.clear_console()
+	#LogBus.info(TAG,"Enharmony...")
+	
+	if (kind == "diatonic" or kind == "add9" or kind == "add11") and realization.size() > 3 and degree_number == 5:
+		if key.scale_name == "major":
+			if enharmonic_string == "Enharmony from major / minor V dominant":
+				# on bascule sur Ger+6
+				reset()
+				key.root_midi = (old_key_root +11) % 12
+				key.scale_name = from_key.scale_name
+				set_aug6_Ger()
+				comment = "Enharmonized from V dominant of "+from_key.to_string() 
+				LogBus.info(TAG,comment)
+				return
+			# sinon...
+			key.scale_name = "harmonic_minor"
+			comment = "Enharmonized from V7 major to V7 harmonic minor"
+			LogBus.info(TAG,comment)
+			return
+		elif key.scale_name == "harmonic_minor":
+			key.scale_name = "major"
+			comment = "Enharmonized from V7 harmonic minor to V7 major"
+			LogBus.info(TAG,comment)
+			enharmonic_string = "Enharmony from major / minor V dominant"
+			return
+	
+	if kind == "Ger+6":
+		reset()
+		degree_number = 5
+		key.scale_name = from_key.scale_name
+		key.root_midi = (old_key_root +1) % 12
+		realization = [1,3,5,7]
+		comment = "Enharmonized from Ger+6 of key "+from_key.to_string() 
+		LogBus.info(TAG,comment)
+		enharmonic_string = "Enharmony: from Ger+6 to V dominant"
+		return
+	
+	if enharmonic_string == "Enharmony: from Ger+6 to V dominant" :
+		reset()
+		key.root_midi = (old_key_root +11) % 12
+		key.scale_name = from_key.scale_name
+		set_aug6_Ger()
+		comment = "Enharmonized from V dominant of "+from_key.to_string() 
+		LogBus.info(TAG,comment)
+		return
+	
+	if kind == "Diatonic" and key.scale_name == "major" and degree_number == 5:
+		key.scale_name = "harmonic_minor"
+		comment = "Enharmony from V major to V harmonic minor"
+		LogBus.info(TAG,comment)
+		return	
+
+	if kind == "Diatonic" and key.scale_name == "harmonic_minor" and degree_number == 5:
+		key.scale_name = "major"
+		comment = "Enharmony from V harmonic minor to V major"
+		LogBus.info(TAG,comment)	
+		return
 	
 	# N6 -> 
 	if kind == "N6":
@@ -1688,6 +1878,7 @@ func enharmonize():
 		inversion = 1
 		realization = [1,3,5]
 		comment =  "N6 enharmonized to IV in key " + key.to_string()
+		LogBus.info(TAG,comment)
 		return
 	
 	# test accord Dim7
@@ -1703,22 +1894,19 @@ func enharmonize():
 			key.root_midi = 60 + ((9 + old_key_root) % 12)
 			key.scale_name = "harmonic_minor"
 			degree_number = 2
-			LogBus.debug(TAG,"to 2 minor")
 		elif (key.scale_name == "harmonic_minor" or key.scale_name == "minor")  and degree_number == 2:
 			key.root_midi = 60 + ((3 + old_key_root) % 12)
 			key.scale_name = "harmonic_minor"
 			degree_number = 7
-			LogBus.debug(TAG,"to 7 minor")
 		elif key.scale_name == "harmonic_minor" and degree_number == 7:
 			key.scale_name = "major"
 			degree_number = 7
-			LogBus.debug(TAG,"to 7 major")
 		else :
 			var midi_root = (key.degree_midi(degree_number) + get_chord_alteration(1)) %12
 			key.root_midi = (midi_root + 1) %12
 			degree_number = 7
 			key.scale_name = "harmonic_minor"
-			LogBus.debug(TAG,"unknown to 7 minor")
+
 	# test accord augmenté 
 	if midi_notes.size() == 3  and (midi_notes[1] - midi_notes[0] == 4) and  (midi_notes[2] - midi_notes[0] == 8): 
 		key.root_midi = 60 + ((4 + old_key_root) % 12)
@@ -1772,7 +1960,7 @@ func enharmonize():
 	
 	#Accord mineur
 	if midi_notes.size() == 3 and (midi_notes[1] - midi_notes[0] == 3) and  (midi_notes[2] - midi_notes[0] == 7): 
-		if key.scale_name == "minor" and degree_number == 1:
+		if (key.scale_name == "minor" or key.scale_name == "harmonic_minor")  and degree_number == 1:
 			key.root_midi = 60 + ((3 + old_key_root) % 12)
 			key.scale_name = "major"
 			degree_number = 6
@@ -1804,8 +1992,11 @@ func enharmonize():
 		elif key.scale_name == "melodic_minor" and degree_number == 2:
 			#G melodic minor
 			key.root_midi = 60 + ((2 + old_key_root) % 12)
-			key.scale_name = "minor"
+			key.scale_name = "harmonic_minor"
 			degree_number = 1
+		var log_str = "Enharmonization minor triad:\nFrom: "+ from_rn + " in key " + from_key.to_string()
+		log_str += "\nTo: " + get_roman_numeral() + " in key " + key.to_string()
+		LogBus.info(TAG,log_str)
 #	# GAMME MAJEURE
 #
 #	# -> FROM ii
@@ -1829,10 +2020,13 @@ func enharmonize():
 #
 
 func guitar_chords()-> Array :
+	
 	var keys = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"]
 	var gc_array = []
 	var basePitch =  key.degree_midi(degree_number) % 12
 	var root_name = keys[basePitch]
+	var triton_root_name = keys[(basePitch + 6) %12]
+	var backdoor_root_name = keys[(basePitch + 3) %12]
 	var chord_name = get_jazz_chord()
 	var ggb = MusicLabGlobals.GuitarBase
 	
@@ -1841,29 +2035,102 @@ func guitar_chords()-> Array :
 			chord_name = root_name+"minor"
 		elif third_distance() == 4:
 			chord_name = root_name+"major"
+	elif kind == "It+6" or kind == "Fr+6" or kind == "Ger+6":
+		chord_name = root_name+"7"
+	elif kind == "It+6Inv" or kind == "Fr+6Inv" or kind == "Ger+6Inv":
+		chord_name = root_name+"7"
 	
 	# search by name
 	gc_array = ggb.search_by_name(chord_name)
-	if gc_array != null and gc_array.size() > 0:
-		LogBus.debug(TAG,"gc_array.size() " + str(gc_array.size() ))
-		return gc_array
-	else :
-		LogBus.debug(TAG,"gc_array.size() = 0 -> " + get_jazz_chord())
-		#LogBus.debug(TAG,"gc_array.size() = 0")
+	
+	
+					
+	# on ajoute les sus2 et sus4
+	if kind == "diatonic" and realization == [1,3,5] and fifth_distance() == 7 and degree_number !=1  and degree_number !=5:
+		gc_array.append_array(ggb.search_by_name(root_name+"sus2"))
+		gc_array.append_array(ggb.search_by_name(root_name+"sus4"))
+		
+	if kind == "diatonic" and realization == [1,3,5] and fifth_distance() == 7 :
+
+	
+		# et les 9emes et 11emes
+		if key.scale_name == "major":
+			if degree_number == 5:
+				gc_array.append_array(ggb.search_by_name(root_name+"7"))
+				gc_array.append_array(ggb.search_by_name(root_name+"9"))
+				
+			elif degree_number == 2 or degree_number == 6 or degree_number == 3 :
+				gc_array.append_array(ggb.search_by_name(root_name+"m9"))
+				if degree_number == 2 or degree_number == 6:
+					gc_array.append_array(ggb.search_by_name(root_name+"m11"))
+				elif degree_number == 5:
+					gc_array.append_array(ggb.search_by_name(root_name+"11"))
+		elif key.scale_name == "minor":	
+			if degree_number == 4:
+				gc_array.append_array(ggb.search_by_name(root_name+"m9"))	
+				gc_array.append_array(ggb.search_by_name(root_name+"m11"))
+			elif degree_number == 1:
+				gc_array.append_array(ggb.search_by_name(root_name+"m11"))
+		elif key.scale_name == "harmonic_minor":	
+			if degree_number == 4:
+				gc_array.append_array(ggb.search_by_name(root_name+"9"))	
+
+	
+	# on ajoute les 6/9
+	if key.scale_name == "major":
+		if (degree_number == 1 or degree_number == 4 or degree_number == 5):
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+		elif degree_number == 2:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif key.scale_name == "minor":
+		if (degree_number == 3 or degree_number == 6 or degree_number == 7):
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+		elif degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif  key.scale_name == "harmonic_minor":
+		if degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif key.scale_name == "melodic_minor":
+		if degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+				
+
+	# Et les Dominantes altérées
+	if kind == "diatonic" and realization == [1,3,5] and fifth_distance() == 7 and degree_number == 5:
+		if key.scale_name == "major":
+			gc_array.append_array(ggb.search_by_name(root_name+"7b9"))
+			gc_array.append_array(ggb.search_by_name(root_name+"7#9"))
+			gc_array.append_array(ggb.search_by_name(root_name+"7sus4"))
+			gc_array.append_array(ggb.search_by_name(root_name+"alt"))
+			# Substitutions tritoniques (♭II7 et cie)
+			#gc_array.append_array(ggb.search_by_name(triton_root_name+"7"))
+			#
+			# ♭VII7 (B♭7) : « backdoor dominant »
+			#gc_array.append_array(ggb.search_by_name(backdoor_root_name+"7"))
+		elif key.scale_name == "harmonic_minor":	
+			gc_array.append_array(ggb.search_by_name(root_name+"7b9"))
+			gc_array.append_array(ggb.search_by_name(root_name+"7#9"))
+			gc_array.append_array(ggb.search_by_name(root_name+"7sus4"))
+			gc_array.append_array(ggb.search_by_name(root_name+"alt"))
+		
 	
 	# search by notes
 	var midi_notes =  PoolIntArray(get_chord_midi())
-	gc_array = ggb.search_by_pitches(midi_notes)
-	if gc_array != null and gc_array.size()>0:
-		var filtered_gc_array = []
-		for c in gc_array:
-			#LogBus.info(TAG,c.chord_name + " -> " + str(c.midiNotes()))
-			if same_pitch_class(c.midiNotes()[0],get_chord_midi()[0]) :
-				filtered_gc_array.append(c)
-		if filtered_gc_array.size() > 0:
-			return filtered_gc_array
-		else :
-			return gc_array
+	var gc_by_pitch = ggb.search_by_pitches(midi_notes)
+	#LogBus.debug(TAG,"gc_by_pitch.size()" + str(gc_by_pitch.size()))
+	
+	var gc_array_midiNotes = []
+	for gc in gc_array:
+		gc_array_midiNotes.append(gc.midiNotes)
+	
+	
+	
+	# on ajoute en dédoublonnant
+	for gc in gc_by_pitch:
+		if pool_int_array_in_array(gc.midiNotes , gc_array_midiNotes) == false:
+			gc_array.append(gc)
+				
+	
 	return gc_array
 	
 func same_pitch_class(p1:int,p2:int)->bool:
@@ -1875,7 +2142,7 @@ func tonalize():
 		return
 		
 	if quality_with_alter() != "min" and  quality_with_alter() != "maj" :
-		LogBus.info(TAG,"cannot tonalize !\n Chord must be diatonic major or minor ")
+		LogBus.info(TAG,"Cannot tonalize !\nYou must select 2 diatonic major or minor chords\nIt is better to use 2 Degree 1 of 2 different tonalities\n")
 		return
 		
 	var k:HarmonicKey = HarmonicKey.new()
@@ -1963,7 +2230,7 @@ func chromatizeUp():
 		comment = "chromatized chord"
 	elif quality_with_alter() == "maj":
 		var midi_root = key.degree_midi(degree_number) + get_chord_alteration(1)
-		LogBus.debug(TAG,"midi_root:" + str(midi_root))
+
 		reset()
 		key.scale_name = "harmonic_minor"
 		key.root_midi = 60 + (midi_root + 9 ) % 12
@@ -1980,3 +2247,8 @@ func chromatizeUp():
 	LogBus.info(TAG,"Cannot chromatize this chord")
 	return
 	
+func pool_int_array_in_array(needle: PoolIntArray, haystack: Array) -> bool:
+	for arr in haystack:
+		if arr == needle:
+			return true
+	return false

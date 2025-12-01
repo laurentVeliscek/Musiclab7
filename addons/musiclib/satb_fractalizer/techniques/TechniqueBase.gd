@@ -19,14 +19,18 @@ func apply(progression, params):
 # UTILITY: SELECT CHORD PAIR
 # =============================================================================
 
-func _select_chord_pair(progression, window, strategy):
+func _select_chord_pair(progression, window, strategy, exclude_decorative_pairs = false):
 	# window: {"start": float, "end": float}
 	# strategy: "earliest" or "longest"
+	# exclude_decorative_pairs: if true, only consider pairs of structural (non-decorative) chords
 
-	var pairs = progression.get_chord_pairs_in_window(window.start, window.end)
+	var pairs = progression.get_chord_pairs_in_window(window.start, window.end, exclude_decorative_pairs)
 
 	if pairs.empty():
-		LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		if exclude_decorative_pairs:
+			LogBus.warn(TAG2, "_select_chord_pair: no structural chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
+		else:
+			LogBus.warn(TAG2, "_select_chord_pair: no chord pairs in window [" + str(window.start) + ", " + str(window.end) + "]")
 		return null
 
 	var selected = progression.select_chord_pair(pairs, strategy)
@@ -55,16 +59,17 @@ func _choose_rhythm_pattern(n_cells, progression, technique_id, triplet_allowed)
 # UTILITY: CREATE NEW CHORDS FROM PATTERN
 # =============================================================================
 
-func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role, time_grid, generation_depth):
+func _create_chords_from_pattern(chord_a, chord_b, pattern, voice_id, pitches, technique_id, role, time_grid, generation_depth, start_time):
 	# pattern: {"pattern": [durations...], "triplet": bool}
 	# pitches: Array of MIDI pitches (same length as pattern.pattern)
 	# time_grid: TimeGrid for beat strength calculation
 	# generation_depth: int, how many fractalizer passes have been applied
+	# start_time: float, explicit start time for the first decorative chord (typically effective_start from pair_info)
 	# Returns: Array of Chord objects
 
 	var new_chords = []
 	var durations = pattern.pattern
-	var current_time = chord_a.start_time
+	var current_time = start_time  # Use explicit start_time instead of chord_a.start_time
 
 	for i in range(durations.size()):
 		var dur = durations[i]

@@ -14,8 +14,8 @@ export(Array) var barres = []						# [{ "fret": n, "from_string": 6, "to_string"
 export(int) var root_pc = -1  # 0..11 ; si -1 => on tente de déduire
 
 
-var time:float = 0 setget set_time,get_time
-var beat_length:float = 1 setget set_beat_length, get_beat_length
+var start:float = 0 setget set_start,get_start
+var length_beats:float = 1 setget set_length_beats, get_length_beats
 var midiNotes:PoolIntArray = ([]) setget set_midiNotes, get_midiNotes
 var notes:Array = [] setget set_notes,get_notes
 
@@ -32,22 +32,24 @@ func to_dict() -> Dictionary:
 	d["fingers"] = fingers
 	d["barres"] = barres
 	d["root_pc"] = root_pc
+	d["start"] = start
+	d["length_beats"] = length_beats
 	
 	return d
 	
 
 
-func set_time(t:float):
-	time = t
+func set_start(t:float):
+	start = t
 
-func get_time()->float:
-	return time
+func get_start()->float:
+	return start
 
-func set_beat_length(t:float):
-	beat_length = t
+func set_length_beats(t:float):
+	length_beats = t
 
-func get_beat_length()->float:
-	return beat_length
+func get_length_beats()->float:
+	return length_beats
 	
 func set_midiNotes(p:PoolIntArray):
 	LogBus.error(TAG,"midiNotes cannot be set !")
@@ -309,7 +311,8 @@ func clone():
 	return c
 
 func to_string() -> String:
-	return "GuitarChord{" + chord_name + ", bf=" + str(base_fret) + ", frets=" + str(frets) + ", fingers=" + str(fingers) + "}"
+	var txt_time = "start: " + str(start) + "  Length: "+ str(length_beats) + "\n"
+	return txt_time + "GuitarChord{" + chord_name + ", bf=" + str(base_fret) + ", frets=" + str(frets) + ", fingers=" + str(fingers) + "}"
 
 # --- Helpers nom→pitch class (0..11)
 func _pc_from_note_name_local(s: String) -> int:
@@ -461,21 +464,30 @@ func get_arp_note(idx:int)-> int:
 			2: return notes[-(3 % size)]
 			1: return notes[-(4 % size)]
 			0:
-				if notes.size() > 4:
+				if notes.size() > 5:
 					return notes[-5]
-				else:
+				elif notes.size() > 4:
 					return notes[-4]
-			_:
+				elif notes.size() > 3:
+					return notes[-3]				
+				elif notes.size() > 2:
+					return notes[-2]
+				elif notes.size() > 1:
+					return notes[-1]
+				else: 
+					return notes[0]
+			_:	
 				return notes[idx % size]
 		
 		
 func get_arp_note_with_string(idx:int)-> Dictionary:
 	var notes = midiNotes_with_string()
+	var notes_size= notes.size()
 	match idx:
-			4: return notes[-1]
-			3: return notes[-2]
-			2: return notes[-3]
-			1: return notes[-4]
+			4: return notes[(notes_size -1) % notes_size]
+			3: return notes[(notes_size -2) % notes_size]
+			2: return notes[(notes_size -3) % notes_size]
+			1: return notes[(notes_size -4) % notes_size]
 			0: 
 				if notes.size() > 4:
 					return notes[-5]

@@ -1,5 +1,6 @@
 extends Node
 
+class_name Planner
 const TAG = "Planner"
 const Constants = preload("res://addons/musiclib/satb_fractalizer/core/Constants.gd")
 
@@ -79,24 +80,45 @@ func apply(chords_array, params):
 	# 2. Process each time window
 	for w in range(time_windows.size()):
 		var window = time_windows[w]
-		LogBus.info(TAG, "Processing window " + str(w) + ": [" + str(window.start) + ", " + str(window.end) + "]")
 
-		# Get pattern voice for this window
-		var pattern_voice = _get_pattern_voice(w, voice_pattern)
-		LogBus.debug(TAG, "Pattern voice for window " + str(w) + ": " + pattern_voice)
+		# Get iteration count for this window (default = 1)
+		var iterations = window.get("iteration", 1)
 
-		# Process window
-		progression = _process_window(
-			progression,
-			window,
-			w,  # window_index
-			pattern_voice,
-			allowed_techniques,
-			triplet_allowed,
-			pair_strategy,
-			technique_weights,
-			params
-		)
+		if iterations < 1:
+			LogBus.warn(TAG, "Window " + str(w) + " has invalid iteration count " + str(iterations) + ", skipping")
+			continue
+
+		LogBus.info(TAG, "Processing window " + str(w) + ": [" + str(window.start) + ", " + str(window.end) + "] (" + str(iterations) + " iteration(s))")
+
+		# Process window multiple times if iterations > 1
+		for iter in range(iterations):
+			if iterations > 1:
+				LogBus.debug(TAG, "Window " + str(w) + ", iteration " + str(iter + 1) + "/" + str(iterations))
+
+			# Get pattern voice for this window
+			var pattern_voice = _get_pattern_voice(w, voice_pattern)
+			LogBus.debug(TAG, "Pattern voice for window " + str(w) + " iter " + str(iter) + ": " + pattern_voice)
+
+			# For iterations after the first, exclude decorative pairs to avoid re-processing
+			# This prevents overlaps and gaps when applying multiple techniques
+			var exclude_decorative = (iter > 0)
+
+			# Create technique params with iteration-specific settings
+			var technique_params = params.duplicate()
+			technique_params["exclude_decorative_pairs"] = exclude_decorative
+
+			# Process window
+			progression = _process_window(
+				progression,
+				window,
+				w,  # window_index
+				pattern_voice,
+				allowed_techniques,
+				triplet_allowed,
+				pair_strategy,
+				technique_weights,
+				technique_params
+			)
 
 	# 3. Convert Progression back to JSON Array
 	var result_chords = adapter.to_json_array(progression)

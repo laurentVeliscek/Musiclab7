@@ -18,10 +18,11 @@ func apply(progression, params):
 	var voice_id = params.get("voice", Constants.VOICE_SOPRANO)
 	var strategy = params.get("pair_selection_strategy", Constants.STRATEGY_EARLIEST)
 	var triplet_allowed = params.get("triplet_allowed", Constants.DEFAULT_TRIPLET_ALLOWED)
+	var exclude_decorative_pairs = params.get("exclude_decorative_pairs", false)
 	var neighbor_direction = params.get("neighbor_direction", "upper")  # "upper" or "lower"
 
 	# 1. Select chord pair
-	var pair_info = _select_chord_pair(progression, window, strategy)
+	var pair_info = _select_chord_pair(progression, window, strategy, exclude_decorative_pairs)
 	if not pair_info:
 		LogBus.warn(TAG, "No chord pair found in window")
 		return progression
@@ -103,7 +104,8 @@ func apply(progression, params):
 		Constants.TECHNIQUE_NEIGHBOR_TONE,
 		Constants.ROLE_NEIGHBOR_TONE,
 		progression.time_grid,
-		generation_depth
+		generation_depth,
+		pair_info.effective_start  # Pass explicit start time
 	)
 
 	# 8. Validate NCT pitches

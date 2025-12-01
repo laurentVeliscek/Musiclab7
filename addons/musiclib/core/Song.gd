@@ -18,8 +18,12 @@ var satb_solutions_array:Array = []
 var satb_solutions_index =  -1
 #pour fractalizer
 var satb_request_data:Dictionary = {}
+# Patterns de strumming (Array de StrumPattern)
+var strum_pattern_array:Array = []
 # ---- Contenu : chaque entrée = { track: Track, offset_beats: float }
 var _entries: Array = []
+var guitar_player_scene_params:Dictionary = {}
+
 
 const PROGRESSION_TRACK_NAME:String= "Chord Progression"
 const SATB_TRACK_NAME:String= "SATB"
@@ -28,7 +32,8 @@ const SATB_ALTO:String= "SATB Alto"
 const SATB_TENOR:String= "SATB Tenor"
 const SATB_BASS:String= "SATB Bass"
 const RYTHM_GUITAR_TRACK:String= "Rythm Guitar"
-
+const FRACTAL_TRACK:String= "fractal SATB"
+const MELODY_TRACK:String= "Melody"
 
 
 func clone() -> Song:
@@ -46,6 +51,26 @@ func clone() -> Song:
 	s.satb_solutions_index =  satb_solutions_index
 	# Pour fratcalizer
 	s.satb_request_data = satb_request_data
+
+	# Patterns de strumming
+	s.strum_pattern_array = []
+	if typeof(strum_pattern_array) == TYPE_ARRAY:
+			for pat in strum_pattern_array:
+					if pat != null and typeof(pat) == TYPE_OBJECT:
+							if pat.has_method("clone"):
+									s.strum_pattern_array.append(pat.clone())
+							elif pat.has_method("duplicate"):
+									s.strum_pattern_array.append(pat.duplicate(true))
+
+	# Patterns de strumming
+	s.strum_pattern_array = []
+	if typeof(strum_pattern_array) == TYPE_ARRAY:
+		for pat in strum_pattern_array:
+			if pat != null and typeof(pat) == TYPE_OBJECT:
+				if pat.has_method("clone"):
+					s.strum_pattern_array.append(pat.clone())
+				elif pat.has_method("duplicate"):
+					s.strum_pattern_array.append(pat.duplicate(true))
 
 
 
@@ -75,7 +100,156 @@ func clone() -> Song:
 					tr_copy = tr.duplicate(true)
 			s._entries.append({"track": tr_copy, "offset_beats": off})
 	
+	s.guitar_player_scene_params = guitar_player_scene_params.duplicate()
+	
 	return s
+
+func to_dict() -> Dictionary:
+	var dic:Dictionary = {}
+	
+	# --- Métadonnées / tempo / métrique ---
+	dic["title"] = title
+	dic["ppq"] = ppq
+	dic["tempo_bpm"] = tempo_bpm
+	dic["time_num"] = time_num
+	dic["time_den"] = time_den
+	
+	# --- Tempo map ---
+	var tempos_array:Array = []
+	for ev in tempo_changes:
+		if typeof(ev) != TYPE_DICTIONARY:
+			continue
+		var t_ev:Dictionary = {}
+		t_ev["beats"] = float(ev.get("beats", 0.0))
+		t_ev["bpm"] = float(ev.get("bpm", tempo_bpm))
+		tempos_array.append(t_ev)
+	dic["tempo_changes"] = tempos_array
+	
+	# --- SATB / Fractalizer ---
+	# Solutions complètes (Array de solutions)
+	dic["satb_solutions_array"] = satb_solutions_array.duplicate(true)
+	# Index de la solution courante
+	dic["satb_solutions_index"] = satb_solutions_index
+	# Requête SATB (paramètres de génération)
+	dic["satb_request_data"] = satb_request_data.duplicate(true)
+
+
+	# --- Strum patterns ---
+	var strums_array:Array = []
+	for pat in strum_pattern_array:
+		if pat != null and typeof(pat) == TYPE_OBJECT and pat.has_method("to_dict"):
+			strums_array.append(pat.to_dict())
+	dic["strum_pattern_array"] = strums_array
+
+	# --- Entries / Tracks ---
+	var entries_array:Array = []
+	for entry in _entries:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		
+		var off = float(entry.get("offset_beats", 0.0))
+		var tr = entry.get("track", null)
+		
+		var e:Dictionary = {}
+		e["offset_beats"] = off
+		
+		if tr != null and typeof(tr) == TYPE_OBJECT and tr.has_method("to_dict"):
+			e["track"] = tr.to_dict()
+		
+		entries_array.append(e)
+	
+	dic["entries"] = entries_array
+	dic["guitar_player_scene_params"] = guitar_player_scene_params.duplicate()
+	
+	
+	#LogBus.debug(TAG, "Song.to_dict(): " + JSON.print(dic, "\t"))
+	return dic
+
+
+func from_dict(dic) -> Song:
+	var s:Song = get_script().new()
+	
+	# --- Métadonnées / tempo / métrique ---
+	s.title = dic.get("title", "Untitled Song")
+	s.ppq = int(dic.get("ppq", 480))
+	s.tempo_bpm = float(dic.get("tempo_bpm", 120.0))
+	s.time_num = int(dic.get("time_num", 4))
+	s.time_den = int(dic.get("time_den", 4))
+	
+	# --- Tempo map ---
+	s.tempo_changes.clear()
+	var tempos_array = dic.get("tempo_changes", [])
+	if typeof(tempos_array) == TYPE_ARRAY:
+		for ev in tempos_array:
+			if typeof(ev) != TYPE_DICTIONARY:
+				continue
+			var t_ev:Dictionary = {}
+			t_ev["beats"] = float(ev.get("beats", 0.0))
+			t_ev["bpm"] = float(ev.get("bpm", s.tempo_bpm))
+			s.tempo_changes.append(t_ev)
+	
+	# --- SATB / Fractalizer ---
+	# Solutions
+	var satb_array = dic.get("satb_solutions_array", [])
+	if typeof(satb_array) == TYPE_ARRAY:
+		s.satb_solutions_array = satb_array.duplicate(true)
+	else:
+		s.satb_solutions_array = []
+	
+	# Index courant (on peut le “clamp” pour éviter les débords)
+	s.satb_solutions_index = int(dic.get("satb_solutions_index", -1))
+	if s.satb_solutions_array.size() == 0:
+		s.satb_solutions_index = -1
+	elif s.satb_solutions_index < -1 or s.satb_solutions_index >= s.satb_solutions_array.size():
+		s.satb_solutions_index = -1
+	
+	# Requête SATB
+	var req = dic.get("satb_request_data", {})
+	if typeof(req) == TYPE_DICTIONARY:
+		s.satb_request_data = req.duplicate(true)
+	else:
+		s.satb_request_data = {}
+
+	# --- Strum patterns ---
+	s.strum_pattern_array.clear()
+	var strums_array = dic.get("strum_pattern_array", [])
+	if typeof(strums_array) == TYPE_ARRAY:
+		for pat_data in strums_array:
+			if typeof(pat_data) == TYPE_DICTIONARY:
+				var dummy_sp = StrumPattern.new()
+				s.strum_pattern_array.append(dummy_sp.from_dict(pat_data))
+
+	# --- Entries / Tracks ---
+	s._entries.clear()
+	var entries_array = dic.get("entries", [])
+	if typeof(entries_array) == TYPE_ARRAY:
+		for e in entries_array:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			
+			var off = float(e.get("offset_beats", 0.0))
+			var tr_data = e.get("track", null)
+			
+			if typeof(tr_data) == TYPE_DICTIONARY:
+				# factory locale pour éviter l’auto-référence en 3.x
+				var dummy_tr = Track.new()
+				var tr = dummy_tr.from_dict(tr_data)
+				s._entries.append({
+					"track": tr,
+					"offset_beats": off
+				})
+	
+	# Requête SATB
+	var guitar_scene_params = dic.get("guitar_player_scene_params", {})
+	if typeof(guitar_scene_params) == TYPE_DICTIONARY:
+		s.guitar_player_scene_params = guitar_scene_params.duplicate(true)
+	else:
+		s.guitar_player_scene_params = {}
+	
+	#LogBus.debug(TAG, "Song.from_dict(): " + JSON.print(dic, "\t"))
+	#LogBus.debug(TAG, "Song rebuilt: " + s.to_string())
+	return s
+
 
 #
 func get_satb_request_data()-> Dictionary:
@@ -90,7 +264,7 @@ func get_satb() -> Dictionary:
 		if satb_solutions_index > -1 and satb_solutions_index <= satb_solutions_array.size() -1 :
 			var satb = satb_solutions_array[satb_solutions_index]	
 			return satb
-			LogBus.debug(TAG,str(satb))
+			#LogBus.debug(TAG,str(satb))
 		else :
 			LogBus.error(TAG,"satb_solutions_index = " + str(satb_solutions_index))
 			return {}

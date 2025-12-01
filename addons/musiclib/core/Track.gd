@@ -22,27 +22,206 @@ var events: Array = []
 
 var length_beats:float setget set_length_beats,get_length_beats
 
+
+func clone() -> Track:
+	var t = get_script().new()
+	
+	# Copie des attributs simples connus
+	t.name = name
+	t.channel = int(channel)
+	t.adopt_channel = bool(adopt_channel)
+	t.adopt_program_channel = bool(adopt_program_channel)
+	
+	# Program Change
+	if program_change != null and typeof(program_change) == TYPE_OBJECT and program_change.has_method("clone"):
+		t.program_change = program_change.clone()
+	else:
+		t.program_change = program_change
+	
+	# Events (deep-ish copy)
+	t.events = []
+	for e in events:
+		var e2 = {}
+		var pos:float = e["start"]
+		if e.has("note"):
+			var n:Note = e["note"].clone()
+			t.add_note(pos,n)
+		elif e.has("degree"):
+			var d:Degree = e["degree"].clone()
+			t.add_degree(pos,d)
+#			e2["degree"] = e["degree"].clone()
+#			e2["start"] = e["start"]
+#			t.events.append(e2)
+			
+			
+		elif e.has("meta"):
+			pass
+			# on ne fait 
+#			e2["text"] = e["text"]
+#			e2["length_beats"] = 0
+#			e2["start"] = e["start"]
+#			t.events.append(e2)
+		elif e.has("MidiCC"): 
+			e["start"] =e["start"]
+			e["length_beats"] = 0
+			t.add_midiCC(pos, e["MidiCC"].clone())
+			
+	return t
+	
+	
+	
+func to_dict() -> Dictionary:
+	var dic:Dictionary = {}
+	dic["name"] = name
+	dic["channel"] = channel
+	dic["adopt_channel"] = adopt_channel
+	dic["adopt_program_channel"] = adopt_program_channel
+	
+	
+	
+	if program_change != null and typeof(program_change) == TYPE_OBJECT and program_change.has_method("to_dict"):
+		dic["program_change"] = program_change.to_dict()
+	
+	# --- Events ---
+	var ev_array:Array = []
+	for ev in events:
+		if typeof(ev) != TYPE_DICTIONARY:
+			# on ignore les trucs exotiques
+			continue
+		
+		var e:Dictionary = {}
+		e["start"] = float(ev.get("start", 0.0))
+		
+		# Note
+		if ev.has("note") and ev["note"] != null and typeof(ev["note"]) == TYPE_OBJECT and ev["note"].has_method("to_dict"):
+			e["kind"] = "note"
+			e["data"] = ev["note"].to_dict()
+		
+		# Degree
+		elif ev.has("degree") and ev["degree"] != null and typeof(ev["degree"]) == TYPE_OBJECT and ev["degree"].has_method("to_dict"):
+			e["kind"] = "degree"
+			e["data"] = ev["degree"].to_dict()
+		
+		# ProgramChange ponctuel
+		elif ev.has("program_change") and ev["program_change"] != null and typeof(ev["program_change"]) == TYPE_OBJECT and ev["program_change"].has_method("to_dict"):
+			e["kind"] = "program_change"
+			e["data"] = ev["program_change"].to_dict()
+		
+		# MidiCC
+		elif ev.has("MidiCC") and ev["MidiCC"] != null and typeof(ev["MidiCC"]) == TYPE_OBJECT and ev["MidiCC"].has_method("to_dict"):
+			e["kind"] = "MidiCC"
+			e["data"] = ev["MidiCC"].to_dict()
+		
+		# Event texte / meta déjà “plat”
+		elif ev.has("meta"):
+			e["kind"] = "meta"
+			e["meta"] = ev.get("meta", 0)
+			if ev.has("text"):
+				e["text"] = String(ev["text"])
+		
+		# On ne stocke que les events qu’on sait interpréter
+		if e.has("kind"):
+			ev_array.append(e)
+	
+	dic["events"] = ev_array
+
+	return dic
+
+
+func from_dict(dic) -> Track:
+	var t:Track = get_script().new()
+	
+	t.name = dic.get("name", "untitled Track")
+	t.channel = int(dic.get("channel", 0))
+	t.adopt_channel = bool(dic.get("adopt_channel", true))
+	t.adopt_program_channel = bool(dic.get("adopt_program_channel", true))
+	
+	# ProgramChange de piste
+	var pc_data = dic.get("program_change", null)
+	if typeof(pc_data) == TYPE_DICTIONARY:
+		var dummy_pc = ProgramChange.new()
+		t.program_change = dummy_pc.from_dict(pc_data)
+	else:
+		t.program_change = null
+	
+	# --- Events ---
+	t.events.clear()
+	
+	var ev_array = dic.get("events", [])
+
+	if typeof(ev_array) == TYPE_ARRAY:
+		for e in ev_array:
+			if typeof(e) != TYPE_DICTIONARY:
+				continue
+			
+			var ev:Dictionary = {}
+			ev["start"] = float(e.get("start", 0.0))
+			
+			var kind:String = String(e.get("kind", ""))
+			
+			# Note
+			if kind == "note":
+				var data_note = e.get("data", null)
+				if typeof(data_note) == TYPE_DICTIONARY:
+					var dummy_note = Note.new()
+					ev["note"] = dummy_note.from_dict(data_note)
+			
+			# Degree
+			elif kind == "degree":
+				var data_deg = e.get("data", null)
+				if typeof(data_deg) == TYPE_DICTIONARY:
+					var dummy_deg = Degree.new()
+					ev["degree"] = dummy_deg.from_dict(data_deg)
+			
+			# ProgramChange ponctuel
+			elif kind == "program_change":
+				var data_pc = e.get("data", null)
+				if typeof(data_pc) == TYPE_DICTIONARY:
+					var dummy_pc2 = ProgramChange.new()
+					ev["program_change"] = dummy_pc2.from_dict(data_pc)
+			
+			# MidiCC
+			elif kind == "MidiCC":
+				var data_cc = e.get("data", null)
+				if typeof(data_cc) == TYPE_DICTIONARY:
+					var dummy_cc = MidiCC.new()
+					ev["MidiCC"] = dummy_cc.from_dict(data_cc)
+			
+			# Meta / texte simple
+			elif kind == "meta":
+				ev["meta"] = e.get("meta", 0)
+				if e.has("text"):
+					ev["text"] = String(e["text"])
+			
+			t.events.append(ev)
+#
+
+	return t
+
+
 func set_length_beats(_n):
 	LogBus.error(TAG,"You cannot set Tracks.length_beats!")
 	
 func get_length_beats() -> float:
-	var end_pos = 0
+	var end_pos:float = 0
 	if events == null or events == []:
 		return end_pos
 	for e in events:
 		if e.has("start") and e["start"] >= end_pos :
 			end_pos = e["start"]
-			var el
-			if e.has("note"):
-				el = e["note"]
-			elif e.has("degree"):
-				el = e["degree"]
+
+		
+		var lb:float = 0
+		if e.has("note"):
+			var n:Note = e["note"]
+			lb = n.length_beats
+		elif e.has("degree"):
+			var d:Degree = e["degree"]
+			lb = d.length_beats
 			
-			var lb:float = el.get("length_beats")
-			if lb != null  and lb > 0:
-				#LogBus.debug(TAG,"el.length_beats: " + str(el.length_beats))
-				if lb + e["start"] > end_pos:
-					end_pos = lb + e["start"]
+		if lb != null  and lb > 0:
+			if lb + e["start"] > end_pos:
+				end_pos = lb + e["start"]
 					
 	return end_pos		
 	
@@ -50,9 +229,16 @@ func get_length_beats() -> float:
 
 
 # ---------- API de base ----------
+# ATTENTION, POUR UN TABLEAU DE Notes !
+func add_notes(batch: Array) -> void:
+	# batch: Array de Dictionaries { "start": float, "note": Note }
+	for e in batch:
+		if typeof(e) == TYPE_DICTIONARY and e.has("start") and e.has("note"):
+			add_note(float(e["start"]), e["note"])
+
+# Pour un objet Note
 ## add_note(start_beats: float, note) -> int:
 func add_note(start_beats: float, note) -> int:
-	# 'note' doit être un objet Note (class_name Note) ou compatible (même propriétés).
 	var ev: Dictionary = {}
 	var t = max(0.0, float(start_beats))
 	ev["start"] = t
@@ -64,11 +250,21 @@ func add_note(start_beats: float, note) -> int:
 	events.append(ev)
 	return events.size() - 1
 
-func add_notes(batch: Array) -> void:
-	# batch: Array de Dictionaries { "start": float, "note": Note }
-	for e in batch:
-		if typeof(e) == TYPE_DICTIONARY and e.has("start") and e.has("note"):
-			add_note(float(e["start"]), e["note"])
+
+
+func add_midiCC(start_beats: float, midiCC:MidiCC) -> int:
+	var ev: Dictionary = {}
+	var t = max(0.0, float(start_beats))
+	ev["start"] = t
+
+	if adopt_channel and typeof(midiCC) == TYPE_OBJECT and midiCC != null and midiCC.has_method("set"):
+		midiCC.channel = clamp(channel, 0, 15)
+
+	ev["MidiCC"] = midiCC
+	events.append(ev)
+	return events.size() - 1
+
+
 
 func remove_at(index: int) -> void:
 	if index >= 0 and index < events.size():
@@ -136,7 +332,7 @@ func half_time() -> void:
 				# Accès direct à la propriété
 				d.length_beats = .5 * float(d.length_beats)
 		e["start"] = max(0.0, .5 * float(e["start"]))
-	LogBus.debug(TAG,"trackToString: " + to_string())
+
 
 
 func double_time() -> void:
@@ -251,36 +447,6 @@ func constrain_channel(ch: int) -> void:
 			n.channel = channel
 
 # ---------- Clone profond ----------
-func clone() -> Track:
-	var t = get_script().new()
-	
-	# Copie des attributs simples connus
-	t.name = name
-	t.channel = int(channel)
-	t.adopt_channel = bool(adopt_channel)
-	t.adopt_program_channel = bool(adopt_program_channel)
-	
-	# Program Change
-	if program_change != null and typeof(program_change) == TYPE_OBJECT and program_change.has_method("clone"):
-		t.program_change = program_change.clone()
-	else:
-		t.program_change = program_change
-	
-	# Events (deep-ish copy)
-	t.events = []
-	for e in events:
-		var e2 = {}
-		var pos:float = e["start"]
-		if e.has("note"):
-			var n:Note = e["note"].clone()
-			t.add_note(pos,n)
-		elif e.has("degree"):
-			var d:Degree = e["degree"].clone()
-			t.add_degree(pos,d)
-		else :
-			LogBus.error(TAG,"Track.clone -> unknown event: " + str(e))
-			
-	return t
 
 # ---------- internes ----------
 func _cmp_event_start(a, b) -> int:
@@ -374,23 +540,28 @@ func to_midi_events(ppq: int = 480, sort: bool = true, min_length_ticks: int = 1
 						"data1": note_num,
 						"data2": 64
 					})
-					
-
-
-		# ----- (B) Meta text (Lyrics/Markers...) -----
-		# add_degree() ajoute déjà des events {start, meta: 0x05, text: "V"}.
-		if typeof(e) == TYPE_DICTIONARY and e.has("meta") and e.has("text"):
-			var t_meta = int(round(start_beats * q))
-			var meta_code = int(e["meta"])
-			var txt = String(e["text"])
-			# On marque l'event avec status 0xFF pour pouvoir le trier/écrire ensuite
-			evs.append({
-				"tick": t_meta,
-				"status": 0xFF,
-				"meta": meta_code,
-				"text": txt
-			})
+					# On ajoute le roman numeral en "lyric"
+				evs.append({
+					"tick": int(round(start_beats * q)),
+					"status": 0xFF,
+					"meta": 5,
+					"text": e["degree"].get_roman_numeral() 
+				})
 			continue
+
+		# ----- (B) Events MidiCC -----
+		if typeof(e) == TYPE_DICTIONARY and e.has("MidiCC"):
+			var cc = e["MidiCC"]
+			if cc != null and typeof(cc) == TYPE_OBJECT:
+				var t_cc = int(round(start_beats * q))
+				if adopt_channel and cc.has_method("set_channel"):
+					cc.set_channel(channel)
+				if cc.has_method("to_midi_event_dict"):
+					var cc_ev = cc.to_midi_event_dict(t_cc)
+					if typeof(cc_ev) == TYPE_DICTIONARY:
+						evs.append(cc_ev)
+			continue
+
 
 		# ----- (C) Events Note "classiques" {start, note} -----
 		var n2 = e.get("note", null)
@@ -612,6 +783,11 @@ const META_LYRIC = 0x05
 # - clone : clone le Degree avant stockage pour éviter le partage d'instances
 # - as_lyric : ajoute aussi un meta-event "Lyric" pour l'export MIDI
 func add_degree(start_beats: float, d: Degree, clone: bool = true, as_lyric: bool = false) -> void:
+	
+	# le meta lyric est toujours ajouté pour les degrés
+	# AU MOMENT DU MIDI
+	as_lyric = false
+	
 	if d == null:
 		return
 
@@ -638,6 +814,7 @@ func add_degree(start_beats: float, d: Degree, clone: bool = true, as_lyric: boo
 		meta_ev["start"] = float(start_beats)
 		meta_ev["meta"] = int(META_LYRIC)
 		meta_ev["text"] = label
+		meta_ev["length_beats"] = 0
 		events.append(meta_ev)
 
 	# Tri chrono pour ne rien casser derrière
@@ -652,7 +829,7 @@ func to_string() -> String:
 	var s = ""
 	s += "Track(name=%s, channel=%d)\n" % [str(name), int(channel)]
 
-	s += "Events:\n"
+	s += "Events: ("+ str(events.size()) +")\n"
 	for e in events:
 		if e == null:
 			continue
@@ -660,7 +837,10 @@ func to_string() -> String:
 		if typeof(e) == TYPE_DICTIONARY:
 			# 1) Degree event
 			if e.has("degree"):
-				s += "\t" + format_degree_event(e) + "\n"
+				#s += "\t" + format_degree_event(e) + "\n"
+				var d:Degree = e["degree"]
+				s += "DEGREE start -> " + str(e["start"])
+				s += " -> " + d.get_roman_numeral() + "\n"
 			# 2) Meta text (lyrics)
 			elif e.has("meta") and e.has("text"):
 				var start_beats = 0.0
@@ -780,7 +960,8 @@ func format_midi_event_dict(e: Dictionary) -> String:
 # Importe les events de 'tr' dans la track courante.
 # - length_beats_offset: décalage (en beats) ajouté aux events qui ont "start".
 # - clone: si true, on clone les Note (et on recopie les dictionaries) pour éviter tout partage indésirable.
-func merge_track(tr: Track, length_beats_offset: float, clone: bool = true) -> void:
+## merge_track(tr: Track, length_beats_offset: float, clone: bool = true) -> void:
+func merge_track(tr: Track, length_beats_offset: float = 0 , clone: bool = true) -> void:
 	if tr == null:
 		return
 	if tr.events == null or tr.events.size() == 0:
@@ -1673,23 +1854,63 @@ func realize_degrees_to_notes() -> void:
 
 
 func extract(from:float,to:float,normalize:bool = false) -> Track:
-	var tr = get_script().new()
-	tr.program_change = program_change
+	
+	var tr = clone()
+	tr.clear()
+
+	
 	for e in events:
 		var start = e["start"]
+		
+		
 		if start >= from and start < to :
 			if e.has("note"):
 				var n:Note = e["note"].clone()
-				tr.add_note(start,n)		
+				var end = start + n["length_beats"]
+				end = min(to,end)
+				var new_note_length = end - start
+				if 	new_note_length > 0 :
+					n.length_beats = new_note_length
+					tr.add_note(start,n)	
+					
 			elif e.has("degree"):
 				var d:Degree = e["degree"].clone()
-				tr.add_degree(start,d)
+				var end = start + d["length_beats"]
+				end = min(to,end)
+				var new_degree_length = end - start
+				if 	new_degree_length > 0 :
+					d.length_beats = new_degree_length
+					var ev = {}
+					ev["start"] = e["start"]
+					ev["degree"] = e["degree"].clone()
+					tr.events.append(ev)
+					#tr.add_degree(start,d)	
+				
+			elif e.has("meta"):
+				var m = {}
+				m["meta"] = e["meta"]
+				m["text"] = e["text"]
+				m["start"]  = e["start"]
+				m["length_beats"]  = 0
+				tr.events.append(m)
+			
+			elif e.has("MidiCC"):
+				var m = {}
+				m["MidiCC"] = e["MidiCC"].clone()
+				m["start"]  = e["start"] 
+				m["length_beats"]  = 0
+				tr.events.append(m)
 			else :
+				LogBus.error(TAG," -> " + str(e) )
 				LogBus.error(TAG,'"extract() -> found a unknown element in track: ' + name + " !" )
-	
+				
+
+			
 	if normalize:
 		tr.shift_time(-1.0 * from)
 	return tr
+
+
 
 
 # Fusionne les notes consécutives de même pitch en une seule note prolongée.
@@ -1829,3 +2050,53 @@ func _moyenne_tableau(t:Array)-> float:
 		somme += nombre
 	return somme / t.size()
 	
+func multiply(n:int, clone:bool = false):
+	var actual_Track_length = self.get_length_beats()
+	#LogBus.debug(TAG, "length_beats" + str(get_length_beats()))
+	
+	var new_events = []
+	for e in events :
+		for i in range(0,n):
+			if e.has("degree") or e.has("note"):
+				#LogBus.debug(TAG,"start: "  + str( e["start"]))
+				var ev
+				if clone == false :
+					ev = e.duplicate()
+				else :
+					ev = {}
+					if e.has("degree") :
+						ev["degree"] = e["degree"].clone()
+					elif e.has("note") :
+						ev["note"] = e["note"].clone()
+				
+				ev["start"] = e["start"] + ((i + 1 )* actual_Track_length)
+				#LogBus.debug(TAG,"start ev: "  + str( ev["start"]))
+				new_events.append(ev)
+	events.append_array(new_events)
+	events.sort_custom(self, "compare_events_by_time")
+			
+				
+
+
+# retourne tous les degrés de la Tarck avec leur start
+func get_degrees_with_start()->Array:
+	var arr = []
+	for e in events:
+		if e.has("degree"):
+			var d_dic = {}
+			d_dic["degree"] = e["degree"]
+			d_dic["start"] = e["start"]
+			arr.append(d_dic)
+	return arr
+						
+#func add_note(start_beats: float, note) -> int:
+#	var ev: Dictionary = {}
+#	var t = max(0.0, float(start_beats))
+#	ev["start"] = t
+#
+#	if adopt_channel and typeof(note) == TYPE_OBJECT and note != null and note.has_method("set"):
+#		note.channel = clamp(channel, 0, 15)
+#
+#	ev["note"] = note
+#	events.append(ev)
+#	return events.size() - 1

@@ -17,6 +17,25 @@ var _root_token_hint: String = ""   # ce que l'utilisateur a tapé pour la toniq
 var _prefer_sharps_hint: int = -1   # -1 = inconnu, 0 = flats, 1 = sharps
 
 
+func to_dict() -> Dictionary:
+	return {
+		"scale_name":scale_name, 
+		"root_midi":root_midi
+	}
+
+func from_dict(data: Dictionary)-> HarmonicKey:
+	var k:HarmonicKey = get_script().new()
+	k.scale_name = str(data["scale_name"])
+	k.root_midi = int(data["root_midi"])
+	return k
+
+
+func clone():
+	var k:HarmonicKey = get_script().new()
+	k.set_from_string(to_string())
+	# … (autres scalaires)
+	return k
+
 func get_prefer_sharps_hint() -> int:
 	return _prefer_sharps_hint
 
@@ -403,14 +422,7 @@ func _norm_en(s: String) -> String:
 	return t
 
 
-func clone():
-	var k:HarmonicKey = get_script().new()
-	# copie tes champs publics pertinents
-	#static func midipitch2StringInKey(midi: int, hk, locale: String = "en", include_octave: bool = true, 
-	
-	k.set_from_string(to_string())
-	# … (autres scalaires)
-	return k
+
 
 func roman_seventh(degree: int) -> String:
 	var base_tri = roman_triad(degree)	# peut contenir "b5", "+", "°"
