@@ -11,6 +11,7 @@ onready var pattern_lineEdit:LineEdit = $Pattern/pattern_lineEdit
 
 onready var console:RichTextLabel = $console/console_RTL
 onready var midi_player:MidiPlayer
+onready var midi_export_dialog: FileDialog = $ExportMidiDialog
 
 onready var playStopBtn:Button = $Transport/playStop_btn
 onready var playHead:ColorRect = $SongViewContainer/play_head_cr
@@ -72,14 +73,24 @@ var scene_is_ready:bool = false
 var songview_is_displaying_degree = true
 var progression_track_length
 
+var _pending_midi_bytes: PoolByteArray = PoolByteArray()
+
 
 
 func _ready():
 	# midiPlayerSetup
-	
+
 	musiclibMidiPlayer.setupMidiPlayer()
 	midi_player = musiclibMidiPlayer.midiPlayer
-	
+
+	midi_export_dialog.mode = FileDialog.MODE_SAVE_FILE
+	midi_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	midi_export_dialog.clear_filters()
+	midi_export_dialog.add_filter("*.mid ; MIDI File")
+	midi_export_dialog.current_dir = MusicLabGlobals.get_midi_directory()
+	if not midi_export_dialog.is_connected("file_selected", self, "_on_ExportMidiDialog_file_selected"):
+		midi_export_dialog.connect("file_selected", self, "_on_ExportMidiDialog_file_selected")
+
 	gp = FolkGuitarPlayer.new()
 	
 	
@@ -590,19 +601,36 @@ func _on_Export_console_btn_pressed():
 
 func _on_Export_midi_btn_pressed():
 	var myExported_song = computeGuitarSong(false)
-	
-	var mime_type = "audio/midi"	
-	var filename = myMasterSong.title + "[GUITAR].mid"
+
+	var filename = myMasterSong.title + "[GUITAR]"
 	var bytes: PoolByteArray = myExported_song.get_midi_bytes_type1()
 	if bytes.size() <= 0:
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
 		return
-	
-	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-		_html5_download_bytes(bytes, filename, mime_type)
-	else:
-		_save_locally(bytes, "user://" + filename)
-		LogBus.info("[MidiExport]", "midifile Exported to user://" + filename)
+
+	_pending_midi_bytes = bytes
+	var export_path = MusicLabGlobals.get_midi_export_path(filename)
+	midi_export_dialog.current_dir = export_path.get_base_dir()
+	midi_export_dialog.current_file = export_path.get_file()
+	midi_export_dialog.popup_centered_ratio(0.8)
+
+func _on_ExportMidiDialog_file_selected(path: String) -> void:
+	if _pending_midi_bytes.size() <= 0:
+		LogBus.error(TAG, "[MidiExport] No Midi Bytes to export (bytes.size == 0).")
+		return
+
+	if not path.ends_with(MusicLabGlobals.MIDI_EXTENSION):
+		path += MusicLabGlobals.MIDI_EXTENSION
+
+	var base_dir = path.get_base_dir()
+	if base_dir != "":
+		MusicLabGlobals._ensure_directory(base_dir)
+
+	var result = MusicLabGlobals._save_locally(_pending_midi_bytes, path)
+	LogBus.info(TAG, result)
+	if base_dir != "":
+		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_MIDI_DIR_KEY, base_dir)
+	_pending_midi_bytes = PoolByteArray()
 
 func _html5_download_bytes(bytes: PoolByteArray, fname: String, mime: String) -> void:
 	# Encode en base64 côté Godot (rapide et fiable)

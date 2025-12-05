@@ -2166,6 +2166,8 @@ margin_right = 1221.0
 margin_bottom = 396.0
 text = "DEBUG"
 
+[node name="ExportMidiDialog" type="FileDialog" parent="."]
+
 [connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
 [connection signal="item_selected" from="SongViewContainer/trackDisplayMode" to="." method="_on_trackDisplayMode_item_selected"]
 [connection signal="value_changed" from="SongViewContainer/trackViewScale_sl" to="." method="_on_trackViewScale_sl_value_changed"]
@@ -2185,6 +2187,7 @@ text = "DEBUG"
 [connection signal="pressed" from="Transport/Export midi_btn" to="." method="_on_Export_midi_btn_pressed"]
 [connection signal="pressed" from="Transport/Export tabs" to="." method="_on_Export_tabs_pressed"]
 [connection signal="pressed" from="Transport/Menu_btn" to="." method="_on_Menu_btn_pressed"]
+[connection signal="file_selected" from="ExportMidiDialog" to="." method="_on_ExportMidiDialog_file_selected"]
 [connection signal="value_changed" from="Transport/tempo_SB" to="Transport/tempo_SB" method="_on_tempo_SB_value_changed"]
 [connection signal="pressed" from="console/Export console_btn" to="." method="_on_Export_console_btn_pressed"]
 [connection signal="pressed" from="console/clear_console_btn" to="." method="_on_clear_console_btn_pressed"]

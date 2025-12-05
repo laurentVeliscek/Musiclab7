@@ -171,6 +171,11 @@ margin_bottom = 170.0
 theme = ExtResource( 8 )
 access = 2
 
+[node name="SaveSongDialog" type="FileDialog" parent="."]
+margin_right = 297.0
+margin_bottom = 170.0
+theme = ExtResource( 8 )
+
 [connection signal="mouse_entered" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_entered"]
 [connection signal="mouse_exited" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_exited"]
 [connection signal="pressed" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_pressed"]
@@ -189,3 +194,4 @@ access = 2
 [connection signal="pressed" from="file_panel/file_container/save_song_btn" to="." method="_on_save_song_btn_pressed"]
 [connection signal="mouse_entered" from="file_panel/file_container/new_song" to="." method="_on_new_song_mouse_entered"]
 [connection signal="pressed" from="file_panel/file_container/new_song" to="." method="_on_new_song_pressed"]
+[connection signal="file_selected" from="SaveSongDialog" to="." method="_on_SaveSongDialog_file_selected"]
