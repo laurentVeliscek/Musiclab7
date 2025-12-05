@@ -161,18 +161,18 @@ func _ready():
 
 	rng.randomize()
 
-        # midi_player
-        #musiclibMidiPlayer.setupMidiPlayer()
-        #midi_player = musiclibMidiPlayer.midiPlayer
-        MusicLabGlobals.setup_midi_player()
+	# midi_player
+	#musiclibMidiPlayer.setupMidiPlayer()
+	#midi_player = musiclibMidiPlayer.midiPlayer
+	MusicLabGlobals.setup_midi_player()
 
-        midi_export_dialog.mode = FileDialog.MODE_SAVE_FILE
-        midi_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
-        midi_export_dialog.clear_filters()
-        midi_export_dialog.add_filter("*.mid ; MIDI File")
-        midi_export_dialog.current_dir = MusicLabGlobals.get_midi_directory()
-        if not midi_export_dialog.is_connected("file_selected", self, "_on_ExportMidiDialog_file_selected"):
-                midi_export_dialog.connect("file_selected", self, "_on_ExportMidiDialog_file_selected")
+	midi_export_dialog.mode = FileDialog.MODE_SAVE_FILE
+	midi_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	midi_export_dialog.clear_filters()
+	midi_export_dialog.add_filter("*.mid ; MIDI File")
+	midi_export_dialog.current_dir = MusicLabGlobals.get_midi_directory()
+	if not midi_export_dialog.is_connected("file_selected", self, "_on_ExportMidiDialog_file_selected"):
+			midi_export_dialog.connect("file_selected", self, "_on_ExportMidiDialog_file_selected")
 	
 	#guitar_base
 	var nb_chords = MusicLabGlobals.GuitarBase._all_chords.size()
@@ -645,7 +645,7 @@ func clear_console():
 func _save_text_to_disk(content: String, filename: String) -> void:
 	# Écrit dans le dossier utilisateur (persistance locale)
 	var path = MusicLabGlobals.get_text_export_path(filename)
-	var ok := MusicLabGlobals.save_text_to_file(path, content)
+	var ok = MusicLabGlobals.save_text_to_file(path, content)
 	if ok:
 		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_TEXT_DIR_KEY, path.get_base_dir())
 
@@ -678,11 +678,11 @@ func _on_tempo_sb_value_changed(value):
 	
 func _on_Export_midi_btn_pressed():
 
-        var filename = myMasterSong.title
-        var bytes: PoolByteArray
-        # construction de la song SATB
-        if is_displaying_SATB and separate_satb_cb.pressed:
-                bytes =  myMasterSong.get_midi_bytes_type1()
+	var filename = myMasterSong.title
+	var bytes: PoolByteArray
+	# construction de la song SATB
+	if is_displaying_SATB and separate_satb_cb.pressed:
+		bytes =  myMasterSong.get_midi_bytes_type1()
 		filename += " [SATB]"
 	else:	
 		bytes = myPlayingSong.get_midi_bytes_type1()
@@ -692,33 +692,33 @@ func _on_Export_midi_btn_pressed():
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
 		return
 	
-        if legato_midi_cb.pressed :
-                var MFT:MidiFileTools = MidiFileTools.new()
-                bytes = MFT.same_pitch_legato(bytes,1)
-                filename += "[Legato]"
-        _pending_midi_bytes = bytes
-        var export_path := MusicLabGlobals.get_midi_export_path(filename)
-        midi_export_dialog.current_dir = export_path.get_base_dir()
-        midi_export_dialog.current_file = export_path.get_file()
-        midi_export_dialog.popup_centered_ratio(0.8)
+	if legato_midi_cb.pressed :
+		var MFT:MidiFileTools = MidiFileTools.new()
+		bytes = MFT.same_pitch_legato(bytes,1)
+		filename += "[Legato]"
+	_pending_midi_bytes = bytes
+	var export_path = MusicLabGlobals.get_midi_export_path(filename)
+	midi_export_dialog.current_dir = export_path.get_base_dir()
+	midi_export_dialog.current_file = export_path.get_file()
+	midi_export_dialog.popup_centered_ratio(0.8)
 
 func _on_ExportMidiDialog_file_selected(path: String) -> void:
-        if _pending_midi_bytes.size() <= 0:
-                LogBus.error(TAG, "[MidiExport] No Midi Bytes to export (bytes.size == 0).")
-                return
+		if _pending_midi_bytes.size() <= 0:
+			LogBus.error(TAG, "[MidiExport] No Midi Bytes to export (bytes.size == 0).")
+			return
 
-        if not path.ends_with(MusicLabGlobals.MIDI_EXTENSION):
-                path += MusicLabGlobals.MIDI_EXTENSION
+		if not path.ends_with(MusicLabGlobals.MIDI_EXTENSION):
+				path += MusicLabGlobals.MIDI_EXTENSION
 
-        var base_dir := path.get_base_dir()
-        if base_dir != "":
-                MusicLabGlobals._ensure_directory(base_dir)
+		var base_dir := path.get_base_dir()
+		if base_dir != "":
+				MusicLabGlobals._ensure_directory(base_dir)
 
-        var result := MusicLabGlobals._save_locally(_pending_midi_bytes, path)
-        LogBus.info(TAG, result)
-        if base_dir != "":
-                MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_MIDI_DIR_KEY, base_dir)
-        _pending_midi_bytes = PoolByteArray()
+		var result = MusicLabGlobals._save_locally(_pending_midi_bytes, path)
+		LogBus.info(TAG, result)
+		if base_dir != "":
+				MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_MIDI_DIR_KEY, base_dir)
+		_pending_midi_bytes = PoolByteArray()
 	
 	
 #	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):

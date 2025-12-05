@@ -12,29 +12,29 @@ func _ready():
 	MusicLabGlobals.connect("browser_song_loaded", self, "_on_song_loaded")
 	MusicLabGlobals.connect("browser_song_load_failed", self, "_on_song_failed")
 
-        import_dialog.mode = FileDialog.MODE_OPEN_FILE
-        import_dialog.access = FileDialog.ACCESS_FILESYSTEM
-        import_dialog.clear_filters()
-        import_dialog.add_filter("*.mlab ; MusicLab Song")
-        if not import_dialog.is_connected("file_selected", self, "_on_ImportSongDialog_file_selected"):
-                import_dialog.connect("file_selected", self, "_on_ImportSongDialog_file_selected")
+	import_dialog.mode = FileDialog.MODE_OPEN_FILE
+	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	import_dialog.clear_filters()
+	import_dialog.add_filter("*.mlab ; MusicLab Song")
+	if not import_dialog.is_connected("file_selected", self, "_on_ImportSongDialog_file_selected"):
+			import_dialog.connect("file_selected", self, "_on_ImportSongDialog_file_selected")
 
-        save_dialog.mode = FileDialog.MODE_SAVE_FILE
-        save_dialog.access = FileDialog.ACCESS_FILESYSTEM
-        save_dialog.clear_filters()
-        save_dialog.add_filter("*.mlab ; MusicLab Song")
-        if not save_dialog.is_connected("file_selected", self, "_on_SaveSongDialog_file_selected"):
-                save_dialog.connect("file_selected", self, "_on_SaveSongDialog_file_selected")
+	save_dialog.mode = FileDialog.MODE_SAVE_FILE
+	save_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	save_dialog.clear_filters()
+	save_dialog.add_filter("*.mlab ; MusicLab Song")
+	if not save_dialog.is_connected("file_selected", self, "_on_SaveSongDialog_file_selected"):
+			save_dialog.connect("file_selected", self, "_on_SaveSongDialog_file_selected")
 
-        var song_dir := MusicLabGlobals.get_song_directory()
-        import_dialog.current_dir = song_dir
-        save_dialog.current_dir = song_dir
+	var song_dir = MusicLabGlobals.get_song_directory()
+	import_dialog.current_dir = song_dir
+	save_dialog.current_dir = song_dir
 
 	MusicLabGlobals.setup_midi_player()
 
-        # Connection LogBus à la console
-        LogBus.connect("log_entry", self, "_on_log_entry")
-        LogBus._verbose = true
+	# Connection LogBus à la console
+	LogBus.connect("log_entry", self, "_on_log_entry")
+	LogBus._verbose = true
 	
 	add_child(fade) # utile si pas en autoload
 	$pony.modulate.a = 0
@@ -212,7 +212,7 @@ func _on_ImportSongDialog_file_selected(path:String) -> void:
 
 func _on_save_song_btn_pressed():
 	clear_console()
-	var filename := myMasterSong.title + MusicLabGlobals.SONG_EXTENSION
+	var filename = myMasterSong.title + MusicLabGlobals.SONG_EXTENSION
 	save_dialog.current_dir = MusicLabGlobals.get_song_directory()
 	save_dialog.current_file = filename
 	save_dialog.popup_centered_ratio(0.8)
@@ -222,7 +222,7 @@ func _on_SaveSongDialog_file_selected(path: String) -> void:
 	clear_console()
 	if not path.ends_with(MusicLabGlobals.SONG_EXTENSION):
 		path += MusicLabGlobals.SONG_EXTENSION
-	var success := MusicLabGlobals.save_current_song_to_file(path)
+	var success = MusicLabGlobals.save_current_song_to_file(path)
 	if success:
 		LogBus.info(TAG,"Song saved to " + path)
 		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_SONG_DIR_KEY, path.get_base_dir())
