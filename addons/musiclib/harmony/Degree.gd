@@ -296,11 +296,11 @@ func from_dict(data:Dictionary) -> Degree:
 	return d
 
 func _set_alterations(d:Dictionary = {}):
-        var normalized:Dictionary = {}
-        for k in d.keys():
-                var key_int = int(k)
-                normalized[key_int] = int(d[k])
-        _alterations = normalized
+		var normalized:Dictionary = {}
+		for k in d.keys():
+				var key_int = int(k)
+				normalized[key_int] = int(d[k])
+		_alterations = normalized
 
 func _get_alterations():
 	return _alterations
