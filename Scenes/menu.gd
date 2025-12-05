@@ -22,15 +22,15 @@ func _ready():
 	save_dialog.mode = FileDialog.MODE_SAVE_FILE
 	save_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	save_dialog.clear_filters()
-	save_dialog.add_filter("*.mlab ; MusicLab Song")
+	save_dialog.add_filter("*.json ; JSON Song")
 	if not save_dialog.is_connected("file_selected", self, "_on_SaveSongDialog_file_selected"):
-			save_dialog.connect("file_selected", self, "_on_SaveSongDialog_file_selected")
+		save_dialog.connect("file_selected", self, "_on_SaveSongDialog_file_selected")
 
 	MusicLabGlobals.setup_midi_player()
 
-	# Connection LogBus à la console
-	LogBus.connect("log_entry", self, "_on_log_entry")
-	LogBus._verbose = true
+        # Connection LogBus à la console
+        LogBus.connect("log_entry", self, "_on_log_entry")
+        LogBus._verbose = true
 	
 	add_child(fade) # utile si pas en autoload
 	$pony.modulate.a = 0
