@@ -1290,6 +1290,8 @@ text = "classical"
 [node name="SATBClient" type="Node" parent="SATB"]
 script = ExtResource( 7 )
 
+[node name="ExportMidiDialog" type="FileDialog" parent="."]
+
 [node name="debug_btn" type="Button" parent="."]
 margin_left = 892.0
 margin_top = 312.0
@@ -1364,6 +1366,7 @@ align = 1
 [connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/legato_midi_file_cb" to="." method="_on_web_api_mode_checkButton_toggled"]
 [connection signal="toggled" from="CenterTabContainer/SATB/interface_switch/separate_cb" to="." method="_on_web_api_mode_checkButton_toggled"]
 [connection signal="value_changed" from="CenterTabContainer/SATB/SATB_Listen_panel/satb_solution_Slider" to="CenterTabContainer/SATB/SATB_Listen_panel/satb_solution_Slider" method="_on_satb_solution_Slider_value_changed"]
+[connection signal="file_selected" from="ExportMidiDialog" to="." method="_on_ExportMidiDialog_file_selected"]
 [connection signal="api_error" from="SATB/SATBClient" to="." method="_on_SATBClient_api_error"]
 [connection signal="api_response" from="SATB/SATBClient" to="." method="_on_SATBClient_api_response"]
 [connection signal="pressed" from="debug_btn" to="." method="_on_debug_btn_pressed"]

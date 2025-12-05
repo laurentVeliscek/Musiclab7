@@ -15,6 +15,7 @@ onready var rewindBtn:Button = $Transport/rewind_btn
 onready var playHead:ColorRect = $SongViewContainer/play_head_cr
 onready var console:RichTextLabel = $console_panel_pn/logBusConsole_rtl
 onready var export_midi_btn:Button = $"Transport/Export midi_btn"
+onready var midi_export_dialog: FileDialog = $ExportMidiDialog
 onready var songTrackView_view_display_mode_option = $SongViewContainer/trackDisplayMode
 onready var songTrackView_scale_option = $SongViewContainer/trackViewScale_sl
 onready var song_title_lbl:LineEdit = $Song_panel/title_line_edit
@@ -101,6 +102,8 @@ var satb_solutions_array: Array = []
 var is_displaying_SATB:bool = false
 var is_computing_satb:bool = false
 
+var _pending_midi_bytes: PoolByteArray = PoolByteArray()
+
 var _undo_tracks:Array = []
 var _redo_tracks:Array = []
 var _max_undo_levels = 1000
@@ -158,10 +161,18 @@ func _ready():
 
 	rng.randomize()
 
-	# midi_player
-	#musiclibMidiPlayer.setupMidiPlayer()
-	#midi_player = musiclibMidiPlayer.midiPlayer
-	MusicLabGlobals.setup_midi_player()
+        # midi_player
+        #musiclibMidiPlayer.setupMidiPlayer()
+        #midi_player = musiclibMidiPlayer.midiPlayer
+        MusicLabGlobals.setup_midi_player()
+
+        midi_export_dialog.mode = FileDialog.MODE_SAVE_FILE
+        midi_export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+        midi_export_dialog.clear_filters()
+        midi_export_dialog.add_filter("*.mid ; MIDI File")
+        midi_export_dialog.current_dir = MusicLabGlobals.get_midi_directory()
+        if not midi_export_dialog.is_connected("file_selected", self, "_on_ExportMidiDialog_file_selected"):
+                midi_export_dialog.connect("file_selected", self, "_on_ExportMidiDialog_file_selected")
 	
 	#guitar_base
 	var nb_chords = MusicLabGlobals.GuitarBase._all_chords.size()
@@ -666,13 +677,12 @@ func _on_tempo_sb_value_changed(value):
 	
 	
 func _on_Export_midi_btn_pressed():
-	
-	var mime_type = "audio/midi"	
-	var filename = myMasterSong.title 
-	var bytes: PoolByteArray 
-	# construction de la song SATB
-	if is_displaying_SATB and separate_satb_cb.pressed:
-		bytes =  myMasterSong.get_midi_bytes_type1()
+
+        var filename = myMasterSong.title
+        var bytes: PoolByteArray
+        # construction de la song SATB
+        if is_displaying_SATB and separate_satb_cb.pressed:
+                bytes =  myMasterSong.get_midi_bytes_type1()
 		filename += " [SATB]"
 	else:	
 		bytes = myPlayingSong.get_midi_bytes_type1()
@@ -682,12 +692,33 @@ func _on_Export_midi_btn_pressed():
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
 		return
 	
-	if legato_midi_cb.pressed :
-		var MFT:MidiFileTools = MidiFileTools.new()
-		bytes = MFT.same_pitch_legato(bytes,1)	
-		filename += "[Legato]" 
-	#filename += ".mid"
-	LogBus.info(TAG,MusicLabGlobals.save_midi_bytes_to_midi_file(bytes,filename))
+        if legato_midi_cb.pressed :
+                var MFT:MidiFileTools = MidiFileTools.new()
+                bytes = MFT.same_pitch_legato(bytes,1)
+                filename += "[Legato]"
+        _pending_midi_bytes = bytes
+        var export_path := MusicLabGlobals.get_midi_export_path(filename)
+        midi_export_dialog.current_dir = export_path.get_base_dir()
+        midi_export_dialog.current_file = export_path.get_file()
+        midi_export_dialog.popup_centered_ratio(0.8)
+
+func _on_ExportMidiDialog_file_selected(path: String) -> void:
+        if _pending_midi_bytes.size() <= 0:
+                LogBus.error(TAG, "[MidiExport] No Midi Bytes to export (bytes.size == 0).")
+                return
+
+        if not path.ends_with(MusicLabGlobals.MIDI_EXTENSION):
+                path += MusicLabGlobals.MIDI_EXTENSION
+
+        var base_dir := path.get_base_dir()
+        if base_dir != "":
+                MusicLabGlobals._ensure_directory(base_dir)
+
+        var result := MusicLabGlobals._save_locally(_pending_midi_bytes, path)
+        LogBus.info(TAG, result)
+        if base_dir != "":
+                MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_MIDI_DIR_KEY, base_dir)
+        _pending_midi_bytes = PoolByteArray()
 	
 	
 #	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
