@@ -1,0 +1,24 @@
+[gd_resource type="Theme" load_steps=4 format=2]
+
+[sub_resource type="DynamicFontData" id=4]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=5]
+size = 20
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 4 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 1, 0.937255, 0.584314, 1 )
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[resource]
+LineEdit/colors/cursor_color = Color( 0, 0, 0, 1 )
+LineEdit/colors/font_color = Color( 0, 0, 0, 1 )
+LineEdit/constants/minimum_spaces = 3
+LineEdit/fonts/font = SubResource( 5 )
+LineEdit/styles/normal = SubResource( 3 )

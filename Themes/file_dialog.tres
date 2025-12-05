@@ -1,0 +1,37 @@
+[gd_resource type="Theme" load_steps=11 format=2]
+
+[ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=1]
+
+[sub_resource type="DynamicFontData" id=6]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=7]
+font_data = SubResource( 6 )
+
+[sub_resource type="DynamicFontData" id=1]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFontData" id=2]
+
+[sub_resource type="DynamicFont" id=3]
+font_data = SubResource( 2 )
+fallback/0 = SubResource( 1 )
+
+[sub_resource type="DynamicFontData" id=4]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=5]
+font_data = SubResource( 4 )
+
+[sub_resource type="DynamicFont" id=8]
+font_data = ExtResource( 1 )
+
+[sub_resource type="DynamicFont" id=9]
+font_data = ExtResource( 1 )
+
+[resource]
+Button/fonts/font = SubResource( 7 )
+Label/fonts/font = SubResource( 3 )
+LineEdit/fonts/font = SubResource( 5 )
+TextEdit/fonts/font = SubResource( 8 )
+Tree/fonts/font = SubResource( 9 )

@@ -3,6 +3,17 @@ extends Node
 
 const AUTOSAVE_SONG_PATH = "user://autosave.json"
 
+const SOUND_FONT_ASPIRIN = "res://soundfonts/Aspirin-Stereo.sf2"
+const SOUND_FONT_DORE_MARK = "res://soundfonts/Dore Mark Model B-v5.2.sf2"
+const SOUND_FONT_ESSENTIAL_KEYS = "res://soundfonts/Essential_Keys.sf2"
+const SOUND_FONT_YAMAHA_C7 = "res://soundfonts/Studio Yamaha C7.sf2"
+const SOUND_FONT_STEINWAY= "res://soundfonts/Studio Steinway D.sf2"
+const SOUND_FONT_KORG_TRITON = "res://soundfonts/Korg_Triton_Piano.sf2"
+const SOUND_FONT_AI_PIANO = "res://soundfonts/AI-APiano02trans.sf2"
+const SOUND_FONT_STEINWAY_GRAND_PIANO = "res://soundfonts/Grand Piano.sf2"
+const SOUND_FONT_CONCERT_GRAND_CHATEAU = "Chateau_Pianos.sf2"
+
+
 # -------------------------------------------------------------------
 #	GLOBAL STATE SINGLETON POUR MUSICLIB
 # -------------------------------------------------------------------
@@ -60,6 +71,9 @@ func _ready():
 func setup_midi_player():
 	musiclibMidiPlayer.setupMidiPlayer()
 	midi_player = musiclibMidiPlayer.midiPlayer
+
+func set_sound_Font(path):
+	midi_player.set_soundfont(path)
 
 func set_song(song):
 	if song == null:

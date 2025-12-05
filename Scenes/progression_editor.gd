@@ -114,14 +114,12 @@ var RP:RockProgressionGenerator = RockProgressionGenerator.new()
 var MDB:ModulationDatabase = MusicLabGlobals.modulationDatabase
 var modManager:ModulationManager
 
-var debug_mode = true
 
 
 func _ready():
 	
 	
-	if debug_mode ==  false:
-		$debug_btn.hide()
+
 	# Connection LogBus à la console 
 	LogBus.connect("log_entry", self, "_on_log_entry")
 	LogBus._verbose = true
@@ -149,7 +147,9 @@ func _ready():
 	else:
 		# Version native (Windows, Linux, Mac)
 		key_command = 16777239
-		base_url = "http://127.0.0.1:8000"
+		base_url = "https://www.theparselmouth.com/musiclab/api/"
+		$CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton.hide()
+		$debug_btn.hide()
 		#LogBus.info(TAG,"💻 Mode natif - API locale")
 	
 
@@ -193,7 +193,7 @@ func _ready():
 		myMasterSong.add_track(new_progression_track)
 		
 	
-	myPlayingSong = myMasterSong.clone()
+	myPlayingSong = myMasterSong
 	#myPlayingSong.title = myMasterSong.title
 	#myPlayingSong.add_track(myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME))	
 		
@@ -237,6 +237,7 @@ func _ready():
 	
 	yield(get_tree(), "physics_frame")
 		
+	#MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_DORE_MARK)
 	set_song_display()
 	run_debug_test()
 	
@@ -3655,3 +3656,19 @@ func _on_debug_btn_pressed():
 	
 	
 
+
+
+func _on_soundBank_ob_item_selected(index):
+	var soundFont_path = ""
+	match index:
+		0 : soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+		1 : soundFont_path = MusicLabGlobals.SOUND_FONT_DORE_MARK
+#		2 : soundFont_path = MusicLabGlobals.SOUND_FONT_CONCERT_GRAND_CHATEAU
+#		2 : soundFont_path = MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS
+
+#		4 : soundFont_path = MusicLabGlobals.SOUND_FONT_YAMAHA_C7
+#		5 : soundFont_path = MusicLabGlobals.SOUND_FONT_STEINWAY
+#		6 : soundFont_path = MusicLabGlobals.SOUND_FONT_KORG_TRITON
+#		_ : soundFont_path = MusicLabGlobals.ASPIRIN_SOUND_FONT
+		
+	MusicLabGlobals.set_sound_Font(soundFont_path)

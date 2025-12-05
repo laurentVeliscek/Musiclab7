@@ -15,7 +15,7 @@ func _ready():
 	import_dialog.mode = FileDialog.MODE_OPEN_FILE
 	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	import_dialog.clear_filters()
-	import_dialog.add_filter("*.json ; JSON Song")
+	import_dialog.add_filter("*.mlab ; MusicLab Song")
 	if not import_dialog.is_connected("file_selected", self, "_on_ImportSongDialog_file_selected"):
 		import_dialog.connect("file_selected", self, "_on_ImportSongDialog_file_selected")
 
@@ -75,7 +75,7 @@ func _on_progression_editor_btn_mouse_entered():
 	if song_title == "Untitled Song":
 		LogBus.info(TAG,"Create a new song\nGroovy !...")
 	else:	
-		LogBus.info(TAG,"Edit your song: \n"+ song_title + "\nGroovy !...")
+		LogBus.info(TAG,"Edit \n"+ song_title + "\nGroovy !...")
 
 func _on_bass_catcher_btn_mouse_entered():
 	fade.fade_in($pony,.5)
@@ -206,15 +206,15 @@ func _on_ImportSongDialog_file_selected(path:String) -> void:
 
 func _on_save_song_btn_pressed():
 	clear_console()
-	var filename := myMasterSong.title + ".json"
+	var filename := myMasterSong.title + ".mlab"
 	save_dialog.current_file = filename
 	save_dialog.popup_centered_ratio(0.8)
 
 
 func _on_SaveSongDialog_file_selected(path: String) -> void:
 	clear_console()
-	if not path.ends_with(".json"):
-		path += ".json"
+	if not path.ends_with(".mlab"):
+		path += ".mlab"
 	var success := MusicLabGlobals.save_current_song_to_file(path)
 	if success:
 		LogBus.info(TAG,"Song saved to " + path)
@@ -234,6 +234,7 @@ func _on_new_song_pressed():
 		$file_panel/file_container/new_song.hide()
 		$file_panel/file_container/save_song_btn.hide()
 		$ColorRect/VBoxContainer/progression_editor_btn.text = "Create Song"
+	get_tree().get_root().get_node("Main").change_scene_preloaded("progression_editor")
 	#LogBus.info(TAG,"Current song:\n" + myMasterSong.title)
 	
 
