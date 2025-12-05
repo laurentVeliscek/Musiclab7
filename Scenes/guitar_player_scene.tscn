@@ -1,4 +1,4 @@
-[gd_scene load_steps=85 format=2]
+[gd_scene load_steps=86 format=2]
 
 [ext_resource path="res://Scenes/guitar_player_scene.gd" type="Script" id=1]
 [ext_resource path="res://assets/guitar_robot.PNG" type="Texture" id=2]
@@ -207,7 +207,7 @@ var current:int = 0
 var preview_guitar_player: FolkGuitarPlayer
 var preview_playing = false
 
-#onready var guitar_player:FolkGuitarPlayer = null
+
 onready var step_beat_length_btn:Button = $step_beat_length_btn
 onready var pattern_number_sb:SpinBox = $pattern_number_sb
 onready var scene = $\"..\"
@@ -228,17 +228,7 @@ func _update_pattern_display():
 	$pattern_lineEdit.text = currentStrumPattern.pattern.rstrip(\" \")
 	scene.set_player_config(currentStrumPattern)
 	var info_txt = str(scene.gp.pattern_sequence.size())
-	#info_txt += \"  - duration: \" + str() + \" measures\"
-#	var nb_temps = guitar_player_scene.guitar_player._calculate_patterns_duration()
-#	var time_num = guitar_player_scene.myMasterSong.time_num
-#	if time_num > 0:
-#		var tempo = guitar_player_scene.myMasterSong.tempo_bpm
-#		var nb_secondes =  nb_temps * 60.0 / tempo
-#		var ms = convert_to_minutes_seconds(nb_secondes)
-#
-#		info_txt += \"  - total duration: \" +  str( float(nb_temps) / float(time_num) )+ \" measures = \"+str(ms[\"minutes\"]) + \"'\" + str(ms[\"seconds\"]) + '\"'
-#	else:
-#		info_txt += \" - duration = 0\"
+
 	info_pattern_label.text = info_txt
 
 func _on_delete_btn_pressed():
@@ -809,7 +799,7 @@ func capitalize_words(text):
 func _on_apply_to_all_btn_pressed():
 	scene.rewind()
 	var current_config = scene.get_player_config()
-	for sp in scene.guitar_player.pattern_sequence:
+	for sp in scene.gp.pattern_sequence:
 		sp.config_override = current_config
 	LogBus.info(TAG,\"Current guitar config applied to all sequence patterns\")
 	
@@ -866,6 +856,12 @@ size = 33
 use_mipmaps = true
 use_filter = true
 font_data = SubResource( 60 )
+
+[sub_resource type="DynamicFont" id=73]
+size = 14
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 5 )
 
 [node name="guitar_player_scene" type="Control"]
 anchor_right = 1.0
@@ -2166,6 +2162,31 @@ margin_right = 1221.0
 margin_bottom = 396.0
 text = "DEBUG"
 
+[node name="soundFont" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="soundBank_ob" type="OptionButton" parent="soundFont"]
+margin_left = 44.0
+margin_top = 329.0
+margin_right = 192.0
+margin_bottom = 352.0
+text = "Fast Audio"
+align = 1
+items = [ "Fast Audio", null, false, 0, null, "HD", null, false, 1, null, "FatBoy-v0.786", null, false, 2, null ]
+selected = 0
+
+[node name="Bonus_Lbl" type="Label" parent="soundFont"]
+margin_left = 706.0
+margin_top = 288.0
+margin_right = 872.0
+margin_bottom = 309.0
+custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
+custom_fonts/font = SubResource( 73 )
+text = "Sound bank"
+align = 1
+
 [connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
 [connection signal="item_selected" from="SongViewContainer/trackDisplayMode" to="." method="_on_trackDisplayMode_item_selected"]
 [connection signal="value_changed" from="SongViewContainer/trackViewScale_sl" to="." method="_on_trackViewScale_sl_value_changed"]
@@ -2208,3 +2229,4 @@ text = "DEBUG"
 [connection signal="pressed" from="voicings_offset_container/random_all_btn" to="voicings_offset_container" method="_on_random_all_btn_pressed"]
 [connection signal="pressed" from="voicings_offset_container/Reset_voicing_btn" to="voicings_offset_container" method="_on_Reset_voicing_btn_pressed"]
 [connection signal="pressed" from="Debug_btn" to="." method="_on_Debug_btn_pressed"]
+[connection signal="item_selected" from="soundFont/soundBank_ob" to="." method="_on_soundBank_ob_item_selected"]

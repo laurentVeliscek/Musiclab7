@@ -90,7 +90,7 @@ var marker_starting_pos_in_ticks:int = -1
 var anim_songTrack_view = false
 
 
-var myProgressionTrack:Track = Track.new()
+#var myProgressionTrack:Track = Track.new()
 var mySATBTrack:Track = Track.new()
 var mySATB_Soprano:Track = Track.new()
 var mySATB_Alto:Track = Track.new()
@@ -114,14 +114,12 @@ var RP:RockProgressionGenerator = RockProgressionGenerator.new()
 var MDB:ModulationDatabase = MusicLabGlobals.modulationDatabase
 var modManager:ModulationManager
 
-var debug_mode = true
-
+var tonalProgressionHelper = TonalProgressionHelper.new()
 
 func _ready():
 	
 	
-	if debug_mode ==  false:
-		$debug_btn.hide()
+
 	# Connection LogBus à la console 
 	LogBus.connect("log_entry", self, "_on_log_entry")
 	LogBus._verbose = true
@@ -149,7 +147,9 @@ func _ready():
 	else:
 		# Version native (Windows, Linux, Mac)
 		key_command = 16777239
-		base_url = "http://127.0.0.1:8000"
+		base_url = "https://www.theparselmouth.com/musiclab/api/"
+		$CenterTabContainer/SATB/interface_switch/web_api_mode_checkButton.hide()
+		$debug_btn.hide()
 		#LogBus.info(TAG,"💻 Mode natif - API locale")
 	
 
@@ -193,7 +193,7 @@ func _ready():
 		myMasterSong.add_track(new_progression_track)
 		
 	
-	myPlayingSong = myMasterSong.clone()
+	myPlayingSong = myMasterSong
 	#myPlayingSong.title = myMasterSong.title
 	#myPlayingSong.add_track(myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME))	
 		
@@ -237,6 +237,7 @@ func _ready():
 	
 	yield(get_tree(), "physics_frame")
 		
+	#MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_DORE_MARK)
 	set_song_display()
 	run_debug_test()
 	
@@ -248,6 +249,19 @@ func set_song_display():
 func run_debug_test():
 	var d:Degree = Degree.new()
 	d.set_realization([1,3,5])
+	d.set_aug6_It()
+	for i in range(1,8):
+		LogBus.debug(TAG,"get_note_name_of_degree_number" + str(i) + " -> " + str(d.get_note_name_of_chord_degree_number(i)))
+		
+	d.reset()
+	d.degree_number = 1 +  (rng.randi() % 7)
+	LogBus.debug(TAG,"FROM DEGREE N:" + str(d.degree_number))
+	
+	var helper = TonalProgressionHelper.new()
+	var new_d:Degree = helper.get_next_degree(d)
+	LogBus.debug(TAG,"NEXT DEGREE:")
+	LogBus.debug(TAG,new_d.to_string())
+	
 #	var hk:HarmonicKey = HarmonicKey.new()
 #	hk.scale_name = "major"
 #	hk.root_midi = 0
@@ -846,8 +860,38 @@ func _input(event):
 				
 				var selected_wrappers = songTrackView.get_selected_wrappers()
 				
+				
+				# NEXT CHORD TonalProgressionHelper
+				if event.scancode == 16777233:
+					var myProgressionTrack:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
+					var degrees_array = myProgressionTrack.get_degrees_array()
+					
+					if degrees_array.size() == 0:
+						LogBus.info(TAG,"You must have at leat one chord to generate next chord")
+						return
+					var degree_from:Degree =  degrees_array[-1]
+					var next_degree = tonalProgressionHelper.get_next_degree(degree_from)
+					
+					#LogBus.debug(TAG,"NEXT DEGREE")				
+					#LogBus.debug(TAG,next_degree.to_string())
+					
+					add_current_progression_track_to_undo()	
+					myProgressionTrack.add_degree(myProgressionTrack.length_beats,next_degree)
+					songTrackView.update_ui()
+					var new_wrappers = songTrackView._wrappers
+					var w = wrappers[-1]
+					songTrackView.select_only_wrapper(w)
+					play_wrapper(w)
+					return
+					
+#						var sel = songTrackView._get_selected_indices()
+#	songTrackView.update_ui()
+#	var wrappers = songTrackView.get_wrappers()
+#	for i in sel:
+#		songTrackView.select_wrapper(wrappers[i])
+				
 				# COMMAND + -> Tonalite +1
-				if event.scancode == 16777349 :
+				elif event.scancode == 16777349 :
 					if selected_wrappers.size() > 0:
 						midi_player.stop()
 						var last_wrapper = selected_wrappers[-1]
@@ -3629,12 +3673,14 @@ func _on_menu_btn_pressed():
 	if myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).get_degrees_array().size() == 0:
 		MusicLabGlobals.set_song(MusicLabGlobals.get_init_song())
 		get_tree().get_root().get_node("Main").change_scene_preloaded("menu")
+		return
 	# on nettoie satb_array
 	var satb_array = myMasterSong.satb_solutions_array
 	var saved_satb = satb_array[myMasterSong.satb_solutions_index]
 	var One_satb_array:Array = [saved_satb.duplicate(true)]
 	myMasterSong.satb_solutions_array = One_satb_array
 	myMasterSong.satb_solutions_index = 0
+	myMasterSong.title = $Song_panel/title_line_edit.text
 	
 	MusicLabGlobals.set_song(myMasterSong)
 	MusicLabGlobals.save_current_song_autosave()
@@ -3653,3 +3699,19 @@ func _on_debug_btn_pressed():
 	
 	
 
+
+
+func _on_soundBank_ob_item_selected(index):
+	var soundFont_path = ""
+	match index:
+		0 : soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+		1 : soundFont_path = MusicLabGlobals.SOUND_FONT_DORE_MARK
+#		2 : soundFont_path = MusicLabGlobals.SOUND_FONT_CONCERT_GRAND_CHATEAU
+#		2 : soundFont_path = MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS
+
+#		4 : soundFont_path = MusicLabGlobals.SOUND_FONT_YAMAHA_C7
+#		5 : soundFont_path = MusicLabGlobals.SOUND_FONT_STEINWAY
+#		6 : soundFont_path = MusicLabGlobals.SOUND_FONT_KORG_TRITON
+#		_ : soundFont_path = MusicLabGlobals.ASPIRIN_SOUND_FONT
+		
+	MusicLabGlobals.set_sound_Font(soundFont_path)

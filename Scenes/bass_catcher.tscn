@@ -198,7 +198,7 @@ icon_align = 1
 [node name="bass_note_lbl" type="Label" parent="."]
 margin_left = 688.0
 margin_top = 233.0
-margin_right = 1096.0
+margin_right = 1208.0
 margin_bottom = 586.0
 custom_fonts/font = SubResource( 4 )
 text = "A"
@@ -208,7 +208,7 @@ valign = 1
 [node name="chord_name_lbl" type="Label" parent="."]
 margin_left = 416.0
 margin_top = 632.0
-margin_right = 1224.0
+margin_right = 1152.0
 margin_bottom = 680.0
 rect_min_size = Vector2( 250, 40 )
 custom_colors/font_color = Color( 0.482353, 0.486275, 1, 1 )
@@ -244,7 +244,15 @@ rect_min_size = Vector2( 100, 100 )
 custom_colors/font_color = Color( 0.482353, 0.486275, 1, 1 )
 custom_fonts/font = SubResource( 9 )
 
+[node name="menu_Btn" type="Button" parent="."]
+margin_left = 1184.0
+margin_top = 648.0
+margin_right = 1233.0
+margin_bottom = 668.0
+text = "menu"
+
 [connection signal="pressed" from="sound_settings/New_chord_Btn" to="." method="_on_New_chord_Btn_pressed"]
 [connection signal="pressed" from="sound_settings/play_chord_Btn" to="." method="_on_play_chord_Btn_pressed"]
 [connection signal="pressed" from="sound_settings/play_bass_Btn" to="." method="_on_play_bass_Btn_pressed"]
 [connection signal="item_selected" from="level_ob" to="." method="_on_level_ob_item_selected"]
+[connection signal="pressed" from="menu_Btn" to="." method="_on_menu_Btn_pressed"]
