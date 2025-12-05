@@ -1,6 +1,8 @@
 extends Reference
 class_name TonalProgressionHelper
 
+const TAG = "TonalProgressionHelper"
+
 #-------------------------------------------------------------------------------
 # Graphe MAJEUR : structure proche du JSON donné précédemment
 #-------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ const GRAPH_MAJOR = {
 			{ "degree": "ii",   "preferred_inversions": ["6", "5"],                     "weight": 2 },
 			{ "degree": "V",    "preferred_inversions": ["5", "7", "65", "43"],        "weight": 4 },
 			{ "degree": "viio", "preferred_inversions": ["6", "65"],                   "weight": 1 },
-			{ "degree": "I",    "preferred_inversions": ["5", "6"],                    "weight": 2 },
+			{ "degree": "I",    "preferred_inversions": ["5", "6"],                    "weight": 4 },
 			{ "degree": "N6",   "preferred_inversions": ["6"],                         "weight": 2 },
 			{ "degree": "It+6", "preferred_inversions": [],                            "weight": 1 },
 			{ "degree": "Fr+6", "preferred_inversions": [],                            "weight": 1 },
@@ -384,6 +386,44 @@ func _init():
 #-------------------------------------------------------------------------------
 # API principale
 #-------------------------------------------------------------------------------
+
+
+func get_next_degree(d:Degree, deceptive = false) -> Degree:
+
+	var seventh = false
+	if d.realization.size() > 3:
+		seventh = true
+		 
+	var state = {
+	"degree": d.degree_number,
+	"mode": d.key.scale_name,
+	"inversion": d.inversion,
+	"seventh": seventh,
+	"type": d.kind,
+	"deceptive": deceptive
+	}	
+	
+	var state_retour = get_next_chord(state)
+	
+	
+	#LogBus.debug(TAG,JSON.print(state_retour))
+	
+	var next_degree:Degree = Degree.new()
+	var new_key:HarmonicKey = d.key.clone()
+	new_key.scale_name = state_retour["mode"]
+	next_degree.key = new_key
+	next_degree.degree_number = state_retour["degree"]
+	next_degree.inversion = state_retour["inversion"]
+	next_degree.kind = state_retour["type"]
+	if state_retour.seventh :
+		next_degree.realization = [1 ,3, 5, 7]
+	else :
+		
+		next_degree.realization = [1 ,3, 5]
+	next_degree.length_beats = d.length_beats
+	
+	return next_degree
+	
 
 func get_next_chord(current_state: Dictionary) -> Dictionary:
 	var degree_key = _state_to_degree_key(current_state)

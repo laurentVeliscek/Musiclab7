@@ -113,7 +113,7 @@ func clone()-> Degree:
 	d.degree_number = degree_number
 	d.realization = realization
 	d.kind = kind
-	d._alterations = _alterations.duplicate()
+	d._alterations = _alterations
 	d.inversion = inversion
 	d.length_beats = length_beats
 	d.harmonic_function = harmonic_function
@@ -221,12 +221,11 @@ func from_dict(data:Dictionary) -> Degree:
 	
 	if data.has("kind"):
 		d.set_kind(str(data["kind"]))
-		
 	
 	# Altérations accord
 	if data.has("alterations"):
 		var alt = data["alterations"]
-		if typeof(alt) == TYPE_ARRAY:
+		if typeof(alt) == TYPE_DICTIONARY:
 			d._set_alterations(alt.duplicate())
 	
 	if data.has("inversion"):
@@ -297,21 +296,15 @@ func from_dict(data:Dictionary) -> Degree:
 	return d
 
 func _set_alterations(d:Dictionary = {}):
-        var normalized:Dictionary = {}
-        for k in d.keys():
-                var key_int = int(k)
-                normalized[key_int] = int(d[k])
-        _alterations = normalized
+		var normalized:Dictionary = {}
+		for k in d.keys():
+				var key_int = int(k)
+				normalized[key_int] = int(d[k])
+		_alterations = normalized
 
 func _get_alterations():
 	return _alterations
 
-func get_degree_note_names(chord_degre_number) :
-	if key.scale_name == "major":
-		var root_midi_norm = key.root_midi % 12
-		var key_notes_string = MIDI_ROOT_TO_NOTES_OF_MAJOR_SCALE[root_midi_norm]
-		return key_notes_string[(chord_degre_number - 1) % 7]
-		
 
 
 
@@ -749,6 +742,8 @@ func has_seventh() -> bool:
 func get_jazz_chord() -> String :
 	var basePitch =  NoteParser.midipitch2StringStrictInKey(int(get_chord_midi()[0])%12,key,"en",false)
 	var res = get_chord_and_scale(get_chord_midi(), (key.root_midi) % 12  )
+	
+	
 	if ["It+6","Fr+6","Ger+6" ].has(kind):
 		
 		match kind:
@@ -762,11 +757,11 @@ func get_jazz_chord() -> String :
 		var invbassPitch =  NoteParser.midipitch2StringStrictInKey(int(get_chord_midi()[1])%12,key,"en",false)
 		match kind:
 			"It+6inv":
-				return invbassPitch+"7no5/" + basePitch
+				return invbassPitch+"7no5" 
 			"Fr+6inv":
-				return invbassPitch+"7b5/" + basePitch
+				return invbassPitch+"7b5" 
 			_:
-				return invbassPitch+"7/" + basePitch
+				return invbassPitch+"7" 
 	
 	if kind == "add9":
 		if third_distance() == 3 :		
@@ -781,7 +776,11 @@ func get_jazz_chord() -> String :
 	
 	#"It+6inv","Fr+6inv","Ger+6inv"
 	if res != null :
+		
+		
 		return str(res["string"])
+		
+		
 	else:
 		# rattrapage pour le faire à la main...
 		var root_txt
@@ -826,6 +825,12 @@ func get_jazz_chord() -> String :
 			return "?"	
 		
 
+# on récupére le nom de la note pour le degré chord_degree_number du degré courant
+func get_note_name_of_chord_degree_number(chord_degree_number:int):
+	var keys = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"]
+	var midi_from_key = key.degree_midi(chord_degree_number + degree_number -1)
+	var alter = get_chord_alteration(chord_degree_number)
+	return keys[(midi_from_key + alter) % 12]
 
 func get_chord_midi_root_normalised() -> int:
 	return get_chord_midi()[0]%12
@@ -2028,27 +2033,46 @@ func guitar_chords()-> Array :
 	
 	var keys = ["C","C#","D","Eb","E","F","F#","G","Ab","A","Bb","B"]
 	var gc_array = []
-	var basePitch =  key.degree_midi(degree_number) % 12
-	
+	var basePitch =  key.degree_midi(degree_number) % 12 + get_chord_alteration(1)
 	var root_name = keys[basePitch]
-	var aug6_root_name = keys[ (key.degree_midi(1) + 8) % 12 ]
 	var triton_root_name = keys[(basePitch + 6) %12]
 	var backdoor_root_name = keys[(basePitch + 3) %12]
 	var chord_name = get_jazz_chord()
 	var ggb = MusicLabGlobals.GuitarBase
 	
-	if kind == "diatonic" and realization == [1,3,5] and fifth_distance() == 7:
-		if third_distance() == 3:
-			chord_name = root_name+"minor"
-		elif third_distance() == 4:
-			chord_name = root_name+"major"
-	elif kind == "It+6" or kind == "Fr+6" or kind == "Ger+6":
-		chord_name = aug6_root_name+"7"
-		root_name = aug6_root_name
-		
-	elif kind == "It+6Inv" or kind == "Fr+6Inv" or kind == "Ger+6Inv":
-		chord_name = aug6_root_name+"7"
-		root_name = aug6_root_name
+
+	if 	["It+6","Fr+6","Ger+6", "It+6inv","Fr+6inv","Ger+6inv"].has(kind):
+		pass
+	
+	elif (kind == "diatonic" or kind == "cad64" or kind == "N6") and realization == [1,3,5] and fifth_distance() == 7:
+		if inversion == 0:
+				
+			if third_distance() == 3:
+				chord_name = root_name+"minor"
+			elif third_distance() == 4:
+				chord_name = root_name+"major"
+		elif inversion == 1:
+			if third_distance() == 3:
+				var bass_name = get_note_name_of_chord_degree_number(3)
+				chord_name = root_name+"m" + "/"+bass_name
+			elif third_distance() == 4:
+				chord_name = root_name+"major"
+				var bass_name = get_note_name_of_chord_degree_number(3)
+				chord_name = root_name+"" + "/"+bass_name
+		elif inversion == 2:
+			if third_distance() == 3:
+				var bass_name = get_note_name_of_chord_degree_number(5)
+				chord_name = root_name+"m" + "/"+bass_name
+			elif third_distance() == 4:
+				chord_name = root_name+"major"
+				var bass_name = get_note_name_of_chord_degree_number(5)
+				chord_name = root_name+"" + "/"+bass_name
+			
+#	elif kind == "It+6" or kind == "Fr+6" or kind == "Ger+6":
+#		chord_name = root_name+"7"
+#	elif kind == "It+6Inv" or kind == "Fr+6Inv" or kind == "Ger+6Inv":
+#		chord_name = root_name+"7"
+	
 	# search by name
 	gc_array = ggb.search_by_name(chord_name)
 	
@@ -2085,24 +2109,24 @@ func guitar_chords()-> Array :
 				gc_array.append_array(ggb.search_by_name(root_name+"9"))	
 
 	
-		# on ajoute les 6/9
-		if key.scale_name == "major":
-			if (degree_number == 1 or degree_number == 4 or degree_number == 5):
-				gc_array.append_array(ggb.search_by_name(root_name+"69"))
-			elif degree_number == 2:
-				gc_array.append_array(ggb.search_by_name(root_name+"m69"))
-		elif key.scale_name == "minor":
-			if (degree_number == 3 or degree_number == 6 or degree_number == 7):
-				gc_array.append_array(ggb.search_by_name(root_name+"69"))
-			elif degree_number == 4:
-				gc_array.append_array(ggb.search_by_name(root_name+"m69"))
-		elif  key.scale_name == "harmonic_minor":
-			if degree_number == 4:
-				gc_array.append_array(ggb.search_by_name(root_name+"m69"))
-		elif key.scale_name == "melodic_minor":
-			if degree_number == 4:
-				gc_array.append_array(ggb.search_by_name(root_name+"69"))
-					
+	# on ajoute les 6/9
+	if key.scale_name == "major":
+		if (degree_number == 1 or degree_number == 4 or degree_number == 5):
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+		elif degree_number == 2:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif key.scale_name == "minor":
+		if (degree_number == 3 or degree_number == 6 or degree_number == 7):
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+		elif degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif  key.scale_name == "harmonic_minor":
+		if degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"m69"))
+	elif key.scale_name == "melodic_minor":
+		if degree_number == 4:
+			gc_array.append_array(ggb.search_by_name(root_name+"69"))
+				
 
 	# Et les Dominantes altérées
 	if kind == "diatonic" and realization == [1,3,5] and fifth_distance() == 7 and degree_number == 5:
