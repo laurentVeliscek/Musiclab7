@@ -632,17 +632,15 @@ func clear_console():
 	console.text = ""
 
 func _save_text_to_disk(content: String, filename: String) -> void:
-	# Écrit dans user:// (persistance locale; en HTML5 = IndexedDB)
-	var path = "user://" + filename
-	var f = File.new()
-	var err = f.open(path, File.WRITE)
-	if err == OK:
-		f.store_string(content)
-		f.close()
+	# Écrit dans le dossier utilisateur (persistance locale)
+	var path = MusicLabGlobals.get_text_export_path(filename)
+	var ok := MusicLabGlobals.save_text_to_file(path, content)
+	if ok:
+		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_TEXT_DIR_KEY, path.get_base_dir())
 
 func _on_export_console_btn_pressed():
 	_save_text_to_disk(console.text, "console.txt")
-	LogBus.info(TAG,'Console.txt exported to "user://console.txt"')
+	LogBus.info(TAG, 'Console.txt exported')
 
 func _randomize_seed():
 	rng.randomize()
