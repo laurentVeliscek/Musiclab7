@@ -99,22 +99,22 @@ func load_autosaved_song() -> Song:
 	return load_song_from_file(AUTOSAVE_SONG_PATH)
 
 func save_current_song_to_file(path:String, compressed:bool = false) -> bool:
-        if current_song == null or not (current_song is Song):
-                LogBus.error(TAG, "save_current_song_to_file(): no current_song to save")
-                return false
+	if current_song == null or not (current_song is Song):
+			LogBus.error(TAG, "save_current_song_to_file(): no current_song to save")
+			return false
 
-        var data:Dictionary = current_song.to_dict()
-        var f := File.new()
-        var err = OK
+	var data:Dictionary = current_song.to_dict()
+	var f := File.new()
+	var err = OK
 
-        var base_dir := path.get_base_dir()
-        if base_dir != "":
-                _ensure_directory(base_dir)
+	var base_dir := path.get_base_dir()
+	if base_dir != "":
+			_ensure_directory(base_dir)
 
-        if compressed:
-                err = f.open_compressed(path, File.WRITE, File.COMPRESSION_DEFLATE)
-        else:
-                err = f.open(path, File.WRITE)
+	if compressed:
+			err = f.open_compressed(path, File.WRITE, File.COMPRESSION_DEFLATE)
+	else:
+			err = f.open(path, File.WRITE)
 	
 	if err != OK:
 		LogBus.error(TAG, "save_current_song_to_file(): can't open " + path + " (err " + str(err) + ")")
@@ -348,132 +348,132 @@ func clear_user_settings():
 # -------------------------------------------------------------------
 
 func _save_globals():
-        if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-                var js = Engine.get_singleton("JavaScript")
-                var json_data = to_json(user_settings)
-                js.eval("localStorage.setItem('musiclab_globals', JSON.stringify(%s))" % json_data)
-                #print_verbose("[MusicLabGlobals] Globals sauvegardés dans localStorage")
-                LogBus.info(TAG,"MusicLab Globals saved in localStorage")
-        else:
-                var f := File.new()
-                var err = f.open(GLOBALS_SAVE_PATH, File.WRITE)
-                if err != OK:
-                        LogBus.error(TAG, "_save_globals(): can't open " + GLOBALS_SAVE_PATH + " (err " + str(err) + ")")
-                        return
+		if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+				var js = Engine.get_singleton("JavaScript")
+				var json_data = to_json(user_settings)
+				js.eval("localStorage.setItem('musiclab_globals', JSON.stringify(%s))" % json_data)
+				#print_verbose("[MusicLabGlobals] Globals sauvegardés dans localStorage")
+				LogBus.info(TAG,"MusicLab Globals saved in localStorage")
+		else:
+				var f := File.new()
+				var err = f.open(GLOBALS_SAVE_PATH, File.WRITE)
+				if err != OK:
+						LogBus.error(TAG, "_save_globals(): can't open " + GLOBALS_SAVE_PATH + " (err " + str(err) + ")")
+						return
 
-                f.store_string(JSON.print(user_settings, "\t"))
-                f.close()
-                LogBus.info(TAG, "MusicLab Globals saved to " + GLOBALS_SAVE_PATH)
+				f.store_string(JSON.print(user_settings, "\t"))
+				f.close()
+				LogBus.info(TAG, "MusicLab Globals saved to " + GLOBALS_SAVE_PATH)
 
 
 func _load_globals():
-        if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-                var js = Engine.get_singleton("JavaScript")
-                var data = js.eval("localStorage.getItem('musiclab_globals')")
-                if data and typeof(data) == TYPE_STRING and data != "":
-                        var parsed = parse_json(data)
-                        if typeof(parsed) == TYPE_DICTIONARY:
-                                user_settings = parsed
-                                #print_verbose("[MusicLabGlobals] Globals rechargés depuis localStorage")
-                                LogBus.info(TAG,"MusicLab Globals loaded from localStorage")
+		if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+				var js = Engine.get_singleton("JavaScript")
+				var data = js.eval("localStorage.getItem('musiclab_globals')")
+				if data and typeof(data) == TYPE_STRING and data != "":
+						var parsed = parse_json(data)
+						if typeof(parsed) == TYPE_DICTIONARY:
+								user_settings = parsed
+								#print_verbose("[MusicLabGlobals] Globals rechargés depuis localStorage")
+								LogBus.info(TAG,"MusicLab Globals loaded from localStorage")
 
-                        else:
-                                #print_verbose("[MusicLabGlobals] Erreur parse_json (data non-dict)")
-                                LogBus.error(TAG,"MusicLab Globals Error parse_json (data non-dict)")
-                else:
-                        #print_verbose("[MusicLabGlobals] Aucune donnée locale à charger")
-                        LogBus.info(TAG,"MusicLab Globals no data to load")
-        else:
-                var f := File.new()
-                if not f.file_exists(GLOBALS_SAVE_PATH):
-                        return
+						else:
+								#print_verbose("[MusicLabGlobals] Erreur parse_json (data non-dict)")
+								LogBus.error(TAG,"MusicLab Globals Error parse_json (data non-dict)")
+				else:
+						#print_verbose("[MusicLabGlobals] Aucune donnée locale à charger")
+						LogBus.info(TAG,"MusicLab Globals no data to load")
+		else:
+				var f := File.new()
+				if not f.file_exists(GLOBALS_SAVE_PATH):
+						return
 
-                var err = f.open(GLOBALS_SAVE_PATH, File.READ)
-                if err != OK:
-                        LogBus.error(TAG, "_load_globals(): can't open " + GLOBALS_SAVE_PATH + " (err " + str(err) + ")")
-                        return
+				var err = f.open(GLOBALS_SAVE_PATH, File.READ)
+				if err != OK:
+						LogBus.error(TAG, "_load_globals(): can't open " + GLOBALS_SAVE_PATH + " (err " + str(err) + ")")
+						return
 
-                var text := f.get_as_text()
-                f.close()
+				var text := f.get_as_text()
+				f.close()
 
-                var parsed = parse_json(text)
-                if typeof(parsed) == TYPE_DICTIONARY:
-                        user_settings = parsed
-                        LogBus.info(TAG, "MusicLab Globals loaded from " + GLOBALS_SAVE_PATH)
-                else:
-                        LogBus.error(TAG, "_load_globals(): invalid data format in " + GLOBALS_SAVE_PATH)
+				var parsed = parse_json(text)
+				if typeof(parsed) == TYPE_DICTIONARY:
+						user_settings = parsed
+						LogBus.info(TAG, "MusicLab Globals loaded from " + GLOBALS_SAVE_PATH)
+				else:
+						LogBus.error(TAG, "_load_globals(): invalid data format in " + GLOBALS_SAVE_PATH)
 
 func _ensure_directory(path: String) -> bool:
-        var dir := Directory.new()
-        if dir.dir_exists(path):
-                return true
+		var dir := Directory.new()
+		if dir.dir_exists(path):
+				return true
 
-        var err := dir.make_dir_recursive(path)
-        if err != OK:
-                LogBus.error(TAG, "_ensure_directory(): can't create " + path + " (err " + str(err) + ")")
-                return false
+		var err := dir.make_dir_recursive(path)
+		if err != OK:
+				LogBus.error(TAG, "_ensure_directory(): can't create " + path + " (err " + str(err) + ")")
+				return false
 
-        return true
+		return true
 
 func get_default_musiclab_dir() -> String:
-        var documents := OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
-        var fallback := "user://" + DEFAULT_DOCUMENTS_SUBDIR
+		var documents := OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+		var fallback := "user://" + DEFAULT_DOCUMENTS_SUBDIR
 
-        if documents == "":
-                _ensure_directory(fallback)
-                return fallback
+		if documents == "":
+				_ensure_directory(fallback)
+				return fallback
 
-        var target := documents.plus_file(DEFAULT_DOCUMENTS_SUBDIR)
-        if _ensure_directory(target):
-                return target
+		var target := documents.plus_file(DEFAULT_DOCUMENTS_SUBDIR)
+		if _ensure_directory(target):
+				return target
 
-        _ensure_directory(fallback)
-        return fallback
+		_ensure_directory(fallback)
+		return fallback
 
 func _get_validated_dir(setting_key: String) -> String:
-        var saved = get_user_setting(setting_key, "")
-        var dir := Directory.new()
+		var saved = get_user_setting(setting_key, "")
+		var dir := Directory.new()
 
-        if typeof(saved) == TYPE_STRING and saved != "" and dir.dir_exists(saved):
-                return saved
+		if typeof(saved) == TYPE_STRING and saved != "" and dir.dir_exists(saved):
+				return saved
 
-        return get_default_musiclab_dir()
+		return get_default_musiclab_dir()
 
 func _remember_dir(setting_key: String, path: String) -> void:
-        var base_dir := path.get_base_dir()
-        if base_dir != "":
-                set_user_setting(setting_key, base_dir)
+		var base_dir := path.get_base_dir()
+		if base_dir != "":
+				set_user_setting(setting_key, base_dir)
 
 func _build_output_path(setting_key: String, filename: String, extension: String) -> String:
-        var base_dir := _get_validated_dir(setting_key)
-        _ensure_directory(base_dir)
+		var base_dir := _get_validated_dir(setting_key)
+		_ensure_directory(base_dir)
 
-        var name := filename
-        if name == "":
-                name = "export"
+		var name := filename
+		if name == "":
+				name = "export"
 
-        if not name.ends_with(extension):
-                name += extension
+		if not name.ends_with(extension):
+				name += extension
 
-        return base_dir.plus_file(name)
+		return base_dir.plus_file(name)
 
 func get_song_export_path(filename: String) -> String:
-        return _build_output_path(LAST_SONG_DIR_KEY, filename, SONG_EXTENSION)
+		return _build_output_path(LAST_SONG_DIR_KEY, filename, SONG_EXTENSION)
 
 func get_midi_export_path(filename: String) -> String:
-        return _build_output_path(LAST_MIDI_DIR_KEY, filename, MIDI_EXTENSION)
+		return _build_output_path(LAST_MIDI_DIR_KEY, filename, MIDI_EXTENSION)
 
 func get_text_export_path(filename: String) -> String:
-        return _build_output_path(LAST_TEXT_DIR_KEY, filename, TEXT_EXTENSION)
+		return _build_output_path(LAST_TEXT_DIR_KEY, filename, TEXT_EXTENSION)
 
 func get_song_directory() -> String:
-        return _get_validated_dir(LAST_SONG_DIR_KEY)
+		return _get_validated_dir(LAST_SONG_DIR_KEY)
 
 func get_midi_directory() -> String:
-        return _get_validated_dir(LAST_MIDI_DIR_KEY)
+		return _get_validated_dir(LAST_MIDI_DIR_KEY)
 
 func get_text_directory() -> String:
-        return _get_validated_dir(LAST_TEXT_DIR_KEY)
+		return _get_validated_dir(LAST_TEXT_DIR_KEY)
 
 
 # -------------------------------------------------------------------
@@ -494,22 +494,22 @@ func reset_all():
 # file_name sans .mid
 func save_midi_bytes_to_midi_file(bytes: PoolByteArray,filename:String)->String:
 
-        #var = Song.get_midi_bytes_type1()
-        if bytes.size() <= 0:
-                return "No Midi Bytes to export (bytes.size == 0)."
+		#var = Song.get_midi_bytes_type1()
+		if bytes.size() <= 0:
+				return "No Midi Bytes to export (bytes.size == 0)."
 
-        var export_path := _build_output_path(LAST_MIDI_DIR_KEY, filename, MIDI_EXTENSION)
-        var mime_type = "audio/midi"
+		var export_path := _build_output_path(LAST_MIDI_DIR_KEY, filename, MIDI_EXTENSION)
+		var mime_type = "audio/midi"
 
 
-        if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-                var result = _html5_download_bytes(bytes, export_path.get_file(), mime_type)
-                _remember_dir(LAST_MIDI_DIR_KEY, export_path)
-                return result
-        else:
-                var result = _save_locally(bytes, export_path)
-                _remember_dir(LAST_MIDI_DIR_KEY, export_path)
-                return result
+		if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+				var result = _html5_download_bytes(bytes, export_path.get_file(), mime_type)
+				_remember_dir(LAST_MIDI_DIR_KEY, export_path)
+				return result
+		else:
+				var result = _save_locally(bytes, export_path)
+				_remember_dir(LAST_MIDI_DIR_KEY, export_path)
+				return result
 	
 	
 
@@ -577,16 +577,16 @@ func wait_one_frame(current_scene):
 
 	
 func save_text_to_file(path:String, text:String) -> bool:
-        var f = File.new()
-        var base_dir := path.get_base_dir()
+	var f = File.new()
+	var base_dir := path.get_base_dir()
 
-        if base_dir != "":
-                _ensure_directory(base_dir)
+	if base_dir != "":
+			_ensure_directory(base_dir)
 
-        var err = f.open(path, File.WRITE)
-        if err != OK:
-                LogBus.error(TAG, "save_text_to_file(): can't open " + path + " (err " + str(err) + ")")
-                return false
+	var err = f.open(path, File.WRITE)
+	if err != OK:
+			LogBus.error(TAG, "save_text_to_file(): can't open " + path + " (err " + str(err) + ")")
+			return false
 	
 	f.store_string(text)
 	f.close()
@@ -596,19 +596,19 @@ func save_text_to_file(path:String, text:String) -> bool:
 	
 	
 func save_text_html5(text:String, filename:String = "export.txt") -> void:
-        # Garde-fou : nom par défaut
-        var fname:String = filename
-        if fname == "":
-                fname = "export" + TEXT_EXTENSION
+	# Garde-fou : nom par défaut
+	var fname:String = filename
+	if fname == "":
+			fname = "export" + TEXT_EXTENSION
 
-        if not fname.ends_with(TEXT_EXTENSION):
-                fname += TEXT_EXTENSION
+	if not fname.ends_with(TEXT_EXTENSION):
+			fname += TEXT_EXTENSION
+
+# Si on est en HTML5 + JavaScript dispo : vrai download navigateur
+	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
+		var b64:String = Marshalls.utf8_to_base64(text)
+		var url:String = "data:text/plain;base64," + b64
 	
-	# Si on est en HTML5 + JavaScript dispo : vrai download navigateur
-        if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-                var b64:String = Marshalls.utf8_to_base64(text)
-                var url:String = "data:text/plain;base64," + b64
-		
 		# Attention : ici on suppose un filename sans quotes ni caractères bizarres
 		var js:String = ""
 		js += "var a=document.createElement('a');"
@@ -620,14 +620,14 @@ func save_text_html5(text:String, filename:String = "export.txt") -> void:
 		
 		JavaScript.eval(js, true)
 		LogBus.info(TAG, "download_text_html5(): HTML5 download triggered (" + fname + ")")
-	
-        else:
-                # Fallback hors HTML5 : on enregistre dans le dossier utilisateur
-                var path:String = get_text_export_path(fname)
-                var ok:bool = save_text_to_file(path, text)
-                if ok:
-                        _remember_dir(LAST_TEXT_DIR_KEY, path)
-                        LogBus.info(TAG, "download_text_html5(): not HTML5, saved to " + path + " instead")
-                else:
-                        LogBus.error(TAG, "download_text_html5(): fallback save failed")
+
+	else:
+		# Fallback hors HTML5 : on enregistre dans le dossier utilisateur
+		var path:String = get_text_export_path(fname)
+		var ok:bool = save_text_to_file(path, text)
+		if ok:
+				_remember_dir(LAST_TEXT_DIR_KEY, path)
+				LogBus.info(TAG, "download_text_html5(): not HTML5, saved to " + path + " instead")
+		else:
+				LogBus.error(TAG, "download_text_html5(): fallback save failed")
 
