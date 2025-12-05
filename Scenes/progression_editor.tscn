@@ -109,7 +109,7 @@ func _ready():
 func _on_title_line_edit_text_entered(new_text):
 	scene.myMasterSong.title = new_text
 	scene.myPlayingSong.title = new_text
-	MusicLabGlobals.get_song().title = new_text
+	#MusicLabGlobals.get_song().title = new_text
 	 
 
 
@@ -225,6 +225,8 @@ bg_color = Color( 0.862745, 0.862745, 0.862745, 1 )
 
 [sub_resource type="DynamicFont" id=28]
 size = 14
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 6 )
 
 [sub_resource type="StyleBoxFlat" id=52]
@@ -272,6 +274,8 @@ font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=55]
 size = 21
+use_mipmaps = true
+use_filter = true
 font_data = SubResource( 54 )
 
 [sub_resource type="StyleBoxFlat" id=51]
@@ -683,9 +687,9 @@ text = "Help"
 
 [node name="compute_SATB_btn" type="Button" parent="Transport"]
 margin_left = -8.0
-margin_top = -115.0
+margin_top = -147.0
 margin_right = 152.0
-margin_bottom = -67.0
+margin_bottom = -99.0
 rect_min_size = Vector2( 160, 30 )
 hint_tooltip = "Compute up to 100
 SATB Solutions for your
@@ -1064,7 +1068,6 @@ custom_colors/font_color_hover_pressed = Color( 0.396078, 0.458824, 1, 1 )
 custom_colors/font_color = Color( 0.396078, 0.458824, 1, 1 )
 custom_colors/font_color_hover = Color( 0.396078, 0.458824, 1, 1 )
 custom_colors/font_color_pressed = Color( 0.396078, 0.458824, 1, 1 )
-pressed = true
 text = "local"
 align = 1
 
@@ -1290,13 +1293,37 @@ script = ExtResource( 7 )
 [node name="ExportMidiDialog" type="FileDialog" parent="."]
 
 [node name="debug_btn" type="Button" parent="."]
-visible = false
 margin_left = 892.0
 margin_top = 312.0
 margin_right = 1036.0
 margin_bottom = 461.0
 custom_fonts/font = SubResource( 63 )
 text = "debug"
+
+[node name="soundFont" type="Control" parent="."]
+visible = false
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="soundBank_ob" type="OptionButton" parent="soundFont"]
+margin_left = 712.0
+margin_top = 312.0
+margin_right = 872.0
+margin_bottom = 335.0
+text = "Fast"
+align = 1
+items = [ "Fast", null, false, 0, null, "HD", null, false, 1, null, "pianos", null, false, 2, null ]
+selected = 0
+
+[node name="Bonus_Lbl" type="Label" parent="soundFont"]
+margin_left = 706.0
+margin_top = 288.0
+margin_right = 872.0
+margin_bottom = 309.0
+custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
+custom_fonts/font = SubResource( 28 )
+text = "Sound bank"
+align = 1
 
 [connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
 [connection signal="element_right_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_right_clicked"]
@@ -1343,3 +1370,4 @@ text = "debug"
 [connection signal="api_error" from="SATB/SATBClient" to="." method="_on_SATBClient_api_error"]
 [connection signal="api_response" from="SATB/SATBClient" to="." method="_on_SATBClient_api_response"]
 [connection signal="pressed" from="debug_btn" to="." method="_on_debug_btn_pressed"]
+[connection signal="item_selected" from="soundFont/soundBank_ob" to="." method="_on_soundBank_ob_item_selected"]

@@ -308,6 +308,9 @@ func clone():
 			}
 			b.append(d)
 	c.barres = b
+	
+	c.start = start
+	c.length_beats = length_beats
 	return c
 
 func to_string() -> String:

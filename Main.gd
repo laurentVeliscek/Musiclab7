@@ -2,6 +2,7 @@ extends Node
 
 # --- Scène courante
 var current_scene: Node = null
+const TAG = "Menu"
 
 # --- Scènes préchargées
 var preload_paths = {
@@ -133,3 +134,12 @@ func _set_focus_to_scene(scene: Node):
 	var focusable = scene.find_node("focus_target", true, false)
 	if focusable and focusable.has_method("grab_focus"):
 		focusable.grab_focus()
+		
+		
+	
+func _on_song_loaded(song: Song) -> void:
+	# La Song est chargée et déjà définie comme current_song
+	LogBus.info(TAG, "Song chargée: " + song.title)
+
+func _on_song_failed(message: String) -> void:
+	 LogBus.error(TAG, "Download failed: "+ str(message))

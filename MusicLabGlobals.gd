@@ -11,6 +11,17 @@ const LAST_MIDI_DIR_KEY := "last_midi_dir"
 const LAST_TEXT_DIR_KEY := "last_text_dir"
 const GLOBALS_SAVE_PATH := "user://musiclab_globals.json"
 
+const SOUND_FONT_ASPIRIN = "res://soundfonts/Aspirin-Stereo.sf2"
+const SOUND_FONT_DORE_MARK = "res://soundfonts/Dore Mark Model B-v5.2.sf2"
+const SOUND_FONT_ESSENTIAL_KEYS = "res://soundfonts/Essential_Keys.sf2"
+const SOUND_FONT_YAMAHA_C7 = "res://soundfonts/Studio Yamaha C7.sf2"
+const SOUND_FONT_STEINWAY= "res://soundfonts/Studio Steinway D.sf2"
+const SOUND_FONT_KORG_TRITON = "res://soundfonts/Korg_Triton_Piano.sf2"
+const SOUND_FONT_AI_PIANO = "res://soundfonts/AI-APiano02trans.sf2"
+const SOUND_FONT_STEINWAY_GRAND_PIANO = "res://soundfonts/Grand Piano.sf2"
+const SOUND_FONT_CONCERT_GRAND_CHATEAU = "Chateau_Pianos.sf2"
+
+
 # -------------------------------------------------------------------
 #	GLOBAL STATE SINGLETON POUR MUSICLIB
 # -------------------------------------------------------------------
@@ -43,22 +54,6 @@ func _ready():
 	
 	current_song = load_autosaved_song()
 	rng.randomize()
-#	print("current_song -> " + str(current_song))
-#
-#	if current_song == null :
-#		current_song = Song.new()
-#		current_song.title =  "Empty song"
-#		var progression_track : Track = Track.new()
-#		progression_track.name =  Song.PROGRESSION_TRACK_NAME
-#		var degres = [1,4,2,5]
-#		for i in range(0,degres.size()):
-#			var d:Degree = Degree.new()
-#			d.degree_number = degres[i]
-#			d.length_beats = 2
-#			progression_track.add_degree(i*2,d)
-#			current_song.add_track(progression_track)
-		
-
 
 
 # -------------------------------------------------------------------
@@ -68,6 +63,9 @@ func _ready():
 func setup_midi_player():
 	musiclibMidiPlayer.setupMidiPlayer()
 	midi_player = musiclibMidiPlayer.midiPlayer
+
+func set_sound_Font(path):
+	midi_player.set_soundfont(path)
 
 func set_song(song):
 	if song == null:

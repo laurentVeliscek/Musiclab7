@@ -44,9 +44,7 @@ onready var single_note_velocity:VSlider = $playerConfig/VBoxContainer/config_sl
 #onready var step_beat_length_btn = $playerConfig/VBoxContainer/config_sliders/buttons/step_beat_length_btn
 onready var pattern = $Pattern
 
-#onready var guitar_player:FolkGuitarPlayer = FolkGuitarPlayer.new()
 
-# on copie en local (clone) les variables de folkGuitarPlayer
 
 var gp:FolkGuitarPlayer
 
@@ -77,9 +75,9 @@ var progression_track_length
 func _ready():
 	# midiPlayerSetup
 	
-	musiclibMidiPlayer.setupMidiPlayer()
-	midi_player = musiclibMidiPlayer.midiPlayer
-	
+	MusicLabGlobals.setup_midi_player()
+	midi_player = MusicLabGlobals.midi_player
+	MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_ASPIRIN)
 	gp = FolkGuitarPlayer.new()
 	
 	
@@ -128,6 +126,7 @@ func _ready():
 		var gc:GuitarChord = guitar_chords[d.chord_voicing_index % guitar_chords.size()]
 		gc.start = dic["start"]
 		gc.length_beats = d.length_beats
+		LogBus.debug(TAG,"Loop Ready add gc" + gc.to_string())
 		gp.chord_grid.append(gc)
 		
 	
@@ -145,13 +144,13 @@ func _ready():
 	var voicings = d.guitar_chords()
 	var voicing_number = d.chord_voicing_index % voicings.size()
 	var current_voicing = voicings[voicing_number]
-	#var guitar_player.chord_grid[index]  = 
+
 	
 	guitar_voicing_view.set_voicings(voicings) 
 	guitar_voicing_view.set_voicing_index(voicing_number)
 	guitar_voicing_view.update()
 	
-	MusicLabGlobals.yield(self)
+	#MusicLabGlobals.yield(self)
 	pattern._update_pattern_display()
 	
 
@@ -178,10 +177,9 @@ func _ready():
 			chords_volume_vs.value = int(guitar_scene_params["chords_volume"])
 		
 	
-	#dic.get("guitar_player_scene_params", {})
 	
 	scene_is_ready = true
-	#MusicLabGlobals.yield(self)
+
 	rewind()
 
 func get_dico_from_interface_sliders()->Dictionary:
@@ -266,26 +264,7 @@ func dummy_song()->Song:
 	dummySong.add_track(prog_track)
 	return dummySong
 		
-#func setup_scene():
-#
-#	set_display_degrees()
-#	songTrackView.set_degree_display("jazzchord")
-#	songTrackView.select_wrapper(songTrackView._wrappers[0])
-#
-#	guitar_voicing_view.rect_min_size = Vector2(260, 280)
-#	# remplit chords_array
-#	var degreeTrack:Track = songTrackView.get_track()
-#	for d in degreeTrack.
-		
-			
-	#guitar_player.chord_grid.append()
-			
 
-#	guitar_voicing_view.set_voicings(chords_array[0]["guitar_chords"])
-
-	
-	
-	#$Pattern.current = 0
 	$Pattern._update_pattern_display()
 	
 func set_display_degrees():
@@ -343,7 +322,7 @@ func _on_SongTrackView_element_clicked(element, index, wrapper):
 	var voicings = d.guitar_chords()
 	var voicing_number = d.chord_voicing_index % voicings.size()
 	var current_voicing = voicings[voicing_number]
-	#var guitar_player.chord_grid[index]  = 
+
 	
 	guitar_voicing_view.set_voicings(voicings) 
 	guitar_voicing_view.set_voicing_index(voicing_number)
@@ -360,8 +339,7 @@ func _on_SongTrackView_element_clicked(element, index, wrapper):
 #
 	
 func _on_voicing_view_voicing_index_changed(current, total):
-	#var guitar_player:FolkGuitarPlayer = FolkGuitarPlayer.new()
-	#clear_console()
+
 	
 	LogBus.debug(TAG,"selected_chord_index: " + str(selected_chord_index))
 	var progression_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)	
@@ -370,22 +348,10 @@ func _on_voicing_view_voicing_index_changed(current, total):
 	var d:Degree = dic["degree"]
 	d.chord_voicing_index = current
 	
-	var gc:GuitarChord = d.guitar_chords()[current]
+	var gc:GuitarChord = d.guitar_chords()[current].clone()
 	gc.start = dic["start"]
 	gc.length_beats = d.length_beats
 	gp.chord_grid[selected_chord_index] = gc
-#	gp.chord_grid[selected_chord_index] = d.guitar_chords()[current]
-#	gp.chord_grid[selected_chord_index].start = dic["start"]
-#	gp.chord_grid[selected_chord_index].
-#	var current_guitar_chord = d.guitar_chords()[d.chord_voicing_index]
-	
-	
-	#var gc = chords_array[selected_chord_index]["guitar_chords"][chords_array[selected_chord_index]["selected"] ]
-	#update_chord_array()
-	#guitar_player.chord_grid[selected_chord_index] = current_guitar_chord
-#	var MasterSongDegrees = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).get_degrees_array()
-#	var current_degree:Degree = MasterSongDegrees[selected_chord_index]
-#	current_degree.chord_voicing_index = selected_chord_index
 
 	
 	play_chord(gc)
@@ -479,7 +445,8 @@ func rewind() :
 
 func computeGuitarSong(with_program_change:bool = true) -> Song:
 	
-	#var guitar_player:FolkGuitarPlayer = FolkGuitarPlayer.new()
+	
+	
 	
 	var song:Song = Song.new()
 	song.tempo_bpm = myMasterSong.tempo_bpm
@@ -497,20 +464,41 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 	
 	# On reconstruit chord_grid depuis myMasterSong
 
-	var progression_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).clone()
-	
+	var progression_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).clone()
 	
 	
 
-
-
-	for gc in gp.chord_grid:
-		LogBus.debug(TAG,gc.to_string())
 		
+	var new_gc_grid = []
+	
+	var degree_dic_array = progression_track.get_degrees_with_start()
+	for dic in degree_dic_array:
+		var d:Degree = dic["degree"]
+		var start = dic["start"]
+		var gc_array = d.guitar_chords()
+		var index_gc = d.chord_voicing_index
+		var my_gc:GuitarChord = gc_array[index_gc].clone()
+		my_gc.start = start
+		my_gc.length_beats = d.length_beats
+		new_gc_grid.append(my_gc)
+	#for d in progression_track.get_degree_array_with_st
+#	for gc in gp.chord_grid:
+#		new_gc_grid.append(gc.clone())
+	
+	var new_pattern_seq = []
+	for sp in gp.pattern_sequence:
+		new_pattern_seq.append(sp.clone())
+		
+	var playing_player = FolkGuitarPlayer.new()
+	playing_player.chord_grid = new_gc_grid
+	playing_player.pattern_sequence = new_pattern_seq
+	
+	for gc in playing_player.chord_grid:
+		LogBus.debug(TAG,"in compute-> " + gc.to_string())
 	
 	#var guitar_score =  gp.generate()
 	#MusicLabGlobals.save_text_html5(JSON.print(guitar_score,"\t"), "guitar_score.txt")
-	var guitar_track = gp.generate_track(transpose)
+	var guitar_track = playing_player.generate_track(transpose)
 	guitar_track.channel = 0
 	guitar_track.adopt_channel = true
 	
@@ -526,6 +514,19 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 	Chords_track.name = "SATB Chords"
 	Chords_track.channel = 2
 	Chords_track.adopt_channel = true
+	
+		
+	var duree_beats_song = guitar_track.length_beats
+	var duree_progression = bass_track.length_beats
+	var multiplier = floor(duree_beats_song/duree_progression) + 1
+	bass_track.multiply(multiplier,true)
+	Chords_track.multiply(multiplier,true)
+#	for i in range(0,multiplier):
+#		bass_track.merge_track(bass_track,bass_track.length_beats,false)
+#		Chords_track.merge_track(Chords_track,Chords_track.length_beats,false)
+
+	bass_track = bass_track.extract(0,duree_beats_song)
+	Chords_track = Chords_track.extract(0,duree_beats_song)
 	
 	
 	# ON AJOUTE LES CONTROLEURS
@@ -549,20 +550,10 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 		bass_track.program_change = program_change_bass
 		Chords_track.program_change = program_change_chords
 		
-	
-	var duree_beats_song = guitar_track.length_beats
-	var duree_progression = bass_track.length_beats
-	
-	
-	var multiplier = floor(duree_beats_song/duree_progression) + 1
-	bass_track.multiply(multiplier,false)
-	Chords_track.multiply(multiplier,false)
-#	for i in range(0,multiplier):
-#		bass_track.merge_track(bass_track,bass_track.length_beats,false)
-#		Chords_track.merge_track(Chords_track,Chords_track.length_beats,false)
 
-	bass_track = bass_track.extract(0,duree_beats_song)
-	Chords_track = Chords_track.extract(0,duree_beats_song)
+	
+	
+
 	
 	 
 	
@@ -805,5 +796,22 @@ func _on_Debug_btn_pressed():
 	for gc in gp.chord_grid:
 		LogBus.debug(TAG,"gc.start: " + str(gc.start) + " midiNotes: " + str( gc.midiNotes) + "length: " + str(gc.length_beats))
 	LogBus.debug(TAG,"gp.pattern_sequence.size(): " + str(gp.pattern_sequence.size()))
+	
+	
+	LogBus.debug(TAG,"\n\nCheck Degrees")
+	for d in myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).get_degrees_with_start():
+		LogBus.debug(TAG,"start = " + str(d["start"]))
+		
+		
+	
 
 
+func _on_soundBank_ob_item_selected(index):
+	var soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+	match index:
+		0 : soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+		1 : soundFont_path = MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS
+#		2 : soundFont_path = MusicLabGlobals.FATBOY_SOUND_FONT
+#		_ : soundFont_path = MusicLabGlobals.ASPIRIN_SOUND_FONT
+		
+	MusicLabGlobals.set_sound_Font(soundFont_path)
