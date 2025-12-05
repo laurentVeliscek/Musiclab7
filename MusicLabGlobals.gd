@@ -46,22 +46,6 @@ func _ready():
 	
 	current_song = load_autosaved_song()
 	rng.randomize()
-#	print("current_song -> " + str(current_song))
-#
-#	if current_song == null :
-#		current_song = Song.new()
-#		current_song.title =  "Empty song"
-#		var progression_track : Track = Track.new()
-#		progression_track.name =  Song.PROGRESSION_TRACK_NAME
-#		var degres = [1,4,2,5]
-#		for i in range(0,degres.size()):
-#			var d:Degree = Degree.new()
-#			d.degree_number = degres[i]
-#			d.length_beats = 2
-#			progression_track.add_degree(i*2,d)
-#			current_song.add_track(progression_track)
-		
-
 
 
 # -------------------------------------------------------------------

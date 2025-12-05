@@ -169,12 +169,14 @@ valign = 1
 margin_right = 297.0
 margin_bottom = 170.0
 theme = ExtResource( 8 )
+window_title = "Enregistrer un fichier"
 access = 2
 
 [node name="SaveSongDialog" type="FileDialog" parent="."]
 margin_right = 297.0
 margin_bottom = 170.0
 theme = ExtResource( 8 )
+window_title = "Enregistrer un fichier"
 
 [connection signal="mouse_entered" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_entered"]
 [connection signal="mouse_exited" from="ColorRect/VBoxContainer/progression_editor_btn" to="." method="_on_progression_editor_btn_mouse_exited"]
