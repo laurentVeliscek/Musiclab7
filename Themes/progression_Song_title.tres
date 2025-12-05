@@ -1,0 +1,27 @@
+[gd_resource type="Theme" load_steps=6 format=2]
+
+[ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=1]
+
+[sub_resource type="DynamicFont" id=2]
+font_data = ExtResource( 1 )
+
+[sub_resource type="DynamicFontData" id=3]
+font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=4]
+size = 21
+use_mipmaps = true
+use_filter = true
+font_data = SubResource( 3 )
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 1, 1, 1, 0 )
+
+[resource]
+Label/colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
+Label/fonts/font = SubResource( 2 )
+LineEdit/colors/font_color = Color( 0.45098, 0.45098, 0.45098, 1 )
+LineEdit/fonts/font = SubResource( 4 )
+LineEdit/styles/focus = SubResource( 1 )
+LineEdit/styles/normal = SubResource( 1 )
+LineEdit/styles/read_only = SubResource( 1 )

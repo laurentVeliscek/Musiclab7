@@ -279,3 +279,9 @@ func _on_level_ob_item_selected(index):
 		$sound_settings/New_chord_Btn.text = "New Chord"
 		#$sound_settings/play_chord_Btn.text = "Play Chord"
 	new_chord()
+
+
+
+
+func _on_menu_Btn_pressed():
+	get_tree().get_root().get_node("Main").change_scene_preloaded("menu")
