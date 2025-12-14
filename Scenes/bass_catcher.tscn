@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://Scenes/bass_catcher.gd" type="Script" id=1]
-[ext_resource path="res://addons/musiclib/LegoBox/program_change_selector.gd" type="Script" id=2]
+[ext_resource path="res://addons/musiclib/LegoBox/musicLab_program_change_selector.gd" type="Script" id=2]
 [ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://Fonts/uwch.ttf" type="DynamicFontData" id=4]
 
@@ -89,8 +89,8 @@ margin_top = 62.0
 margin_right = 250.0
 margin_bottom = 102.0
 rect_min_size = Vector2( 250, 40 )
-max_value = 120.0
-value = 80.0
+max_value = 127.0
+value = 100.0
 
 [node name="octave_lbl" type="Label" parent="sound_settings/bass"]
 margin_top = 106.0
@@ -140,7 +140,7 @@ margin_top = 62.0
 margin_right = 250.0
 margin_bottom = 102.0
 rect_min_size = Vector2( 250, 40 )
-max_value = 120.0
+max_value = 127.0
 value = 80.0
 
 [node name="chord playing speed" type="Label" parent="sound_settings/chords"]

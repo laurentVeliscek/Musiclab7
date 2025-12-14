@@ -9,8 +9,6 @@ onready var save_dialog = $SaveSongDialog
 onready var song_title = ""
 
 func _ready():
-	MusicLabGlobals.connect("browser_song_loaded", self, "_on_song_loaded")
-	MusicLabGlobals.connect("browser_song_load_failed", self, "_on_song_failed")
 
 	import_dialog.mode = FileDialog.MODE_OPEN_FILE
 	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
@@ -30,7 +28,8 @@ func _ready():
 	import_dialog.current_dir = song_dir
 	save_dialog.current_dir = song_dir
 
-	MusicLabGlobals.setup_midi_player()
+	#MusicLabGlobals.setup_midi_player()
+	#MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS)
 
 	# Connection LogBus à la console
 	LogBus.connect("log_entry", self, "_on_log_entry")
@@ -69,6 +68,16 @@ func _ready():
 		
 	else:
 		LogBus.info(TAG,"Current song:\n" + myMasterSong.title)
+		
+	# Check guitarChords
+	var progression_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
+	if progression_track:
+		for d in progression_track.get_degrees_array():
+			if d.guitar_chords().size() == 0 :
+				$ColorRect/VBoxContainer/guitar_player_btn.hide()
+				
+			
+		
 			
 func clear_console():
 	console.text = ""
@@ -77,14 +86,14 @@ func _on_progression_editor_btn_mouse_entered():
 	fade.fade_in($musiclab,.5)
 	clear_console()
 	if song_title == "Untitled Song":
-		LogBus.info(TAG,"Create a new song\nGroovy !...")
+		LogBus.info(TAG,"Create a new song(\n(Tasty !...)")
 	else:	
-		LogBus.info(TAG,"Edit your song: \n"+ song_title + "\nGroovy !...")
+		LogBus.info(TAG,"Edit your song: \n"+ song_title + "\n(Tasty !...)")
 
 func _on_bass_catcher_btn_mouse_entered():
 	fade.fade_in($pony,.5)
 	clear_console()
-	LogBus.info(TAG,"Ear training quizz:\nfind the bass note of a chord.\nFunky !")
+	LogBus.info(TAG,"Ear training quizz:\nfind the bass note of a chord.\n(Funky !)")
 
 
 func _on_progression_editor_btn_mouse_exited():
@@ -97,7 +106,7 @@ func _on_bass_catcher_btn_mouse_exited():
 func _on_guitar_player_btn_mouse_entered():
 	fade.fade_in($GuitarRobot,.5)
 	clear_console()
-	LogBus.info(TAG,"Robot guitar player.\nTasty !...")
+	LogBus.info(TAG,"Robot guitar player.\n(Groovy !...)")
 
 func _on_guitar_player_btn_mouse_exited():
 	fade.fade_out($GuitarRobot,.5)
@@ -171,7 +180,6 @@ func _on_load_song_btn_pressed():
 func _on_ImportSongDialog_file_selected(path:String) -> void:
 	
 	clear_console()
-	#LogBus.debug(TAG,"importing a song from path: "+ path)
 	var song:Song = MusicLabGlobals.import_song_from_json_file(path)
 	if song == null:
 		clear_console()
@@ -186,7 +194,6 @@ func _on_ImportSongDialog_file_selected(path:String) -> void:
 			$ColorRect/VBoxContainer/guitar_player_btn.show()
 		
 		
-		#LogBus.debug(TAG,"Valid Song File")
 		MusicLabGlobals.set_song(song)
 		myMasterSong = MusicLabGlobals.get_song()
 		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_SONG_DIR_KEY, path.get_base_dir())
@@ -242,12 +249,14 @@ func _on_new_song_pressed():
 		$file_panel/file_container/new_song.hide()
 		$file_panel/file_container/save_song_btn.hide()
 		$ColorRect/VBoxContainer/progression_editor_btn.text = "Create Song"
+	get_tree().get_root().get_node("Main").change_scene_preloaded("progression_editor")
+
 	#LogBus.info(TAG,"Current song:\n" + myMasterSong.title)
 	
-
-func _on_song_loaded(song: Song) -> void:
-	# La Song est chargée et déjà définie comme current_song
-	print("Song chargée : %s" % song.title)
-
-func _on_song_failed(message: String) -> void:
-	print("Échec du chargement : %s" % message)
+#
+#func _on_song_loaded(song: Song) -> void:
+#	# La Song est chargée et déjà définie comme current_song
+#	print("Song loaded : %s" % song.title)
+#
+#func _on_song_failed(message: String) -> void:
+#	print("failed to load : %s" % message)

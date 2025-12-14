@@ -102,8 +102,8 @@ func _ready():
 	#loader = ChordDBLoader.new()
 	#loader.name = "Loader"
 	#add_child(loader)
-	chord_program_ob.set_program(25)
-	bass_program_ob.set_program(32)
+	chord_program_ob.set_program(11)
+	bass_program_ob.set_program(15)
 	
 	
 	
@@ -208,10 +208,10 @@ func play_chord():
 
 func play_bass():
 	bass_note_lbl.text = root_letter
-	var symbol_from_gc = ""
+	var _symbol_from_gc = ""
 	$chord_name_lbl.text = current_symbol
 	if current_guitar_chord != null:
-		symbol_from_gc = current_guitar_chord.chord_name
+		_symbol_from_gc = current_guitar_chord.chord_name
 		#print(current_guitar_chord.get_ascii_tab())
 		$tab_label.text = current_guitar_chord.get_ascii_tab()
 	midi_player.stop()

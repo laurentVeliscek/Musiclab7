@@ -8,6 +8,9 @@ onready var songTrackView:SongTrackView = $SongViewContainer/SongTrackView
 onready var voicings_container:CenterContainer = $voicingContainer
 onready var guitar_voicing_view:GuitarChordView = $voicingContainer/voicing_view
 onready var pattern_lineEdit:LineEdit = $Pattern/pattern_lineEdit
+onready var voicing_view:GuitarChordView =  $voicingContainer/voicing_view
+
+onready var midi_export_dialog: FileDialog = $midi_export/ExportMidiDialog
 
 onready var console:RichTextLabel = $console/console_RTL
 onready var midi_player:MidiPlayer
@@ -45,7 +48,7 @@ onready var single_note_velocity:VSlider = $playerConfig/VBoxContainer/config_sl
 onready var pattern = $Pattern
 
 
-
+var _pending_midi_bytes: PoolByteArray = PoolByteArray()
 var gp:FolkGuitarPlayer
 
 var song_playing_ended:bool = true
@@ -70,24 +73,28 @@ var scene_is_ready:bool = false
 var songview_is_displaying_degree = true
 var progression_track_length
 
+var mode_debug = false
 
 
 func _ready():
 	# midiPlayerSetup
 	
-	MusicLabGlobals.setup_midi_player()
+	#MusicLabGlobals.setup_midi_player()
 	midi_player = MusicLabGlobals.midi_player
-	MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_ASPIRIN)
+	#MusicLabGlobals.set_sound_Font(MusicLabGlobals.SOUND_FONT_ASPIRIN)
 	gp = FolkGuitarPlayer.new()
 	
+	
+		# Détecter l'environnement
+	if OS.has_feature("editor") == false:
+		$Debug_btn.hide()
+	
+	if mode_debug == false:
+		$Debug_btn.hide()
 	
 	myMasterSong = MusicLabGlobals.get_song().clone()
 	if myMasterSong == null:
 		myMasterSong = dummy_song()
-	#print(myMasterSong.to_string())
-	# on degage la piste guitare
-	#myMasterSong.remove_track_by_name(Song.RYTHM_GUITAR_TRACK)
-	
 	
 	
 	songTrackView.song = myMasterSong
@@ -97,21 +104,12 @@ func _ready():
 
 	progression_track_length = progression_track.length_beats * myMasterSong.ppq
 	
-#	for e in progression_track.events :
-#		if e.has("degree"):
-#			var d = e["degree"]
-#			var guitar_chords = d.guitar_chords()
-#			var gc:GuitarChord = guitar_chords[d.chord_voicing_index % guitar_chords.size()]
-#			gc.start = e["start"]
-#			gc.length_beats = d.length_beats
-#			gp.chord_grid.append(gc)
-	
+
 
 	LogBus.connect("log_entry", self, "_on_log_entry")
 	LogBus._verbose = true
 	LogBus.info(TAG,"Select a chord to set the guitar chord voicing")
-	#clear_console()
-	#var sp:StrumPattern = StrumPattern.new()
+
 	if  myMasterSong.strum_pattern_array.size() > 0 :
 		gp.pattern_sequence = myMasterSong.strum_pattern_array
 	else :
@@ -119,14 +117,12 @@ func _ready():
 		gp.pattern_sequence = [sp]
 	
 	
-	LogBus.debug(TAG,"progression_track.get_degrees_with_start().size():" + str(progression_track.get_degrees_with_start().size()))
 	for dic in progression_track.get_degrees_with_start():
 		var d:Degree = dic["degree"]
 		var guitar_chords = d.guitar_chords()
 		var gc:GuitarChord = guitar_chords[d.chord_voicing_index % guitar_chords.size()]
 		gc.start = dic["start"]
 		gc.length_beats = d.length_beats
-		LogBus.debug(TAG,"Loop Ready add gc" + gc.to_string())
 		gp.chord_grid.append(gc)
 		
 	
@@ -143,7 +139,7 @@ func _ready():
 	var d:Degree = progression_track.get_degrees_array()[0]
 	var voicings = d.guitar_chords()
 	var voicing_number = d.chord_voicing_index % voicings.size()
-	var current_voicing = voicings[voicing_number]
+	#var current_voicing = voicings[voicing_number]
 
 	
 	guitar_voicing_view.set_voicings(voicings) 
@@ -155,9 +151,9 @@ func _ready():
 	
 
 	
-	guitar_program_ob.set_program(25)
-	bass_program_ob.set_program(32)
-	chords_program_ob.set_program(50)
+	guitar_program_ob.set_program(9)
+	bass_program_ob.set_program(15)
+	chords_program_ob.set_program(0)
 	
 	var guitar_scene_params = myMasterSong.guitar_player_scene_params
 	if guitar_scene_params != null:
@@ -175,9 +171,7 @@ func _ready():
 			bass_volume_vs.value = int(guitar_scene_params["bass_volume"])
 		if guitar_scene_params.has("chords_volume"):		
 			chords_volume_vs.value = int(guitar_scene_params["chords_volume"])
-		
-	
-	
+
 	scene_is_ready = true
 
 	rewind()
@@ -201,7 +195,7 @@ func _process(_delta):
 		var pos = midi_player.position
 		if anim_songTrack_view :
 			if songview_is_displaying_degree:
-				songTrackView.set_playing_pos_ticks(fmod(pos,progression_track_length))
+				songTrackView.set_playing_pos_ticks(int(fmod(pos,progression_track_length)))
 			else:
 				songTrackView.set_playing_pos_ticks(pos)
 			
@@ -221,6 +215,7 @@ func _process(_delta):
 		$Pattern/preview_btn.text = "Preview"
 		playStopBtn.text = "Play"
 		pattern.preview_playing = false
+		update_song_view_selection_display()
 		if song_playing_ended == false :
 			song_playing_ended = true
 			rewind()
@@ -228,22 +223,67 @@ func _process(_delta):
 			playHead.hide()
 
 
+
 # gestion du clavier
 
 func _input(event):
 	if event is InputEventKey and pattern_lineEdit.has_focus() == false:
-		#accept_event()
+		accept_event()
 		if  event.is_released():
 			return
-
-
 
 		if event.scancode == KEY_SPACE :
 			_on_playStop_btn_pressed()
 			accept_event()
+		elif event.scancode == KEY_BACKSPACE :
+			$voicingContainer/voicing_view.set_voicing_index(0)
+			var progression_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)	
+			var dic = progression_track.get_degrees_with_start()[selected_chord_index]
+			var d:Degree = dic["degree"]
+			d.chord_voicing_index = 0
+			var gc:GuitarChord =$voicingContainer/voicing_view._voicings[0].clone()
+			gc.start = dic["start"]
+			gc.length_beats = d.length_beats
+			gp.chord_grid[selected_chord_index] = gc
+			play_chord(gc)
+			LogBus.info(TAG,"Chord voicing reset" ) 
+		elif event.scancode == KEY_UP :
+			$voicingContainer/voicing_view.next_voicing()
+		elif event.scancode == KEY_DOWN :
+			$voicingContainer/voicing_view.prev_voicing()
+		elif event.scancode == KEY_RIGHT:
+			if anim_songTrack_view == false :
+				var progression_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
+				var nb_chords = progression_track.get_degrees_array().size()
+				selected_chord_index = (selected_chord_index + 1) % nb_chords
+				var wrappers = songTrackView._wrappers
+				var w = wrappers[selected_chord_index]
+				songTrackView.select_only_wrapper(w)
+				var d:Degree = w.get_meta("degree")
+				var selected_voicing = d.chord_voicing_index
+				voicing_view.set_voicings(d.guitar_chords())
+				voicing_view.set_voicing_index(selected_voicing)
+				var gc = d.guitar_chords()[selected_voicing].clone()
+				play_chord(gc)
+			
+			#update_song_view_selection_display()
+		elif event.scancode == KEY_LEFT:
+			if anim_songTrack_view == false :
+				var progression_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
+				var nb_chords = progression_track.get_degrees_array().size()
+				selected_chord_index = (nb_chords+selected_chord_index -1) % nb_chords
+				var wrappers = songTrackView._wrappers
+				var w = wrappers[selected_chord_index]
+				songTrackView.select_only_wrapper(w)
+				var d:Degree = w.get_meta("degree")
+				var selected_voicing = d.chord_voicing_index
+				voicing_view.set_voicings(d.guitar_chords())
+				voicing_view.set_voicing_index(selected_voicing)
+				var gc = d.guitar_chords()[selected_voicing].clone()
+				play_chord(gc)
 
-
-
+	
+	
 func dummy_song()->Song:
 	var dummySong = Song.new()
 	var degrees = [1,2,5,6]
@@ -265,7 +305,7 @@ func dummy_song()->Song:
 	return dummySong
 		
 
-	$Pattern._update_pattern_display()
+	#$Pattern._update_pattern_display()
 	
 func set_display_degrees():
 	songTrackView.song = myMasterSong
@@ -329,21 +369,26 @@ func _on_SongTrackView_element_clicked(element, index, wrapper):
 	guitar_voicing_view.update()
 
 
-	var pos = wrapper.get_meta("start_time")
+	var pos = wrapper.get_meta("start")
 	var pattern_index = gp.get_strum_pattern_index_at_pos(pos)
 	$Pattern/pattern_number_sb._on_pattern_number_sb_value_changed(pattern_index+1)
 
 	play_chord(current_voicing)
+	var degree_info = ""
+	degree_info += d.get_roman_numeral() +" in key " + d.key.to_string()
+	LogBus.info(TAG,degree_info)
 	LogBus.info(TAG,str(voicings.size()) + " voicings available")
-	
+	songTrackView.select_wrapper(songTrackView._wrappers[index])
 #
 	
+func update_song_view_selection_display():
+	songTrackView.select_wrapper(songTrackView._wrappers[selected_chord_index])
+
 func _on_voicing_view_voicing_index_changed(current, total):
 
 	
-	LogBus.debug(TAG,"selected_chord_index: " + str(selected_chord_index))
+
 	var progression_track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)	
-	#var d:Degree = progression_track.get_degrees_array()[selected_chord_index]
 	var dic = progression_track.get_degrees_with_start()[selected_chord_index]
 	var d:Degree = dic["degree"]
 	d.chord_voicing_index = current
@@ -355,6 +400,7 @@ func _on_voicing_view_voicing_index_changed(current, total):
 
 	
 	play_chord(gc)
+	update_song_view_selection_display()
 	LogBus.info(TAG,"chord voicing: " + str(current + 1) + " / " + str(total) ) 
 	
 func play_chord(gc:GuitarChord):
@@ -415,7 +461,7 @@ func _on_playStop_btn_pressed():
 		if marker_starting_pos_in_ticks > -1 :
 			posInTicks = marker_starting_pos_in_ticks
 		else:
-			posInTicks = 480 * (songTrackView.get_scroll_beats())
+			posInTicks = int(480 * (songTrackView.get_scroll_beats()))
 		anim_songTrack_view = true
 		$SongViewContainer/trackDisplayMode.emit_signal("item_selected", 0)
 		songview_is_displaying_degree = false
@@ -438,15 +484,14 @@ func rewind() :
 	marker_starting_pos_in_ticks = -1
 	midi_player.stop()
 	playStopBtn.text = "Play"
-	songTrackView.scroll_to_pos(0,.5)
+	songTrackView.scroll_to_pos(0,.3)
+	anim_songTrack_view = false
+	update_song_view_selection_display()
 	#songTrackView.update_ui()
 	#rewindBtn.hide()
 
 
 func computeGuitarSong(with_program_change:bool = true) -> Song:
-	
-	
-	
 	
 	var song:Song = Song.new()
 	song.tempo_bpm = myMasterSong.tempo_bpm
@@ -465,8 +510,6 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 	# On reconstruit chord_grid depuis myMasterSong
 
 	var progression_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).clone()
-	
-	
 
 		
 	var new_gc_grid = []
@@ -477,7 +520,7 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 		var start = dic["start"]
 		var gc_array = d.guitar_chords()
 		var index_gc = d.chord_voicing_index
-		var my_gc:GuitarChord = gc_array[index_gc].clone()
+		var my_gc:GuitarChord = gc_array[index_gc % gc_array.size()].clone()
 		my_gc.start = start
 		my_gc.length_beats = d.length_beats
 		new_gc_grid.append(my_gc)
@@ -493,8 +536,7 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 	playing_player.chord_grid = new_gc_grid
 	playing_player.pattern_sequence = new_pattern_seq
 	
-	for gc in playing_player.chord_grid:
-		LogBus.debug(TAG,"in compute-> " + gc.to_string())
+
 	
 	#var guitar_score =  gp.generate()
 	#MusicLabGlobals.save_text_html5(JSON.print(guitar_score,"\t"), "guitar_score.txt")
@@ -565,72 +607,35 @@ func computeGuitarSong(with_program_change:bool = true) -> Song:
 	
 
 func _save_text_to_disk(content: String, filename: String) -> void:
-	# Écrit dans user:// (persistance locale; en HTML5 = IndexedDB)
-	var path = "user://" + filename
-	var f = File.new()
-	var err = f.open(path, File.WRITE)
-	if err == OK:
-		f.store_string(content)
-		f.close()
-
+	# Écrit dans le dossier utilisateur (persistance locale)
+	var path = MusicLabGlobals.get_text_export_path(filename)
+	var ok = MusicLabGlobals.save_text_to_file(path, content)
+	if ok:
+		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_TEXT_DIR_KEY, path.get_base_dir())
+		clear_console()
+		LogBus.info(TAG,"TABS.txt saved to "+ path)
 
 func _on_Export_console_btn_pressed():
 	_save_text_to_disk(console.text, "console.txt")
+	clear_console()
 	LogBus.info(TAG,'Console.txt exported to "user://console.txt"')
 
 
 func _on_Export_midi_btn_pressed():
 	var myExported_song = computeGuitarSong(false)
 	
-	var mime_type = "audio/midi"	
+	#var mime_type = "audio/midi"	
 	var filename = myMasterSong.title + "[GUITAR].mid"
 	var bytes: PoolByteArray = myExported_song.get_midi_bytes_type1()
 	if bytes.size() <= 0:
 		LogBus.error("[MidiExport]","No Midi Bytes to export (bytes.size == 0).")
 		return
 	
-	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-		_html5_download_bytes(bytes, filename, mime_type)
-	else:
-		_save_locally(bytes, "user://" + filename)
-		LogBus.info("[MidiExport]", "midifile Exported to user://" + filename)
-
-func _html5_download_bytes(bytes: PoolByteArray, fname: String, mime: String) -> void:
-	# Encode en base64 côté Godot (rapide et fiable)
-	var b64: String = Marshalls.raw_to_base64(bytes)
-	
-	# Installe une fonction JS si absente, puis appelle le download
-	var js_win = JavaScript.get_interface("window")
-	if js_win == null:
-		LogBus.error(TAG,"[MidiExport] JavaScript window interface non available.")
-		printerr("[MidiExport] JavaScript window interface non disponible.")
-		return
-	
-	if not js_win.has("musiclib_download_b64"):
-		var code = ""
-		code += "window.musiclib_download_b64 = function(b64, filename, mime) {"
-		code += "  try {"
-		code += "    var bin = atob(b64);"
-		code += "    var len = bin.length;"
-		code += "    var arr = new Uint8Array(len);"
-		code += "    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);"
-		code += "    var blob = new Blob([arr], {type: mime || 'application/octet-stream'});"
-		code += "    var a = document.createElement('a');"
-		code += "    a.href = URL.createObjectURL(blob);"
-		code += "    a.download = filename || 'export.bin';"
-		code += "    document.body.appendChild(a);"
-		code += "    a.click();"
-		code += "    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);"
-		code += "  } catch(e) { console.error('musiclib_download_b64 error', e); }"
-		code += "};"
-		JavaScript.eval(code, true)	#﻿
-	
-	if OS.has_feature("HTML5") and Engine.has_singleton("JavaScript"):
-		# Appel direct
-		js_win.musiclib_download_b64(b64, fname, mime)
-	else:
-		LogBus.error(TAG,"[MidiExport] JavaScript environment required for export.")
-
+	_pending_midi_bytes = bytes
+	var export_path = MusicLabGlobals.get_midi_export_path(filename)
+	midi_export_dialog.current_dir = export_path.get_base_dir()
+	midi_export_dialog.current_file = export_path.get_file()
+	midi_export_dialog.popup_centered_ratio(0.8)
 
 func _save_locally(bytes: PoolByteArray, path: String) -> void:
 	var f = File.new()
@@ -721,12 +726,28 @@ func _on_duplicate_all_btn_pressed():
 	LogBus.info(TAG,"Pattern Sequence duplicated")
 
 func _on_Export_tabs_pressed():
-	var txt = gp.generate_ascii_tab(4,80,true)
+	var txt = "Song title: "+ myMasterSong.title + "\n\n"
+	txt += "\nCHORDS:\n\n"
+	var prog_track:Track = myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME)
+	for dic in prog_track.get_degrees_with_start():
+		txt += "--------------------------------------------------------\n\n"
+		#var start = dic["start"]
+		var d:Degree = dic["degree"]
+		var guitarChords = d.guitar_chords()
+		var index_GC = d.chord_voicing_index
+		var gc:GuitarChord = guitarChords[index_GC]
+		txt += gc.get_ascii_tab() + "\n\n\n"
+		
+		
+		
+	txt += "\n\n======================== TABS ========================\n\n"
 	
+	
+	txt += gp.generate_ascii_tab(4,80,true)
 	#_save_text_to_disk(txt,"tabs.txt")
 	var title = myMasterSong.title + " [TABS].txt"
-	MusicLabGlobals.save_text_html5(txt,title)
-
+	#MusicLabGlobals.save_text_html5(txt,title)
+	_save_text_to_disk(txt, title)
 
 
 
@@ -762,7 +783,7 @@ func _on_paste_btn_pressed():
 
 
 
-func slider_updated(value):
+func slider_updated(_value):
 	if scene_is_ready:
 		rewind()
 
@@ -802,16 +823,43 @@ func _on_Debug_btn_pressed():
 	for d in myMasterSong.get_track_by_name(Song.PROGRESSION_TRACK_NAME).get_degrees_with_start():
 		LogBus.debug(TAG,"start = " + str(d["start"]))
 		
-		
+func _on_ExportMidiDialog_file_selected(path: String) -> void:
+	if _pending_midi_bytes.size() <= 0:
+		LogBus.error(TAG, "[MidiExport] No Midi Bytes to export (bytes.size == 0).")
+		return
+
+	if not path.ends_with(MusicLabGlobals.MIDI_EXTENSION):
+		path += MusicLabGlobals.MIDI_EXTENSION
+
+	var base_dir := path.get_base_dir()
+	if base_dir != "":
+		MusicLabGlobals._ensure_directory(base_dir)
+
+	var result = MusicLabGlobals._save_locally(_pending_midi_bytes, path)
+	LogBus.info(TAG, result)
+	if base_dir != "":
+		MusicLabGlobals.set_user_setting(MusicLabGlobals.LAST_MIDI_DIR_KEY, base_dir)
+	_pending_midi_bytes = PoolByteArray()		
 	
 
 
-func _on_soundBank_ob_item_selected(index):
-	var soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
-	match index:
-		0 : soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
-		1 : soundFont_path = MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS
-#		2 : soundFont_path = MusicLabGlobals.FATBOY_SOUND_FONT
-#		_ : soundFont_path = MusicLabGlobals.ASPIRIN_SOUND_FONT
-		
-	MusicLabGlobals.set_sound_Font(soundFont_path)
+#func _on_soundBank_ob_item_selected(index):
+#	var soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+#	match index:
+#		0 : soundFont_path = MusicLabGlobals.SOUND_FONT_ASPIRIN
+#		1 : soundFont_path = MusicLabGlobals.SOUND_FONT_ESSENTIAL_KEYS
+##		2 : soundFont_path = MusicLabGlobals.FATBOY_SOUND_FONT
+##		_ : soundFont_path = MusicLabGlobals.ASPIRIN_SOUND_FONT
+#
+#	MusicLabGlobals.set_sound_Font(soundFont_path)
+
+
+func _on_Edit_btn_pressed():
+	midi_player.stop()
+	myMasterSong.strum_pattern_array = gp.pattern_sequence
+	myMasterSong.guitar_player_scene_params = get_dico_from_interface_sliders()
+	myMasterSong.remove_track_by_name(Song.RYTHM_GUITAR_TRACK)
+	MusicLabGlobals.set_song(myMasterSong)
+	MusicLabGlobals.save_current_song_autosave()
+	get_tree().get_root().get_node("Main").change_scene_preloaded("progression_editor")
+

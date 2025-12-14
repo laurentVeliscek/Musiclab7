@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Scenes/welcome.gd" type="Script" id=1]
+[ext_resource path="res://Fonts/uwch.ttf" type="DynamicFontData" id=2]
 [ext_resource path="res://Themes/musicLab_theme.tres" type="Theme" id=4]
 [ext_resource path="res://Fonts/Roboto_Condensed-Bold.ttf" type="DynamicFontData" id=5]
 [ext_resource path="res://Fonts/Roboto-VariableFont_wdth,wght.ttf" type="DynamicFontData" id=6]
@@ -27,6 +28,28 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="DynamicFont" id=5]
+use_mipmaps = true
+use_filter = true
+extra_spacing_char = 7
+font_data = ExtResource( 2 )
+
+[sub_resource type="Animation" id=6]
+resource_name = "apparition"
+length = 10.0
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 5.1, 8.7 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 1 ) ]
+}
+
 [node name="main" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -50,22 +73,22 @@ rect_scale = Vector2( 0.5, 0.5 )
 texture = ExtResource( 7 )
 
 [node name="Titre" type="Label" parent="Welcome"]
-margin_left = 704.0
+margin_left = 700.0
 margin_top = 82.0
-margin_right = 1096.0
+margin_right = 1092.0
 margin_bottom = 181.0
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_fonts/font = SubResource( 1 )
 text = "MusicLab"
 
 [node name="Credits" type="Label" parent="Welcome"]
-margin_left = 712.0
-margin_top = 192.0
-margin_right = 1176.0
-margin_bottom = 423.0
+margin_left = 705.0
+margin_top = 224.0
+margin_right = 1169.0
+margin_bottom = 527.0
 custom_colors/font_color = Color( 1, 1, 1, 1 )
 custom_fonts/font = SubResource( 2 )
-text = "Version 7.1
+text = "Version 7.2
 
 Programmed with love by Laurent Veliscek
 © november 2025
@@ -96,5 +119,20 @@ custom_styles/focus = SubResource( 4 )
 custom_styles/disabled = SubResource( 4 )
 custom_styles/normal = SubResource( 4 )
 text = "Enter"
+
+[node name="music_typewriter" type="Label" parent="."]
+modulate = Color( 1, 1, 1, 0 )
+margin_left = 700.0
+margin_top = 168.0
+margin_right = 1008.0
+margin_bottom = 200.0
+custom_colors/font_color = Color( 0.596078, 0.596078, 0.596078, 1 )
+custom_fonts/font = SubResource( 5 )
+text = "a music typewriter"
+align = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="music_typewriter"]
+autoplay = "apparition"
+anims/apparition = SubResource( 6 )
 
 [connection signal="pressed" from="Welcome/Enter_btn" to="." method="_on_Enter_btn_pressed"]

@@ -187,7 +187,7 @@ func clear_console():
 	console.text = ""
 
 
-func _on_SongTrackView_element_clicked(element, index, wrapper):
+func _on_SongTrackView_element_clicked(_element, index, wrapper):
 	$Commands/selection_label.update_text()
 
 

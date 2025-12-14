@@ -280,7 +280,6 @@ static func save_midi_file_from_bytes(filename: String = "", bytes:PoolByteArray
 	return true
 
 func _save_text_to_disk(content: String, filename: String) -> void:
-	# Écrit dans user:// (persistance locale; en HTML5 = IndexedDB)
 	var path = "user://" + filename
 	var f = File.new()
 	var err = f.open(path, File.WRITE)

@@ -8,7 +8,7 @@
 [ext_resource path="res://Themes/script_minimal.tres" type="Theme" id=6]
 [ext_resource path="res://Themes/guitar_player_console.tres" type="Theme" id=7]
 [ext_resource path="res://addons/musiclib/guitar/GuitarChordView.gd" type="Script" id=8]
-[ext_resource path="res://addons/musiclib/LegoBox/program_change_selector.gd" type="Script" id=9]
+[ext_resource path="res://addons/musiclib/LegoBox/essential_program_change_selector.gd" type="Script" id=9]
 [ext_resource path="res://Fonts/AtkinsonHyperlegibleMono-VariableFont_wght.ttf" type="DynamicFontData" id=10]
 [ext_resource path="res://Fonts/Hymnus212.ttf" type="DynamicFontData" id=11]
 [ext_resource path="res://pattern_number.tres" type="Theme" id=12]
@@ -16,26 +16,7 @@
 [ext_resource path="res://Themes/Tempo_guitar_player.tres" type="Theme" id=14]
 [ext_resource path="res://Fonts/Littlearrows-Regular.otf" type="DynamicFontData" id=15]
 [ext_resource path="res://Scenes/voicing_offset_container.gd" type="Script" id=16]
-
-[sub_resource type="DynamicFont" id=1]
-size = 70
-font_data = ExtResource( 5 )
-
-[sub_resource type="Animation" id=2]
-resource_name = "anim"
-loop = true
-tracks/0/type = "value"
-tracks/0/path = NodePath(".:modulate")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0, 0.6, 1.1 ),
-"transitions": PoolRealArray( 1, 1, 1 ),
-"update": 0,
-"values": [ Color( 1, 1, 1, 0 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
-}
+[ext_resource path="res://addons/musiclib/LegoBox/musicLab_program_change_selector.gd" type="Script" id=17]
 
 [sub_resource type="DynamicFont" id=21]
 use_mipmaps = true
@@ -106,14 +87,25 @@ font_path = "res://Fonts/Roboto_Condensed-Bold.ttf"
 
 [sub_resource type="DynamicFont" id=67]
 size = 20
+use_mipmaps = true
+use_filter = true
 font_data = SubResource( 66 )
 
 [sub_resource type="DynamicFont" id=15]
-size = 26
+size = 25
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 5 )
 
 [sub_resource type="StyleBoxFlat" id=45]
 bg_color = Color( 0, 0.321569, 1, 1 )
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id=74]
+bg_color = Color( 0.878431, 0.658824, 0, 1 )
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -131,7 +123,9 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="DynamicFont" id=19]
-size = 21
+size = 24
+use_mipmaps = true
+use_filter = true
 font_data = ExtResource( 5 )
 
 [sub_resource type="StyleBoxFlat" id=20]
@@ -307,7 +301,8 @@ func play_preview():
 	var sp:StrumPattern = scene.gp.pattern_sequence[current].clone()
 	var gc:GuitarChord = $\"../voicingContainer/voicing_view\".get_current_guitar_chord().clone()
 	var step = sp.step_beat_length
-	var pattern_length = 16 * step
+	var pattern_length = 1 * step
+	LogBus.debug(TAG,\"pattern_length: \" + str(pattern_length))
 	gc.length_beats = pattern_length
 	preview_guitar_player.chord_grid = [gc]
 	preview_guitar_player.pattern_sequence = [sp]
@@ -582,10 +577,11 @@ func _on_step_beat_length_btn_pressed():
 			button.text = \"$\"
 			l = 0.25
 			length_text = \"16th\"
-	#var gp:FolkGuitarPlayer = pattern.guitar_player
-	for sp in guitar_player_scene.gp.pattern_sequence:
-		sp.step_beat_length = l
-	
+	if Input.is_key_pressed(KEY_SHIFT):
+		#var gp:FolkGuitarPlayer = pattern.guitar_player
+		for sp in guitar_player_scene.gp.pattern_sequence:
+			sp.step_beat_length = l
+	guitar_player_scene.gp.pattern_sequence[pattern.current].step_beat_length = l
 	guitar_player_scene.clear_console()
 	pattern._update_pattern_display()
 	LogBus.info(TAG,\"Pattern step set to \"+length_text)
@@ -871,9 +867,31 @@ margin_bottom = -1.0
 rect_pivot_offset = Vector2( 802, 404 )
 script = ExtResource( 1 )
 
-[node name="GuitarRobot" type="Sprite" parent="."]
-position = Vector2( 178, 178 )
-scale = Vector2( 0.277344, 0.277344 )
+[node name="GuitarRobotRect" type="ColorRect" parent="."]
+margin_left = 42.0
+margin_top = 42.0
+margin_right = 320.0
+margin_bottom = 321.0
+hint_tooltip = "Guitar Robot plays guitar chords or notes  to your chord progression.
+
+1) click on any chord to select a chord voicing 
+> key Up / key Down to change voicing
+> Backspace to reset the voicing 
+
+2) Edit the Guitar pattern(s)
+A Guitar pattern is 16 steps sequence made of letters
+You can use numbers to select a guitar string 
+or plays strums (D for down, U for up)
+
+Mouse over the pattern to popup 
+the pattern vocabulary...
+
+"
+color = Color( 1, 1, 1, 0 )
+
+[node name="GuitarRobot" type="Sprite" parent="GuitarRobotRect"]
+position = Vector2( 139, 140 )
+scale = Vector2( 0.271484, 0.271484 )
 texture = ExtResource( 2 )
 
 [node name="SongViewContainer" type="Control" parent="."]
@@ -891,19 +909,6 @@ margin_right = 916.0
 margin_bottom = 140.0
 rect_min_size = Vector2( 900, 140 )
 color = Color( 0, 0, 0, 1 )
-
-[node name="computing_label" type="Label" parent="SongViewContainer"]
-modulate = Color( 1, 1, 1, 0.75 )
-margin_right = 900.0
-margin_bottom = 134.0
-custom_colors/font_color = Color( 0.356863, 0.356863, 0.356863, 1 )
-custom_fonts/font = SubResource( 1 )
-text = "Computing SATB solutions..."
-align = 1
-valign = 1
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="SongViewContainer/computing_label"]
-anims/anim = SubResource( 2 )
 
 [node name="SongTrackView" parent="SongViewContainer" instance=ExtResource( 3 )]
 margin_left = 16.0
@@ -1046,7 +1051,10 @@ margin_left = 10.0
 margin_right = 270.0
 margin_bottom = 280.0
 rect_min_size = Vector2( 260, 280 )
-hint_tooltip = "Use arrows on the tab  to change the chord voicing"
+hint_tooltip = "key Arrow [Up] and [Down] to select previous / next Voicing
+key Arrow [<-] and [->] to select previous / next Chord
+
+[Backspace] :  reset the current chord voicing"
 script = ExtResource( 8 )
 font_title = SubResource( 40 )
 font_nut = SubResource( 44 )
@@ -1222,7 +1230,7 @@ margin_bottom = 49.0
 hint_tooltip = "Guitar Sound Selector"
 theme = ExtResource( 7 )
 align = 1
-script = ExtResource( 9 )
+script = ExtResource( 17 )
 
 [node name="bass_label" type="Label" parent="instruments"]
 margin_top = 53.0
@@ -1242,7 +1250,7 @@ margin_bottom = 102.0
 hint_tooltip = "Bass Sound Selector"
 theme = ExtResource( 7 )
 align = 1
-script = ExtResource( 9 )
+script = ExtResource( 17 )
 
 [node name="satb_label" type="Label" parent="instruments"]
 margin_top = 106.0
@@ -1262,19 +1270,20 @@ margin_bottom = 155.0
 hint_tooltip = "Chords Sound Selector"
 theme = ExtResource( 7 )
 align = 1
-script = ExtResource( 9 )
+script = ExtResource( 17 )
 
 [node name="Transport" type="Control" parent="."]
 margin_left = 1088.0
-margin_top = 464.0
+margin_top = 504.0
 margin_right = 1231.0
-margin_bottom = 682.0
+margin_bottom = 722.0
 rect_min_size = Vector2( 100, 150 )
 
 [node name="computing_lbl" type="Label" parent="Transport"]
 margin_left = 8.0
-margin_top = -60.0
+margin_top = -77.0
 margin_right = 136.0
+margin_bottom = -6.0
 rect_min_size = Vector2( 80, 26 )
 theme = ExtResource( 7 )
 custom_colors/font_color = Color( 0.321569, 0.333333, 1, 1 )
@@ -1285,9 +1294,9 @@ valign = 1
 
 [node name="playStop_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = -60.0
+margin_top = -77.0
 margin_right = 136.0
-margin_bottom = 2.0
+margin_bottom = -6.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Press [SPACE] bar to
 play / stop the progression"
@@ -1298,6 +1307,28 @@ custom_styles/focus = SubResource( 45 )
 custom_styles/disabled = SubResource( 45 )
 custom_styles/normal = SubResource( 45 )
 text = "Play"
+
+[node name="Edit_btn" type="Button" parent="Transport"]
+margin_left = 8.0
+margin_top = 5.0
+margin_right = 136.0
+margin_bottom = 44.0
+rect_min_size = Vector2( 120, 0 )
+hint_tooltip = "Press [SPACE] bar to
+play / stop the progression"
+custom_colors/font_color_focus = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover_pressed = Color( 0, 0, 0, 1 )
+custom_colors/font_color = Color( 0, 0, 0, 1 )
+custom_colors/font_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/icon_color_hover = Color( 0, 0, 0, 1 )
+custom_colors/font_color_pressed = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 15 )
+custom_styles/hover = SubResource( 74 )
+custom_styles/pressed = SubResource( 74 )
+custom_styles/focus = SubResource( 74 )
+custom_styles/disabled = SubResource( 74 )
+custom_styles/normal = SubResource( 74 )
+text = "Edit"
 
 [node name="rewind_btn" type="Button" parent="Transport"]
 visible = false
@@ -1318,9 +1349,9 @@ text = "<<"
 
 [node name="Export midi_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 72.0
+margin_top = 99.0
 margin_right = 136.0
-margin_bottom = 112.0
+margin_bottom = 130.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Export the midifile of 
 the current song"
@@ -1334,9 +1365,9 @@ text = "Export Midi"
 
 [node name="Export tabs" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 121.0
+margin_top = 137.0
 margin_right = 136.0
-margin_bottom = 161.0
+margin_bottom = 169.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Export the TABS of
 the Guitar Sequence."
@@ -1350,9 +1381,9 @@ text = "Export Tabs"
 
 [node name="Menu_btn" type="Button" parent="Transport"]
 margin_left = 8.0
-margin_top = 170.0
+margin_top = -118.0
 margin_right = 136.0
-margin_bottom = 210.0
+margin_bottom = -87.0
 rect_min_size = Vector2( 120, 0 )
 hint_tooltip = "Back to Menu
 
@@ -1367,9 +1398,9 @@ text = "Menu"
 
 [node name="tempo_SB" type="SpinBox" parent="Transport"]
 margin_left = 8.0
-margin_top = 11.0
+margin_top = 53.0
 margin_right = 136.0
-margin_bottom = 64.0
+margin_bottom = 92.0
 hint_tooltip = "Song tempo.
 
 You can click and 
@@ -1389,7 +1420,7 @@ margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="console_RTL" type="RichTextLabel" parent="console"]
-margin_left = 385.0
+margin_left = 408.0
 margin_top = 344.0
 margin_right = 646.0
 margin_bottom = 486.0
@@ -1399,9 +1430,9 @@ custom_fonts/normal_font = SubResource( 4 )
 scroll_following = true
 
 [node name="Export console_btn" type="Button" parent="console"]
-margin_left = 383.0
+margin_left = 399.0
 margin_top = 495.0
-margin_right = 503.0
+margin_right = 519.0
 margin_bottom = 515.0
 rect_min_size = Vector2( 120, 20 )
 hint_tooltip = "Export the midifile of 
@@ -1415,9 +1446,9 @@ custom_styles/normal = SubResource( 22 )
 text = "Export console"
 
 [node name="clear_console_btn" type="Button" parent="console"]
-margin_left = 520.0
+margin_left = 528.0
 margin_top = 495.0
-margin_right = 640.0
+margin_right = 648.0
 margin_bottom = 515.0
 rect_min_size = Vector2( 120, 20 )
 hint_tooltip = "Export the midifile of 
@@ -1516,7 +1547,7 @@ W : Double Mute
 w : Double Mute Light
 
 B : Main Bass note
-b : Main Bass note Light
+b : ALternate Bass note
 
 [Point] : Let ring
 [Space] : Silence
@@ -1547,11 +1578,15 @@ margin_right = 727.0
 margin_bottom = 144.0
 rect_min_size = Vector2( 55, 46 )
 hint_tooltip = "Song Guitar Pattern 
-step length (global).
+step length
 
 Click to change
  the step value
-"
+
+If [Shift] is pressed while 
+changing step length,
+the new step length is
+applied to all patterns"
 custom_fonts/font = SubResource( 27 )
 custom_styles/hover = SubResource( 16 )
 custom_styles/pressed = SubResource( 16 )
@@ -1888,7 +1923,7 @@ margin_right = 101.0
 margin_bottom = 100.0
 hint_tooltip = "Minimum Strum Duration in beats"
 min_value = 0.01
-max_value = 0.3
+max_value = 0.2
 step = 0.0
 value = 0.01
 
@@ -1899,7 +1934,7 @@ margin_bottom = 100.0
 hint_tooltip = "Maximum Strum
 Duration in beats"
 min_value = 0.01
-max_value = 0.3
+max_value = 0.2
 step = 0.0
 value = 0.1
 
@@ -1940,7 +1975,6 @@ margin_bottom = 100.0
 hint_tooltip = "timing variance"
 max_value = 0.1
 step = 0.0
-value = 0.005
 
 [node name="down_velocity_base" type="VSlider" parent="playerConfig/VBoxContainer/config_sliders"]
 margin_left = 223.0
@@ -2156,10 +2190,10 @@ custom_fonts/font = SubResource( 61 )
 text = "Playing pattern #"
 
 [node name="Debug_btn" type="Button" parent="."]
-margin_left = 1096.0
-margin_top = 376.0
-margin_right = 1221.0
-margin_bottom = 396.0
+margin_left = 184.0
+margin_top = 337.0
+margin_right = 309.0
+margin_bottom = 357.0
 text = "DEBUG"
 
 [node name="soundFont" type="Control" parent="."]
@@ -2167,15 +2201,13 @@ visible = false
 margin_right = 40.0
 margin_bottom = 40.0
 
-[node name="soundBank_ob" type="OptionButton" parent="soundFont"]
+[node name="program_selector_ob" type="OptionButton" parent="soundFont"]
 margin_left = 44.0
 margin_top = 329.0
 margin_right = 192.0
 margin_bottom = 352.0
-text = "Fast Audio"
 align = 1
-items = [ "Fast Audio", null, false, 0, null, "HD", null, false, 1, null, "FatBoy-v0.786", null, false, 2, null ]
-selected = 0
+script = ExtResource( 9 )
 
 [node name="Bonus_Lbl" type="Label" parent="soundFont"]
 margin_left = 706.0
@@ -2186,6 +2218,14 @@ custom_colors/font_color = Color( 0.392157, 0.392157, 0.392157, 1 )
 custom_fonts/font = SubResource( 73 )
 text = "Sound bank"
 align = 1
+
+[node name="midi_export" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="ExportMidiDialog" type="FileDialog" parent="midi_export"]
+window_title = "Enregistrer un fichier"
+access = 2
 
 [connection signal="element_clicked" from="SongViewContainer/SongTrackView" to="." method="_on_SongTrackView_element_clicked"]
 [connection signal="item_selected" from="SongViewContainer/trackDisplayMode" to="." method="_on_trackDisplayMode_item_selected"]
@@ -2202,6 +2242,7 @@ align = 1
 [connection signal="program_changed" from="instruments/bass_program_ob" to="." method="slider_updated"]
 [connection signal="program_changed" from="instruments/satb_program_ob" to="." method="slider_updated"]
 [connection signal="pressed" from="Transport/playStop_btn" to="." method="_on_playStop_btn_pressed"]
+[connection signal="pressed" from="Transport/Edit_btn" to="." method="_on_Edit_btn_pressed"]
 [connection signal="pressed" from="Transport/rewind_btn" to="." method="_on_rewind_btn_pressed"]
 [connection signal="pressed" from="Transport/Export midi_btn" to="." method="_on_Export_midi_btn_pressed"]
 [connection signal="pressed" from="Transport/Export tabs" to="." method="_on_Export_tabs_pressed"]
@@ -2229,4 +2270,4 @@ align = 1
 [connection signal="pressed" from="voicings_offset_container/random_all_btn" to="voicings_offset_container" method="_on_random_all_btn_pressed"]
 [connection signal="pressed" from="voicings_offset_container/Reset_voicing_btn" to="voicings_offset_container" method="_on_Reset_voicing_btn_pressed"]
 [connection signal="pressed" from="Debug_btn" to="." method="_on_Debug_btn_pressed"]
-[connection signal="item_selected" from="soundFont/soundBank_ob" to="." method="_on_soundBank_ob_item_selected"]
+[connection signal="file_selected" from="midi_export/ExportMidiDialog" to="." method="_on_ExportMidiDialog_file_selected"]
