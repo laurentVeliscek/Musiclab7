@@ -22,6 +22,8 @@ const drum_track_channel:int = 0x09
 
 const midi_master_bus_name:String = "arlez80_GMP_MASTER_BUS"
 const midi_channel_bus_name:String = "arlez80_GMP_CHANNEL_BUS%d"
+const midi_channel_bus_name_left:String = "arlez80_GMP_CHANNEL_BUS%d_L"
+const midi_channel_bus_name_right:String = "arlez80_GMP_CHANNEL_BUS%d_R"
 
 # -----------------------------------------------------------------------------
 # Classes
@@ -288,7 +290,8 @@ func _ready( ):
 		for i in range( 0, 16 ):
 			AudioServer.add_bus( -1 )
 			var midi_channel_bus_idx:int = AudioServer.get_bus_count( ) - 1
-			AudioServer.set_bus_name( midi_channel_bus_idx, self.midi_channel_bus_name % i )
+			var channel_bus_name:String = self.midi_channel_bus_name % i
+			AudioServer.set_bus_name( midi_channel_bus_idx, channel_bus_name )
 			AudioServer.set_bus_send( midi_channel_bus_idx, self.midi_master_bus_name )
 			AudioServer.set_bus_volume_db( midi_channel_bus_idx, 0.0 )
 
@@ -302,6 +305,27 @@ func _ready( ):
 			AudioServer.add_bus_effect( midi_channel_bus_idx, cae.ae_panner )
 			AudioServer.add_bus_effect( midi_channel_bus_idx, cae.ae_reverb )
 			self.channel_audio_effects.append( cae )
+
+			# Create stereo sub-buses (L/R) for proper stereo sample playback
+			# Left channel bus (hard-panned left)
+			AudioServer.add_bus( -1 )
+			var left_bus_idx:int = AudioServer.get_bus_count( ) - 1
+			AudioServer.set_bus_name( left_bus_idx, self.midi_channel_bus_name_left % i )
+			AudioServer.set_bus_send( left_bus_idx, channel_bus_name )
+			AudioServer.set_bus_volume_db( left_bus_idx, 0.0 )
+			var left_panner:AudioEffectPanner = AudioEffectPanner.new( )
+			left_panner.pan = -1.0
+			AudioServer.add_bus_effect( left_bus_idx, left_panner )
+
+			# Right channel bus (hard-panned right)
+			AudioServer.add_bus( -1 )
+			var right_bus_idx:int = AudioServer.get_bus_count( ) - 1
+			AudioServer.set_bus_name( right_bus_idx, self.midi_channel_bus_name_right % i )
+			AudioServer.set_bus_send( right_bus_idx, channel_bus_name )
+			AudioServer.set_bus_volume_db( right_bus_idx, 0.0 )
+			var right_panner:AudioEffectPanner = AudioEffectPanner.new( )
+			right_panner.pan = 1.0
+			AudioServer.add_bus_effect( right_bus_idx, right_panner )
 	else:
 		for i in range( 0, 16 ):
 			var midi_channel_bus_idx:int = 0
@@ -1234,10 +1258,10 @@ func get_now_playing_polyphony( ) -> int:
 		if audio_stream_player.playing:
 			polyphony += 1
 	return polyphony
+	
 
-
-##### # Chargement d’un MIDI depuis un tableau d’octets #########
 func load_from_bytes(byte_array: PoolByteArray) -> bool:
+	# load a MIDI file from a PoolByteArray
 	self._lock("prepare_to_play_bytes")
 
 	var smf_reader = SMF.new()

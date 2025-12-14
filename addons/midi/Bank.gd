@@ -19,6 +19,7 @@ class Instrument:
 	var vel_range_min:int = 0
 	var vel_range_max:int = 127
 	var preset:Preset
+	var is_stereo_sample:bool = false	# True if this is a stereo L/R pair
 	# var assine_group:int = 0	# reserved
 
 	# 遅くなるので初期設定を削除
@@ -57,7 +58,8 @@ class TempSoundFontBag:
 	var preset:Preset
 	var coarse_tune:int
 	var fine_tune:int
-	var key_range:TempSoundFontRange
+	var key_range:TempSoundFontRange = TempSoundFontRange.new( 0, 127 )
+	var vel_range:TempSoundFontRange = TempSoundFontRange.new( 0, 127 )
 	var instrument:TempSoundFontInstrument
 	var pan:float = 0.5
 
@@ -97,12 +99,13 @@ class TempSoundFontInstrumentBag:
 	var sample_modes:int = -1
 	var key_range:TempSoundFontRange = TempSoundFontRange.new( 0, 127 )
 	var vel_range:TempSoundFontRange = TempSoundFontRange.new( 0, 127 )
+	var has_vel_range:bool = false
 	var volume_db:float = 0.0
 	var adsr:TempSoundFontInstrumentBagADSR = TempSoundFontInstrumentBagADSR.new( )
 
 	func duplicate( ) -> TempSoundFontInstrumentBag:
 		var new:TempSoundFontInstrumentBag = TempSoundFontInstrumentBag.new( )
-		new.sample = self.sample
+		new.sample = sample
 		new.sample_id = sample_id
 		new.sample_start_offset = sample_start_offset
 		new.sample_end_offset = sample_end_offset
@@ -114,6 +117,7 @@ class TempSoundFontInstrumentBag:
 		new.keynum = keynum
 		new.key_range = key_range.duplicate( )
 		new.vel_range = vel_range.duplicate( )
+		new.has_vel_range = has_vel_range
 		new.volume_db = volume_db
 		new.adsr = adsr.duplicate( )
 
@@ -239,6 +243,8 @@ func read_soundfont( sf:SoundFont.SoundFontData, need_program_numbers:Array = []
 						bag.fine_tune = gen.amount
 					SoundFont.gen_oper_key_range:
 						bag.key_range = TempSoundFontRange.new( gen.uamount & 0xFF, gen.uamount >> 8 )
+					SoundFont.gen_oper_vel_range:
+						bag.vel_range = TempSoundFontRange.new( gen.uamount & 0xFF, gen.uamount >> 8 )
 					SoundFont.gen_oper_pan:
 						bag.pan = float( gen.amount + 500 ) / 1000.0
 					SoundFont.gen_oper_instrument:
@@ -298,6 +304,7 @@ func _read_soundfont_pdta_inst( sf:SoundFont.SoundFontData ) -> Array:
 					SoundFont.gen_oper_vel_range:
 						bag.vel_range.high = gen.uamount >> 8
 						bag.vel_range.low = gen.uamount & 0xFF
+						bag.has_vel_range = true
 					SoundFont.gen_oper_overriding_root_key:
 						bag.original_key = gen.amount
 					SoundFont.gen_oper_start_addrs_offset:
@@ -373,12 +380,73 @@ func _read_soundfont_preset_compose_sample( sf:SoundFont.SoundFontData, preset:P
 
 		for ibag_index in range( 0, pbag.instrument.bags.size( ) ):
 			var ibag:TempSoundFontInstrumentBag = pbag.instrument.bags[ibag_index]
-			if ibag.vel_range.high < 100: continue
 			var sample:SoundFont.SoundFontSampleHeader = ibag.sample
 			var array_stream:Array = Array( )
 			var array_base_pitch:PoolRealArray = PoolRealArray( )
 
-			for i in range( 0, 2 ):
+			# Check if this is a stereo sample (left/right linked pair)
+			var is_stereo:bool = (
+				sample.sample_type == SoundFont.sample_link_left_sample
+			or	sample.sample_type == SoundFont.sample_link_right_sample
+			or	sample.sample_type == SoundFont.sample_link_linked_sample
+			or	sample.sample_type == SoundFont.sample_link_rom_left_sample
+			or	sample.sample_type == SoundFont.sample_link_rom_right_sample
+			or	sample.sample_type == SoundFont.sample_link_rom_linked_sample
+			)
+
+			if is_stereo:
+				# Get the linked sample
+				var linked_sample:SoundFont.SoundFontSampleHeader = sf.pdta.shdr[sample.sample_link]
+
+				# Determine which is left and which is right
+				var left_sample:SoundFont.SoundFontSampleHeader
+				var right_sample:SoundFont.SoundFontSampleHeader
+				if (
+					sample.sample_type == SoundFont.sample_link_left_sample
+				or	sample.sample_type == SoundFont.sample_link_rom_left_sample
+				):
+					left_sample = sample
+					right_sample = linked_sample
+				else:
+					left_sample = linked_sample
+					right_sample = sample
+
+				# Load LEFT channel first, then RIGHT channel
+				# This order is important for stereo panning in ADSR.gd
+				var samples_to_load:Array = [left_sample, right_sample]
+				for chan_sample in samples_to_load:
+					var start:int = chan_sample.start + ibag.sample_start_offset
+					var end:int = chan_sample.end + ibag.sample_end_offset
+					var start_loop:int = chan_sample.start_loop + ibag.sample_start_loop_offset
+					var end_loop:int = chan_sample.end_loop + ibag.sample_end_loop_offset
+					var base_pitch:float = ( pbag.coarse_tune + ibag.coarse_tune ) / 12.0 + ( pbag.fine_tune + ibag.sample.pitch_correction + ibag.fine_tune ) / 1200.0
+					if chan_sample.sample_rate != 44100:
+						var f:float = float( chan_sample.sample_rate ) / 44100.0
+						base_pitch += log( f ) / log2
+
+					var loaded_key:String = "%d_%d_%d_%d_%d_%f" % [start, end, start_loop, end_loop, chan_sample.sample_rate, base_pitch]
+
+					if loaded_key in loaded_sample_data:
+						array_stream.append( loaded_sample_data[loaded_key] )
+					else:
+						var ass:AudioStreamSample = AudioStreamSample.new( )
+						ass.data = append_head_silent + sample_base.subarray( start * 2, end * 2 - 1 )
+						ass.format = AudioStreamSample.FORMAT_16_BITS
+						ass.mix_rate = 44100
+						ass.stereo = false
+						ass.loop_mode = AudioStreamSample.LOOP_DISABLED
+						if ( ibag.sample_modes == SoundFont.sample_mode_loop_continuously ) or ( start + 64 <= start_loop and ibag.sample_modes == -1 and preset.number != drum_track_bank << 7 ):
+							ass.loop_mode = AudioStreamSample.LOOP_FORWARD
+							ass.loop_begin = start_loop - start + append_head_silent_samples
+							ass.loop_end = end_loop - start + append_head_silent_samples
+
+						loaded_sample_data[loaded_key] = ass
+						array_stream.append( ass )
+
+					array_base_pitch.append( base_pitch )
+
+			else:
+				# Mono sample - original behavior
 				var start:int = sample.start + ibag.sample_start_offset
 				var end:int = sample.end + ibag.sample_end_offset
 				var start_loop:int = sample.start_loop + ibag.sample_start_loop_offset
@@ -406,18 +474,12 @@ func _read_soundfont_preset_compose_sample( sf:SoundFont.SoundFontData, preset:P
 						ass.loop_end = end_loop - start + append_head_silent_samples
 
 					loaded_sample_data[loaded_key] = ass
-
 					array_stream.append( ass )
 
 				array_base_pitch.append( base_pitch )
 
-				if sample.sample_type != SoundFont.sample_link_mono_sample and sample.sample_type != SoundFont.sample_link_rom_mono_sample:
-					sample = sf.pdta.shdr[sample.sample_link]
-				else:
-					break
-
 			var key_range:TempSoundFontRange = ibag.key_range
-			var vel_range:TempSoundFontRange = ibag.vel_range
+			var vel_range:TempSoundFontRange = ibag.vel_range if ibag.has_vel_range else pbag.vel_range
 			var vel_range_min:int = vel_range.low
 			var vel_range_max:int = vel_range.high
 
@@ -460,6 +522,7 @@ func _read_soundfont_preset_compose_sample( sf:SoundFont.SoundFontData, preset:P
 					for k in range( len( instrument.array_base_pitch ) ):
 						instrument.array_base_pitch[k] += shift_pitch
 				instrument.array_stream = array_stream
+				instrument.is_stereo_sample = is_stereo
 
 				instrument.volume_db = volume_db
 				instrument.ads_state = ads_state

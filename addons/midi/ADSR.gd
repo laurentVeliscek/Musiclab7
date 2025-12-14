@@ -8,6 +8,8 @@ extends AudioStreamPlayer
 
 class_name AudioStreamPlayerADSR
 const gap_second:float = 1024.0 / 44100.0
+const stereo_bus_name_left:String = "arlez80_GMP_CHANNEL_BUS%d_L"
+const stereo_bus_name_right:String = "arlez80_GMP_CHANNEL_BUS%d_R"
 
 # 発音チャンネル
 var channel_number:int = -1
@@ -50,6 +52,8 @@ var force_update:bool = false
 
 # LinkedSampleを使用中
 var is_check_using_linked:bool
+# ステレオサンプル（左右分離が必要）
+var is_stereo_sample:bool = false
 
 # ADSステート
 onready var ads_state:Array = [
@@ -93,6 +97,7 @@ func set_instrument( _instrument:Bank.Instrument ) -> void:
 	self.stream = _instrument.array_stream[0]
 	self.ads_state = _instrument.ads_state
 	self.release_state = _instrument.release_state
+	self.is_stereo_sample = _instrument.is_stereo_sample
 
 	self.is_check_using_linked = self._check_using_linked( )
 	if self.is_check_using_linked:
@@ -109,9 +114,15 @@ func play( from_position:float = 0.0 ) -> void:
 	self.request_release = false
 	self.timer = 0.0
 	self.using_timer = 0.0
-	self.linked.bus = self.bus
 	self.pitch_scale = 1.0
 	self.linked.pitch_scale = 1.0
+
+	# Route to stereo L/R buses if this is a stereo sample pair
+	if self.is_stereo_sample and self.is_check_using_linked and self.channel_number >= 0:
+		self.bus = self.stereo_bus_name_left % self.channel_number
+		self.linked.bus = self.stereo_bus_name_right % self.channel_number
+	else:
+		self.linked.bus = self.bus
 
 	self.current_volume_db = self.ads_state[0].volume_db
 	self._update_volume( )
